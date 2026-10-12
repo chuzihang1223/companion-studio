@@ -1,0 +1,76 @@
+# Credentials and personal runtime data
+.env
+.env.*
+!.env.example
+UserData/
+PrivateArchive/
+voice_profiles/
+data/*
+!data/.gitkeep
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.log
+
+# Dependencies, caches and generated builds
+.venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.cache/
+Cache/
+cache/
+Build/
+build/
+Release/
+dist/
+desktop/frontend/dist/
+*.spec
+*.egg-info/
+
+# Local test output and temporary files
+Smoke/
+TestData/
+tests/**/output/
+tests/**/cache/
+tests/**/diagnostics/current/
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.rej
+*.lnk
+
+# User-provided model and audio material
+*.wav
+*.mp3
+*.flac
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Developer runtime profiles
+.runtime/
+
+# Other private audio/model/credential artifacts
+*.ogg
+*.m4a
+*.aac
+*.gguf
+*.ggml
+*.bin
+*.key
+*.pfx
+*.p12
+api-keys.json
+fish-key.json
+secrets.json
+.[eE][nN][vV]
+.[eE][nN][vV].*
+!.env.example

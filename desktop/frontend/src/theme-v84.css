@@ -1,0 +1,15 @@
+.workbench .workbench-action-button,.workbench .workspace-toolbar select {
+ background:var(--surface) !important;color:var(--text) !important;border:1px solid var(--line) !important;
+ border-radius:9px;box-shadow:0 1px 3px #0000000c;min-height:32px;padding:6px 10px;
+}
+.workbench .workbench-action-button:hover:not(:disabled) {background:var(--hover) !important;border-color:var(--accent) !important}
+.workbench .workbench-action-button.active,.workbench .workbench-action-button[aria-pressed=true],.workbench .workbench-action-button[aria-selected=true] {
+ background:var(--accent-soft) !important;color:var(--text) !important;border-color:var(--accent) !important;
+}
+.workbench .workbench-action-button:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
+.workbench .workbench-action-button:disabled {opacity:.55;cursor:default}
+.model-roles {margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+.model-roles>label {align-items:start;gap:8px}
+.app-candidates {display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.app-candidates>span {flex-basis:100%;color:var(--text)}
+.app-candidates .workbench-action-button {background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;min-height:32px;padding:6px 10px}

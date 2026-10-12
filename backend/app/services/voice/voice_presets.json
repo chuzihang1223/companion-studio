@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sample_rate": 32000,
+  "default_intensity": 0.5,
+  "reference_fallbacks": {
+    "neutral": ["neutral"],
+    "playful": ["playful", "happy", "neutral"],
+    "happy": ["happy", "playful", "neutral"],
+    "excited": ["excited", "happy", "neutral"],
+    "gentle": ["gentle", "neutral"],
+    "concerned": ["concerned", "gentle", "neutral"],
+    "serious": ["serious", "neutral"],
+    "sad": ["sad", "gentle", "neutral"],
+    "nostalgic": ["nostalgic", "gentle", "neutral"],
+    "embarrassed": ["embarrassed", "playful", "neutral"],
+    "protective": ["protective", "serious", "neutral"],
+    "annoyed": ["annoyed", "concerned", "neutral"]
+  },
+  "presets": {
+    "neutral": {"speed_target": 1.0, "pause_target": 0.3, "temperature": 1.0, "top_k": 15},
+    "playful": {"speed_target": 1.08, "pause_target": 0.24, "temperature": 1.08, "top_k": 20},
+    "happy": {"speed_target": 1.05, "pause_target": 0.22, "temperature": 1.04, "top_k": 17},
+    "excited": {"speed_target": 1.12, "pause_target": 0.18, "temperature": 1.08, "top_k": 20},
+    "gentle": {"speed_target": 0.94, "pause_target": 0.36, "temperature": 0.96, "top_k": 15},
+    "concerned": {"speed_target": 0.92, "pause_target": 0.39, "temperature": 0.94, "top_k": 14},
+    "serious": {"speed_target": 0.90, "pause_target": 0.44, "temperature": 0.92, "top_k": 13},
+    "sad": {"speed_target": 0.90, "pause_target": 0.45, "temperature": 0.92, "top_k": 13},
+    "nostalgic": {"speed_target": 0.92, "pause_target": 0.41, "temperature": 0.95, "top_k": 14},
+    "embarrassed": {"speed_target": 1.05, "pause_target": 0.32, "temperature": 1.02, "top_k": 17},
+    "protective": {"speed_target": 0.92, "pause_target": 0.39, "temperature": 0.93, "top_k": 14},
+    "annoyed": {"speed_target": 1.06, "pause_target": 0.25, "temperature": 0.98, "top_k": 15}
+  }
+}

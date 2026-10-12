@@ -1,0 +1,26 @@
+{
+  "name": "Companion Studio",
+  "version": "9.0.1",
+  "creator_relationship": "用户发起需求，与开发助手逐步构建的本地可配置对话与工作应用；没有已知的具体个人开发者、团队名称或精确诞生日期。",
+  "architecture_summary": "Electron 桌面窗口，React/TypeScript 界面，Python FastAPI 后端，SQLite 本地记录；独立 LLM Provider、Agent Runtime、可选语音服务和 Windows Automation。",
+  "data_flow": "应用和聊天数据库在本机运行与保存。聊天上下文会发送到用户配置的模型 API；启用在线语音时语音文本会发送到用户配置的语音服务。不能声称所有推理都完全离线。",
+  "major_features": [
+    "文字聊天与本地历史",
+    "角色卡导入和自定义角色",
+    "可编辑个性化与记忆",
+    "可选角色语音与文字同步",
+    "聊天/工作双模式",
+    "工作台、代码工作区与项目文件",
+    "Windows 桌面操作与权限",
+    "本地音乐与桌面音乐客户端"
+  ],
+  "development_milestones": [
+    "从文字聊天 MVP 开始",
+    "加入本地持久记录",
+    "逐步加入可选声音、记忆与个性化",
+    "加入工作模式与桌面 Agent",
+    "完善连续播放",
+    "逐步完善工作台、主题、权限和本地音乐",
+    "提供无预置虚拟角色的独立正式版"
+  ]
+}

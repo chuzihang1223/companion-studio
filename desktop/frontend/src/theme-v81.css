@@ -1,0 +1,23 @@
+:root{--panel-opacity:92%;--panel-surface:color-mix(in srgb,var(--surface) var(--panel-opacity),transparent);--panel-shadow:0 8px 32px color-mix(in srgb,var(--text) 6%,transparent);--radius:16px}
+.app-shell{font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+.chat-panel{position:relative;isolation:isolate;background:var(--canvas)}
+.chat-panel::before,.chat-panel::after{content:"";position:absolute;inset:0;z-index:-2;pointer-events:none}
+.chat-panel::before{background:var(--app-background);background-size:cover;background-position:center;filter:blur(var(--app-background-blur)) brightness(var(--app-background-brightness))}
+.chat-panel::after{z-index:-1;background:color-mix(in srgb,var(--canvas) calc(var(--app-background-mask)*100%),transparent)}
+.conversation::before{display:none}.conversation{background:transparent}
+.chat-header{background:var(--panel-surface);backdrop-filter:blur(14px);-webkit-app-region:drag;padding-right:0;min-height:64px;gap:12px;flex-shrink:0}
+.chat-header button,.chat-header input,.chat-header select,.chat-header a,.chat-header .mode-switch,.window-controls{-webkit-app-region:no-drag}
+.chat-title{min-width:100px}.chat-title strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:30vw;display:block}
+.window-controls{display:flex;align-self:stretch;margin-left:auto;flex-shrink:0}
+.window-controls button{width:42px;border-radius:0;font-size:17px;padding:0;color:var(--text)}
+.window-controls button:hover{background:var(--hover)}.window-controls .window-close:hover{background:#c42b1c;color:white}
+.mode-content{display:flex;flex-direction:column;flex:1;min-height:0}.mode-hidden{display:none}
+.composer{background:transparent}.composer-box{background:var(--panel-surface);backdrop-filter:blur(12px);box-shadow:var(--panel-shadow)}
+.primary-nav{display:flex;gap:4px;margin:14px 0}.primary-nav button{flex:1;padding:9px 6px;border-radius:10px;font-size:13px;color:var(--muted)}.primary-nav .active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.background-settings fieldset{border:1px solid var(--line);border-radius:var(--radius);margin:12px 0;padding:14px}.background-settings legend{font-size:13px;color:var(--accent)}
+.background-settings button,.files-toolbar button{border:1px solid var(--line);padding:7px 12px;border-radius:8px}
+.workspace-folder-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-surface);font-size:12px}
+.workspace-folder-bar>span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}.workspace-folder-bar>button{flex-shrink:0;padding:5px 8px;color:var(--accent)}
+.files-module{display:flex;flex-direction:column;gap:12px}.files-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.files-module input:not([type=checkbox]){border:1px solid var(--line);background:var(--panel-surface);color:var(--text);border-radius:8px;padding:9px}.files-list{display:flex;flex-direction:column;max-height:260px;overflow:auto}.files-list button{display:flex;justify-content:space-between;gap:12px;padding:9px;border-bottom:1px solid var(--line);text-align:left;font-size:12px}.files-list button:hover{background:var(--hover)}.files-list small{color:var(--muted)}
+.music-page{flex:1;min-height:0;overflow:auto;padding:28px;display:flex;flex-direction:column;gap:20px}.music-page[hidden]{display:none}.music-cover{width:168px;height:168px;object-fit:cover;border-radius:var(--radius);background:var(--accent-soft);display:grid;place-items:center;font-size:60px;color:var(--accent);flex-shrink:0}.music-playing{display:flex;gap:24px;align-items:center;padding:24px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-surface);backdrop-filter:blur(12px)}.music-playing h2{margin:8px 0;color:var(--text)}.music-playing p,.music-playing small{color:var(--muted)}.music-progress input{flex:1;min-width:0;accent-color:var(--accent)}.music-source-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.music-source-row select{max-width:340px}.music-clients{display:flex;gap:12px;flex-wrap:wrap}.music-clients button,.music-actions button{border:1px solid var(--line);border-radius:10px;padding:9px 16px;background:var(--panel-surface)}
+@media(max-width:800px){.chat-header .mode-switch button{font-size:11px;padding:6px}.chat-header{gap:6px}.window-controls button{width:32px}.music-cover{width:100px;height:100px}.music-page{padding:16px}.workspace-folder-bar{flex-wrap:wrap}}

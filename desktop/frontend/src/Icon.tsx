@@ -1,0 +1,47 @@
+export type IconName = 'copy' | 'check' | 'reply' | 'retry' | 'branch' | 'volume' | 'pause' | 'more' | 'edit' | 'send' | 'plus' | 'search' | 'settings' | 'panel' | 'close' | 'download' | 'clock' | 'alert' | 'wave' | 'conversation' | 'workflow' | 'network' | 'code' | 'diff' | 'terminal' | 'globe' | 'folder' | 'app' | 'music' | 'activity' | 'eye' | 'package' | 'pin' | 'maximize' | 'collapse' | 'left' | 'right' | 'back' | 'user'
+
+const paths: Record<IconName, string> = {
+  copy: 'M8 4H6a2 2 0 0 0-2 2v12m4-12h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z',
+  check: 'm5 12 4 4L19 6',
+  reply: 'm9 10-5 4 5 4M4 14h9a6 6 0 0 1 6 6',
+  retry: 'M20 7v5h-5M4 17v-5h5M5.8 9A7 7 0 0 1 18 7l2 5M4 12l2 5a7 7 0 0 0 12.2-2',
+  branch: 'M7 4v10a5 5 0 0 0 5 5h5M7 10a5 5 0 0 0 5-5h5M17 2v6M17 16v6',
+  volume: 'M4 9v6h4l5 4V5L8 9H4ZM17 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12',
+  pause: 'M7 5v14M17 5v14',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
+  edit: 'm4 20 4-.8L19 8.2 15.8 5 4.8 16 4 20ZM14 7l3 3',
+  send: 'm3 11 18-8-8 18-2-8-8-2ZM11 13l10-10',
+  plus: 'M12 5v14M5 12h14',
+  search: 'm20 20-4-4M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+  settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM4 10l2-1 1-2-1-2 3-2 2 2h2l2-2 3 2-1 2 1 2 2 1v4l-2 1-1 2 1 2-3 2-2-2h-2l-2 2-3-2 1-2-1-2-2-1v-4Z',
+  panel: 'M4 4h16v16H4zM10 4v16',
+  close: 'M5 5l14 14M19 5 5 19',
+  download: 'M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4',
+  clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v5l3 2',
+  alert: 'M12 3 2 21h20L12 3Zm0 6v5m0 3h.01',
+  wave: 'M3 12v2m4-7v10m4-14v18m4-14v10m4-7v4',
+  conversation:'M5 4h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z',
+  workflow:'m3 6 2 2 3-4M11 6h10m-18 7 2 2 3-4m3 2h10M4 20h3m4 0h10',
+  network:'M9 3h6v6H9zM2 16h6v6H2zM16 16h6v6h-6zM12 9v4M5 16v-3h14v3',
+  code:'m8 7-5 5 5 5m8-10 5 5-5 5m-3-14-2 18',
+  diff:'M5 3v14m0-9 3-3-3-3-3 3m17 16V7m0 9-3 3 3 3 3-3M9 12h6',
+  terminal:'M3 4h18v16H3zm4 5 3 3-3 3m6 0h4',
+  globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z',
+  folder:'M3 6V4h6l2 2h10v14H3zM7 10v6h4m-4-3h4',
+  app:'M3 4h18v16H3zM3 9h18m-14-3h.1m3 0h.1',
+  music:'M10 18V5l10-2v13M10 8l10-2M10 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3Zm10-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z',
+  activity:'M2 12h4l3-8 6 16 3-8h4',
+  eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
+  package:'m3 7 9-5 9 5v10l-9 5-9-5V7Zm0 0 9 5 9-5M12 12v10M7 4l10 5',
+  pin:'m8 3 8 0-2 5 4 4v2H6v-2l4-4-2-5ZM12 14v7',
+  maximize:'M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5',
+  collapse:'m6 14 6-6 6 6',
+  left:'M3 4h18v16H3zM8 4v16m8-12-4 4 4 4',
+  right:'M3 4h18v16H3zM16 4v16M8 8l4 4-4 4',
+  back:'m10 5-7 7 7 7M3 12h18',
+  user:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-3a8 8 0 0 1 16 0v3',
+}
+
+export default function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
+  return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>
+}

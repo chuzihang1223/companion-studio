@@ -1,0 +1,11 @@
+{
+  "version": "9.0.1",
+  "product_name": "Companion Studio",
+  "build_label": "Companion Studio Public Release",
+  "build_id": "studio-9.0.1-20261012-131946",
+  "built_at": "2026-10-12T13:19:50.2045775Z",
+  "channel": "release",
+  "app_id": "com.companionstudio.desktop",
+  "clean_distribution": true,
+  "source_fingerprint": "7a2b523d965be3fbad24c8c69ac9a74875f7df267ce060e47448a85e2c8370c8"
+}

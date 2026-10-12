@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),{MusicSearchResultResolver:R}=require('../../desktop/electron/music-search-result-resolver.cjs'),{parseQuery}=require('../../desktop/electron/music-query.cjs')
+const e=(key,parent_key,type,name,extra={})=>({key:String(key),parent_key:parent_key===null?null:String(parent_key),type,name,enabled:true,offscreen:false,bounds:[0,0,10,10],...extra})
+const target=parseQuery('《再于终末归还》。'),tree={elements:[e(0,null,'Window','QQ音乐'),e(1,0,'Button','已选中 歌曲'),e(2,0,'Button','专辑'),e(3,0,'Button','歌单'),e(4,0,'Text','歌名/歌手'),e(5,0,'Pane',''),e(6,5,'Hyperlink','再于终末归还'),e(7,5,'Hyperlink','歌手：鸣潮先约电台,jixwang,JINGYAN,Emi Evans'),e(8,5,'Hyperlink','专辑：旧夜群星闪耀时'),e(9,5,'Text','时长：02:00'),e(10,5,'Button','播放'),e(11,0,'Pane',''),e(12,11,'Hyperlink','专辑：再于终末归还'),e(13,11,'Text','专辑详情')]}
+const resolved=R.fromUIA(tree,target);assert.equal(target.query,'再于终末归还');assert.equal(resolved.page.type,'search_song');assert.equal(resolved.results.length,1);assert.equal(resolved.results[0].kind,'song');assert.equal(resolved.results[0].play_selector.name,'播放');assert.equal(resolved.results[0].album,'旧夜群星闪耀时')
+const visual=R.fromVisual({width:1000,height:700,lines:[{text:'歌曲',x:260,y:160,width:35,height:20},{text:'视频',x:330,y:160,width:35,height:20},{text:'专辑',x:400,y:160,width:35,height:20},{text:'歌单',x:470,y:160,width:35,height:20},{text:'歌词',x:540,y:160,width:35,height:20},{text:'歌名/歌手',x:260,y:280,width:80,height:20},{text:'专辑',x:690,y:280,width:40,height:20},{text:'时长',x:870,y:280,width:40,height:20},{text:'再于终末归还',x:310,y:320,width:110,height:20},{text:'鸣潮先约电台',x:310,y:347,width:110,height:18},{text:'再于终末归还',x:690,y:320,width:110,height:20},{text:'02:00',x:870,y:320,width:45,height:20}]},target)
+assert.equal(visual.results.length,1);assert.equal(visual.results[0].kind,'song');assert.equal(visual.results[0].title,'再于终末归还')
+const album=structuredClone(tree);album.elements[1].name='已选中 专辑';assert.equal(R.page(album).category,'album')
+// Actual Windows OCR: Chinese spaces, full-width colon, cover glyph and badge
+// on the title line. The exact song span must survive without matching a program.
+const actual=require('../fixtures/qqmusic-song-table.json'),actualResult=R.fromVisual(actual,target)
+assert.equal(actualResult.results.length,1);assert.equal(actualResult.results[0].title,target.title);assert.equal(actualResult.results[0].kind,'song')
+assert.ok(actualResult.results[0].artist.replace(/\s/g,'').includes('鸣潮先约电台'))
+console.log(JSON.stringify({pass:true,uia_parent_rows:true,play_button:true,album_text_excluded:true,visual_table_classified:true,category:true}))

@@ -1,0 +1,99 @@
+{
+  "name": "companion-studio",
+  "version": "9.0.1",
+  "private": true,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "dev": "concurrently -k \"npm:dev:frontend\" \"npm:dev:electron\"",
+    "dev:frontend": "vite --config frontend/vite.config.ts",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && electron . --dev",
+    "build": "tsc --noEmit -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
+    "build:win": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1",
+    "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1",
+    "start": "electron .",
+    "start:compat": "electron . --compat",
+    "build:public": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "9.2.5",
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "wait-on": "8.0.5"
+  },
+  "build": {
+    "appId": "com.companionstudio.desktop",
+    "productName": "Companion Studio",
+    "directories": {
+      "output": "../build/electron",
+      "buildResources": "assets"
+    },
+    "files": [
+      "electron/**/*",
+      "assets/companion-studio.ico",
+      "assets/companion-studio.png",
+      "assets/companion-studio.svg",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "electron/automation/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../build/backend/companion-backend",
+        "to": "companion-backend"
+      },
+      {
+        "from": "../backend/app",
+        "to": "backend-source/app",
+        "filter": [
+          "**/*.py",
+          "**/*.json"
+        ]
+      },
+      {
+        "to": "licenses",
+        "from": "../licenses"
+      },
+      {
+        "to": "THIRD_PARTY_NOTICES.md",
+        "from": "../THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "to": "LICENSE",
+        "from": "../LICENSE"
+      }
+    ],
+    "win": {
+      "target": [
+        "dir"
+      ],
+      "icon": "assets/companion-studio.ico",
+      "executableName": "CompanionStudio"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "Companion-Studio-9.0.1-Setup.${ext}"
+    }
+  },
+  "description": "Configurable characters, local conversations, and a desktop workbench.",
+  "license": "MIT",
+  "author": "Companion Studio contributors",
+  "overrides": {
+    "global-agent": "4.1.3",
+    "source-map-js": "1.2.2"
+  }
+}
