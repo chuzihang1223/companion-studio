@@ -1,6 +1,6 @@
 # Companion Studio（伴舟）
 
-**9.0.1 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
+**0.1.0 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -36,13 +36,15 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 ### Windows 正式版
 
-普通使用无需安装 Python、Node.js 或 npm。
+当前 `v0.1.0` 为首个公开源码版本，GitHub Release 提供源码下载；Windows 安装包可按照下方「生成 Windows 安装包」步骤自行构建。
 
-1. 获取 `Companion-Studio-9.0.1-Setup.exe` 和 `SHA256SUMS.txt`。
+使用构建好的安装包无需安装 Python、Node.js 或 npm。
+
+1. 从源码构建后，在构建产物目录获取 `Companion-Studio-0.1.0-Setup.exe` 和 `SHA256SUMS.txt`。
 2. 用以下命令取得安装包 SHA256，与校验文件中的对应值比较：
 
    ```powershell
-   Get-FileHash -LiteralPath '.\Companion-Studio-9.0.1-Setup.exe' -Algorithm SHA256
+   Get-FileHash -LiteralPath '.\Companion-Studio-0.1.0-Setup.exe' -Algorithm SHA256
    ```
 
 3. 运行安装器，选择具有写入权限的目录。建议采用 **应用根目录\Release\installed** 结构，例如 `D:\Apps\CompanionStudio\Release\installed`，以分开程序与用户数据。

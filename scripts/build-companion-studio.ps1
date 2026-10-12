@@ -1,5 +1,5 @@
 ﻿param(
-  [string]$BuildId = ('studio-9.0.1-' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')),
+  [string]$BuildId,
   [string]$OutputRoot,
   [switch]$SkipTests
 )
@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $project = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $desktop = Join-Path $project 'desktop'
 $version = (Get-Content -LiteralPath (Join-Path $desktop 'package.json') -Raw | ConvertFrom-Json).version
+if (-not $BuildId) { $BuildId = 'studio-' + $version + '-' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss') }
 if ($BuildId -notmatch '^studio-[A-Za-z0-9.-]+$') { throw 'Invalid build ID' }
 if (-not $OutputRoot) { $OutputRoot = Join-Path $project 'build' }
 $root = [IO.Path]::GetFullPath($OutputRoot).TrimEnd('\')

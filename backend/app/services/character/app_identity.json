@@ -1,6 +1,6 @@
 {
   "name": "Companion Studio",
-  "version": "9.0.1",
+  "version": "0.1.0",
   "creator_relationship": "用户发起需求，与开发助手逐步构建的本地可配置对话与工作应用；没有已知的具体个人开发者、团队名称或精确诞生日期。",
   "architecture_summary": "Electron 桌面窗口，React/TypeScript 界面，Python FastAPI 后端，SQLite 本地记录；独立 LLM Provider、Agent Runtime、可选语音服务和 Windows Automation。",
   "data_flow": "应用和聊天数据库在本机运行与保存。聊天上下文会发送到用户配置的模型 API；启用在线语音时语音文本会发送到用户配置的语音服务。不能声称所有推理都完全离线。",

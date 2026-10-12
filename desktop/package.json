@@ -1,6 +1,6 @@
 {
   "name": "companion-studio",
-  "version": "9.0.1",
+  "version": "0.1.0",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
@@ -86,7 +86,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "Companion-Studio-9.0.1-Setup.${ext}"
+      "artifactName": "Companion-Studio-0.1.0-Setup.${ext}"
     }
   },
   "description": "Configurable characters, local conversations, and a desktop workbench.",
