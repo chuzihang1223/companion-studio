@@ -28,7 +28,10 @@ def collect(root):
     def visit(folder):
         for file in sorted(folder.iterdir()):
             if file.name.casefold() in {name.casefold() for name in SKIP_DIRS}:
-                continue
+                # Upstream build definitions are retained as source/license evidence.
+                upstream_build = file.name.casefold() == 'build' and file.is_relative_to(root / 'licenses/source')
+                if not upstream_build:
+                    continue
             if file.is_symlink() or file.is_junction():
                 raise ValueError(f'Unexpected filesystem link: {file.relative_to(root)}')
             if file.is_dir():
@@ -73,6 +76,14 @@ def audit(root):
             for line in text.splitlines():
                 if re.match(r'^[A-Z_]*(?:KEY|TOKEN|SECRET|PASSWORD)=.+', line):
                     findings.append({'file': relative, 'kind': 'nonempty-template-credential'})
+    selected = {file.relative_to(root).as_posix(): file for file in files}
+    manifest = json.loads((root / 'licenses/source-manifest.json').read_text(encoding='utf-8'))
+    for row in manifest['files']:
+        relative = row['path']
+        if relative not in selected:
+            findings.append({'file': relative, 'kind': 'required-third-party-file-not-exported'})
+        elif hashlib.sha256(selected[relative].read_bytes()).hexdigest() != row['sha256']:
+            findings.append({'file': relative, 'kind': 'third-party-source-hash-mismatch'})
     report = {'pass': not findings, 'scope': 'source files selected by explicit export policy', 'files': len(files), 'findings': findings,
               'excluded': ['Git history', 'virtual environments', 'node_modules', 'runtime profiles', 'chat databases', 'audio', 'user models', 'private archives', 'build caches'],
               'notes': ['Dummy keys in isolated tests are not account credentials.', 'This scan does not guarantee the absence of every possible software vulnerability.']}
