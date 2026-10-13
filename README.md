@@ -6,28 +6,6 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 新安装只包含中性的「通用助手」和独立应用图标，不附带虚拟角色、角色头像、图片背景、聊天记录、API 密钥、声音 ID 或模型文件。模型服务需要用户自行配置。
 
-## 界面预览
-
-以下截图来自 **v0.1.0 Windows 正式版**的初始界面。
-
-### 聊天与会话
-
-使用通用助手或自己的角色交流，左侧管理会话，底部输入消息与添加附件。聊天模型需要自行配置。
-
-![Companion Studio 聊天首页：通用助手、会话侧栏与消息输入框](docs/screenshots/chat.jpg)
-
-### 模块化工作台
-
-工作模式将协作对话、代码、代码变更、工作流和终端放在各自模块中；可以切换布局并通过 Dock 管理模块。
-
-![Companion Studio 工作模式：代码布局与多个工作台模块](docs/screenshots/workbench.jpg)
-
-### 角色与个性化
-
-导入 JSON / PNG 角色卡，或创建自定义角色；按需调整人格、关系与称呼、回复风格和记忆。
-
-![Companion Studio 角色管理：角色卡导入、自定义角色与个性化分类](docs/screenshots/characters.jpg)
-
 ## 1. 主要功能
 
 | 功能 | 当前实现与条件 |
@@ -160,6 +138,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-compan
 
 配置支持热切换。远程带密钥的地址要求 HTTPS，本机可使用 localhost HTTP。未配置模型时仍可打开应用；失败时用户消息可能已保存，不会伪造模型回复。
 
+![Companion Studio 聊天模式：通用助手、会话管理、消息输入与附件](docs/screenshots/chat.png)
+
 ### 导入或自定义角色
 
 点击侧栏 **角色管理**：
@@ -171,6 +151,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-compan
 
 JSON 上限 **256 KB**，桌面选择角色卡文件上限 **6 MB**。每次导入生成新的 ID，不覆盖同名角色。选择和各角色历史在重启后恢复。
 
+![Companion Studio 角色管理：导入角色卡、创建自定义角色与个性化设置](docs/screenshots/characters.png)
+
 ### 工作模式
 
 1. 切换到 **工作模式**，按需选择项目文件夹。
@@ -179,6 +161,8 @@ JSON 上限 **256 KB**，桌面选择角色卡文件上限 **6 MB**。每次导�
 4. 代码草稿可先在代码 / Diff 模块检查，保存、应用和执行遵循当前权限策略。
 
 项目目录不会自动整目录上传。自动操作需要 Windows 解锁，焦点变化可能使任务暂停。后台回复和语音按原会话归属，不插入其他角色当前会话。
+
+![Companion Studio 工作模式：协作对话、工作流、助手协作流与模块停靠栏](docs/screenshots/workbench.png)
 
 ### 可选语音和附件
 
