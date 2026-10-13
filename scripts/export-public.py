@@ -13,7 +13,8 @@ SKIP_DIRS = {'node_modules', '.venv', '__pycache__', '.pytest_cache', '.git', 'd
 BAD_SUFFIXES = {'.pyc', '.pyo', '.db', '.sqlite', '.sqlite3', '.log', '.wav', '.mp3', '.flac', '.onnx', '.pt', '.pth', '.ckpt', '.safetensors', '.tmp', '.bak', '.lnk', '.ogg', '.m4a', '.aac', '.gguf', '.ggml', '.bin', '.key', '.pfx', '.p12'}
 LICENSE_ARCHIVE = 'licenses/source/electron-44.4.5/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz'
 LICENSE_ARCHIVE_SHA = '115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc'
-ALLOWED_BINARY = {'desktop/assets/companion-studio.ico', 'desktop/assets/companion-studio.png'}
+SCREENSHOTS = {'docs/screenshots/chat.jpg', 'docs/screenshots/workbench.jpg', 'docs/screenshots/characters.jpg'}
+ALLOWED_BINARY = {'desktop/assets/companion-studio.ico', 'desktop/assets/companion-studio.png'} | SCREENSHOTS
 PRIVATE_NAMES = {'api-keys.json', 'fish-key.json', 'secrets.json'}
 SECRET_PATTERNS = [r'\bsk-[A-Za-z0-9_-]{24,}', r'\bgh[pousr]_[A-Za-z0-9]{30,}', r'\bgithub_pat_[A-Za-z0-9_]{50,}', r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----', r'\bAKIA[A-Z0-9]{16}\b', r'\bxox[baprs]-[A-Za-z0-9-]{24,}']
 PRIVATE_PATH = re.compile(r'(?i)(?:[a-z]:[\\/]+(?:users[\\/]+(?!public\b|default\b|test\b)[^\\/\s\"\']+|\u684c\u9762[\\/]+))')
@@ -40,6 +41,15 @@ def collect(root):
                 yield file
     for name in sorted(TREES):
         yield from visit(root / name)
+    # Only reviewed product screenshots belong in public documentation exports.
+    for relative in sorted(SCREENSHOTS):
+        file = root / relative
+        if any(part.is_symlink() or part.is_junction() for part in (file, file.parent, file.parent.parent)):
+            raise ValueError(f'Unexpected screenshot filesystem link: {relative}')
+        if file.exists():
+            if not file.is_file():
+                raise ValueError(f'Expected regular screenshot: {relative}')
+            yield file
     placeholder = root / 'data/.gitkeep'
     if placeholder.is_file():
         yield placeholder
@@ -58,7 +68,7 @@ def audit(root):
             if hashlib.sha256(content).hexdigest() != LICENSE_ARCHIVE_SHA:
                 findings.append({'file': relative, 'kind': 'corresponding-source-hash-mismatch'})
             continue
-        if content.startswith(b'\x89PNG') or content.startswith(b'\0\0\1\0'):
+        if content.startswith(b'\x89PNG') or content.startswith(b'\0\0\1\0') or content.startswith(b'\xff\xd8\xff'):
             if relative not in ALLOWED_BINARY:
                 findings.append({'file': relative, 'kind': 'unexpected-image'})
             continue
