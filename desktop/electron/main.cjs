@@ -10,6 +10,7 @@ const permissions = require('./permissions.cjs')
 const appearanceConfig = require('./appearance-config.cjs')
 const contextMenus = require('./context-menu.cjs')
 const { WorkspaceBrowserManager } = require('./workspace-browser.cjs')
+const { safeHttps } = require('./url-policy.cjs')
 const {DesktopAppAgent,DesktopCommandPump}=require('./desktop-app-agent.cjs')
 const crypto = require('node:crypto')
 const os = require('node:os')
@@ -36,23 +37,6 @@ function guardWebSession(partition) {
     isolated.on('will-download', (event) => event.preventDefault())
     guardedPartitions.add(partition)
   }
-}
-
-function safeHttps(url) {
-  const parsed = new URL(String(url))
-  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || !parsed.hostname || parsed.port && parsed.port !== '443') {
-    throw new Error('工作区只允许打开 HTTPS 网页')
-  }
-  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '')
-  const octets = host.split('.').map(Number)
-  const ipv4 = octets.length === 4 && octets.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)
-  if (host === 'localhost' || host.endsWith('.localhost') || host === '::1' || host.includes(':') && (host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80:')) ||
-      (ipv4 && (octets[0] === 10 || octets[0] === 127 || octets[0] === 0 ||
-                octets[0] === 169 && octets[1] === 254 || octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31 ||
-                octets[0] === 192 && octets[1] === 168))) {
-    throw new Error('工作区不能打开本机或内网地址')
-  }
-  return parsed.toString()
 }
 
 function browserBounds(rect) {
