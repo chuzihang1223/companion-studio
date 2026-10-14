@@ -1,10 +1,41 @@
 # Companion Studio（伴舟）
 
-**0.1.0 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
+**0.1.1 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
 新安装只包含中性的「通用助手」和独立应用图标，不附带虚拟角色、角色头像、图片背景、聊天记录、API 密钥、声音 ID 或模型文件。模型服务需要用户自行配置。
+
+[![CI](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml)
+
+**[Download for Windows](https://github.com/chuzihang1223/companion-studio/releases)** · 0.1.1 安装包准备中，完成草稿审核后公开。当前 0.1.0 Release 提供源码。
+
+## 系统架构与 Agent 实现
+
+```mermaid
+flowchart LR
+    UI[React / TypeScript 工作台] -->|HTTP / SSE| API[FastAPI]
+    UI -->|受控 IPC / preload| E[Electron 主进程]
+    E -->|启动、健康检查、退出| API
+    API --> R[AgentService / RuntimeRegistry]
+    R --> T[AgentTaskRuntime / ToolExecutor]
+    T -->|本机桥接| E
+    T --> V[Observation / GoalVerifier]
+    API --> DB[(SQLite / SQLAlchemy)]
+    API --> L[LLMService / OpenAI-compatible Provider]
+```
+
+### 核心技术
+
+- **Agent Runtime**：规划与执行分离，工具执行后记录观察结果、验证目标，并根据工具副作用决定重试边界。简单本机指令走确定性路由；复杂规划使用 Tool Calling。
+- **模型职责路由**：角色回复、任务规划和工具执行可以使用不同配置；没有能力声明的模型仍需通过实际请求验证，不把空工具调用当作已支持。
+- **任务调度**：按任务种类与会话串行，同种不同会话受全局并发门控制；任务 ID 防止重复执行，取消与超时通过 finally 释放锁和配额。
+- **桌面工具与权限**：多来源发现 Windows 应用，再解析和启动；工具参数验证、风险判定和桌面控制令牌共同限定调用。操作后的窗口/结果证据参与验证。
+- **模块化工作台**：布局迁移与持久化、拖动/缩放、单帧预览、自动滚动和会话输出归属；调整模块不重写聊天记录。
+
+应用重启会把未完成任务标为中断，尚未实现完整自动断点恢复、自主学习或分布式多 Agent 系统。
+
+架构与源码细节：[系统架构](docs/ARCHITECTURE.md) · [Agent Runtime](docs/AGENT_RUNTIME.md) · [工具系统](docs/TOOL_SYSTEM.md) · [工作台](docs/WORKBENCH.md) · [工程审计](docs/ENGINEERING_AUDIT.md)
 
 ## 1. 主要功能
 
@@ -36,15 +67,15 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 ### Windows 正式版
 
-当前 `v0.1.0` 为首个公开源码版本，GitHub Release 提供源码下载；Windows 安装包可按照下方「生成 Windows 安装包」步骤自行构建。
+Windows 安装包下载入口：[GitHub Releases](https://github.com/chuzihang1223/companion-studio/releases)。`v0.1.1` 正在进行安装包审核，当前公开的 `v0.1.0` 提供源码；审核完成后才会提供可直接下载的 Setup。准备期间可按下方步骤自行构建。
 
 使用构建好的安装包无需安装 Python、Node.js 或 npm。
 
-1. 从源码构建后，在构建产物目录获取 `Companion-Studio-0.1.0-Setup.exe` 和 `SHA256SUMS.txt`。
+1. 从源码构建后，在构建产物目录获取 `Companion-Studio-0.1.1-Setup.exe` 和 `SHA256SUMS.txt`。
 2. 用以下命令取得安装包 SHA256，与校验文件中的对应值比较：
 
    ```powershell
-   Get-FileHash -LiteralPath '.\Companion-Studio-0.1.0-Setup.exe' -Algorithm SHA256
+   Get-FileHash -LiteralPath '.\Companion-Studio-0.1.1-Setup.exe' -Algorithm SHA256
    ```
 
 3. 运行安装器，选择具有写入权限的目录。建议采用 **应用根目录\Release\installed** 结构，例如 `D:\Apps\CompanionStudio\Release\installed`，以分开程序与用户数据。
@@ -64,7 +95,7 @@ $env:COMPANION_HOME = 'D:\CompanionStudioData'
 
 ### 从源码安装
 
-适用于 Windows 10 / 11。使用 **Python 3.12**、**Node.js 24** 和 npm；依赖见 `backend/requirements.txt` 与 `desktop/package-lock.json`。本地 TTS 使用独立环境。
+适用于 Windows 10 / 11。使用 **Python 3.12**、**Node.js 24** 和 npm；锁定运行依赖见 `backend/requirements.lock`，开发及构建工具见 `backend/requirements-dev.txt` 与 `desktop/package-lock.json`。本地 TTS 使用独立环境。
 
 在 PowerShell 打开包含本 README、`backend`、`desktop` 的项目根目录，再执行：
 
@@ -77,10 +108,11 @@ $env:TMP = $studioCache
 $env:PIP_CACHE_DIR = Join-Path $studioCache 'pip'
 $env:npm_config_cache = Join-Path $studioCache 'npm'
 $env:ELECTRON_CACHE = Join-Path $studioCache 'electron'
+$env:electron_config_cache = $env:ELECTRON_CACHE
 $env:ELECTRON_BUILDER_CACHE = Join-Path $studioCache 'electron-builder'
 
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
 npm.cmd ci --prefix desktop
 ```
 
@@ -90,7 +122,7 @@ npm.cmd ci --prefix desktop
 
 ```powershell
 $env:COMPANION_HOME = Join-Path $projectRoot '.runtime\desktop'
-$env:BACKEND_PORT = '8000'
+$env:BACKEND_PORT = '8786'
 npm.cmd run dev --prefix desktop
 ```
 
@@ -110,7 +142,6 @@ npm.cmd run start:compat --prefix desktop
 完成源码依赖安装后，在项目根目录执行：
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install 'pyinstaller==6.22.3'
 npm.cmd run build:public --prefix desktop
 ```
 
@@ -345,7 +376,19 @@ CompanionStudio/
 | 本机任务暂停或点歌失败 | 检查客户端、登录、权限、桌面解锁和窗口焦点。 |
 | 没有语音 | 自动朗读默认关闭；检查服务、模型、声音配置和音频设备。 |
 
-## 8. 许可证与发行范围
+## 8. 开发与验证
+
+[开发文档](docs/DEVELOPMENT.md)包含实际环境、隔离启动、构建与 GUI 测试命令；[贡献规范](CONTRIBUTING.md)和 [AGENTS.md](AGENTS.md)约束后续维护。[发布流程](docs/RELEASING.md)说明版本、安装门和草稿审批，[安全审计](docs/RELEASE_SECURITY.md)说明检查范围与限制。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
+```
+
+该命令运行 Ruff / Python 语法、TypeScript / ESLint / Prettier、前端生产构建、Electron 纯单元、隔离 pytest 与源码/历史检查。公开 CI 使用 mock 和合成样例，不依赖私有 API、语音模型、聊天库或音乐客户端。
+
+真实 Windows 安装、窗口与桌面操作另行验收，纯单元通过不能代替这些结果。Hooks 依赖仍有经过审计的既有警告，未为静态检查自动改变订阅生命周期；非阻断问题在工程审计中记录。以 [Actions 实际运行](https://github.com/chuzihang1223/companion-studio/actions)为准，不把尚未运行的 workflow 称为通过。
+
+## 9. 许可证与发行范围
 
 原创代码及应用图标采用 [MIT License](LICENSE)。第三方组件保留各自许可证，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和 [licenses](licenses)。MIT 不覆盖用户自行导入的角色卡、图片、音频、模型和第三方服务。
 
