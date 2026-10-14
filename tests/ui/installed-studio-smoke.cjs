@@ -180,16 +180,24 @@ async function run() {
     '/api/chat/history?character_id=assistant&conversation_id=' + work.id,
   );
   const workReply = workHistory.find((row) => row.role === 'assistant' && row.content.trim());
+  assert.ok(workReply, 'Work assistant feedback persisted');
+  const persistedFeedbackAt = Date.now();
+  // WorkSession 的完成事件和回复文字走各自的事件流；状态先完成时，
+  // FirstSpeechGate 仍可能在逐段展示已保存文字。等实际 DOM 呈现完再检查。
+  await driver.c.until(
+    `document.querySelector('.work-dialogue')?.innerText.includes(${q(workReply.content)})`,
+    10000,
+  );
   driver.check(
-    workReply &&
-      (await driver.c.evaluate(
-        `document.querySelector('.work-dialogue')?.innerText.includes(${q(workReply.content)})`,
-      )),
+    await driver.c.evaluate(
+      `document.querySelector('.work-dialogue')?.innerText.includes(${q(workReply.content)})`,
+    ),
     'Work completion persists and displays its actual task feedback',
     {
       localModelRequestsDelta: driver.report.localModelRequests - modelRequestsBeforeWork,
       actualFeedbackPersisted: true,
       actualFeedbackDisplayed: true,
+      feedbackRenderWaitMs: Date.now() - persistedFeedbackAt,
     },
   );
   const browserSkipped = process.env.COMPANION_TEST_SKIP_BROWSER === '1';
