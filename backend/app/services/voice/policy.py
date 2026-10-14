@@ -45,7 +45,9 @@ class VoiceExpressionPolicy:
     def emotions(self) -> tuple[str, ...]:
         return tuple(self.presets)
 
-    def style(self, emotion: str, intensity: float = 0.5, expression: str = "standard") -> VoiceStyle:
+    def style(
+        self, emotion: str, intensity: float = 0.5, expression: str = "standard"
+    ) -> VoiceStyle:
         if emotion not in self.presets:
             emotion = "neutral"
         if expression not in EXPRESSION_MULTIPLIERS:

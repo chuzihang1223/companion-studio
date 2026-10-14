@@ -1,4 +1,5 @@
 """Resolve the current situation before choosing a sentence's delivery."""
+
 import re
 
 
@@ -13,8 +14,13 @@ def _current_scene(context: str) -> str:
     if re.search(r"请认真|认真.{0,8}(?:看看|讨论|对待|说)|严肃|很重要|重要决定", text):
         return "serious"
     # A negative outcome must not match the substring '成功' or '通过'.
-    if re.search(r"失败|没.{0,2}成功|未.{0,2}成功|没.{0,2}通过|未.{0,2}通过|没完成|未完成|报错|出错了", text):
-        technical = any(word in text for word in ("代码", "修复", "运行", "测试", "任务", "项目", "程序", "报错"))
+    if re.search(
+        r"失败|没.{0,2}成功|未.{0,2}成功|没.{0,2}通过|未.{0,2}通过|没完成|未完成|报错|出错了", text
+    ):
+        technical = any(
+            word in text
+            for word in ("代码", "修复", "运行", "测试", "任务", "项目", "程序", "报错")
+        )
         return "agent_problem" if technical else "sad"
     if any(word in text for word in ("难过", "伤心", "失落", "失业")):
         return "sad"
@@ -23,7 +29,10 @@ def _current_scene(context: str) -> str:
         return "invited_teasing"
     if any(word in text for word in ("没吃饭", "不吃饭", "忘记吃饭", "硬撑")):
         return "self_neglect"
-    if any(word in text for word in ("没睡", "熬夜", "撑不住", "好累", "很累", "睡得很少", "睡得少", "睡不好")):
+    if any(
+        word in text
+        for word in ("没睡", "熬夜", "撑不住", "好累", "很累", "睡得很少", "睡得少", "睡不好")
+    ):
         return "tired"
     if any(word in text for word in ("有点累", "疲惫", "疲劳")):
         return "tired_mild"
@@ -39,7 +48,10 @@ def _current_scene(context: str) -> str:
         return "flattered"
     if any(word in text for word in ("修好了", "测试通过", "任务完成")):
         return "agent_success"
-    if any(word in text for word in ("成功", "通过了", "面试过了", "录取", "offer", "好消息", "赢了", "生日")):
+    if any(
+        word in text
+        for word in ("成功", "通过了", "面试过了", "录取", "offer", "好消息", "赢了", "生日")
+    ):
         return "good_news"
     if "晚安" in text or "睡觉" in text:
         return "goodnight"
@@ -55,6 +67,9 @@ def resolve_scene(user: str, history: list[dict[str, str]]) -> str:
     if scene != "casual" or len(user.strip()) > 6:
         return scene
     # '真的？' can depend on history; a new explicit '晚安' must not inherit it.
-    nearby = [item.get("content", "") for item in reversed(history)
-              if item.get("content", "").strip() != user.strip()][:2]
+    nearby = [
+        item.get("content", "")
+        for item in reversed(history)
+        if item.get("content", "").strip() != user.strip()
+    ][:2]
     return _current_scene(user + " " + " ".join(nearby))

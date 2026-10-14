@@ -66,16 +66,24 @@ class IndexTTSVoiceProvider(VoiceProvider):
                 return
             if not self.reference.is_file():
                 raise FileNotFoundError(f"Speaker reference missing: {self.reference}")
+
             def stage(name: str) -> None:
                 if os.getenv("VOICE_DEBUG_STARTUP") == "1":
-                    print(f"VOICE_INDEX_STAGE {name} {time.monotonic():.3f}", file=sys.stderr, flush=True)
+                    print(
+                        f"VOICE_INDEX_STAGE {name} {time.monotonic():.3f}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+
             stage("before_torch")
             import torch
+
             stage("after_torch")
             if not torch.cuda.is_available():
                 raise RuntimeError("IndexTTS requires a working CUDA GPU on this installation")
             stage("after_cuda_check")
             from indextts.infer_v2_5 import IndexTTS2
+
             stage("after_index_import")
 
             stage("before_model_constructor")
@@ -92,12 +100,17 @@ class IndexTTSVoiceProvider(VoiceProvider):
         self.warm()
         with self._lock:
             rate, pcm = self.engine.infer(
-                spk_audio_prompt=str(self.reference), text=text,
-                output_path=None, lang="ZH",
-                emo_vector=blended_emotion_vector(control.emotion, control.secondary_emotion, control.secondary_weight),
+                spk_audio_prompt=str(self.reference),
+                text=text,
+                output_path=None,
+                lang="ZH",
+                emo_vector=blended_emotion_vector(
+                    control.emotion, control.secondary_emotion, control.secondary_weight
+                ),
                 emo_alpha=control.intensity,
                 duration_factor=max(0.94, min(1.07, 1.0 / control.speed_factor)),
-                use_random=False, verbose=False,
+                use_random=False,
+                verbose=False,
             )
             samples = np.asarray(pcm).reshape(-1)
             if samples.dtype == np.int16:

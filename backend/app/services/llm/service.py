@@ -15,7 +15,7 @@ class LLMService:
     async def chat(self, messages: list[dict[str, str]]) -> str:
         try:
             result = await self.provider.chat(messages)
-            self.observed_capabilities['text'] = True
+            self.observed_capabilities["text"] = True
             self.last_error = False
             return result
         except Exception:
@@ -25,12 +25,12 @@ class LLMService:
             self.availability_checked = True
 
     async def stream_chat(self, messages: list[dict[str, str]]):
-        if self.config and self.config.capabilities.get('streaming') is False:
+        if self.config and self.config.capabilities.get("streaming") is False:
             yield await self.chat(messages)
             return
         try:
             async for delta in self.provider.stream_chat(messages):
-                self.observed_capabilities.update(text=True,streaming=True)
+                self.observed_capabilities.update(text=True, streaming=True)
                 self.last_error = False
                 yield delta
         except Exception:
@@ -56,6 +56,14 @@ class LLMService:
 def create_llm_service(config: LLMConfig | None = None) -> LLMService:
     current = config or LLMConfig.from_environment()
     provider_model = current.model if config is not None else settings.openai_model.strip()
-    return LLMService(OpenAIProvider(current.api_key, provider_model, current.base_url,
-                                     temperature=current.temperature, max_tokens=current.max_tokens,
-                                     timeout=current.timeout_seconds), current)
+    return LLMService(
+        OpenAIProvider(
+            current.api_key,
+            provider_model,
+            current.base_url,
+            temperature=current.temperature,
+            max_tokens=current.max_tokens,
+            timeout=current.timeout_seconds,
+        ),
+        current,
+    )

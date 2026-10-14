@@ -13,12 +13,21 @@ def join_segments(parts: list[tuple[SpeechSegmentPlan, VoiceAudio]]) -> VoiceAud
     if any(audio.sample_rate != rate for _, audio in parts):
         raise ValueError("All segments must use the same sample rate")
     # Stay within 1.5 dB of original segment gain; do not flatten dynamics.
-    rms_values = [float(np.sqrt(np.mean(np.square(audio.samples)))) for _, audio in parts if len(audio.samples)]
+    rms_values = [
+        float(np.sqrt(np.mean(np.square(audio.samples))))
+        for _, audio in parts
+        if len(audio.samples)
+    ]
     target_rms = float(np.median(rms_values)) if rms_values else 0.0
     result = []
     for index, (plan, audio) in enumerate(parts):
         if index:
-            gap_ms = max(60, min(500, plan.delivery.pause_before_ms + parts[index - 1][0].delivery.pause_after_ms))
+            gap_ms = max(
+                60,
+                min(
+                    500, plan.delivery.pause_before_ms + parts[index - 1][0].delivery.pause_after_ms
+                ),
+            )
             result.append(np.zeros(round(rate * gap_ms / 1000), dtype=np.float32))
         samples = np.asarray(audio.samples, dtype=np.float32).copy()
         if samples.size and target_rms:

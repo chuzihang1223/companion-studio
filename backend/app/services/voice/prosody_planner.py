@@ -26,10 +26,18 @@ class EngineControl:
 class ProsodyPlanner:
     def for_onnx(self, segment: SpeechSegmentPlan) -> EngineControl:
         reference = {
-            "neutral": "neutral", "playful": "playful", "happy": "happy",
-            "excited": "happy", "concerned": "concerned", "gentle": "concerned",
-            "serious": "serious", "protective": "serious", "annoyed": "playful",
-            "embarrassed": "playful", "nostalgic": "neutral", "curious": "neutral",
+            "neutral": "neutral",
+            "playful": "playful",
+            "happy": "happy",
+            "excited": "happy",
+            "concerned": "concerned",
+            "gentle": "concerned",
+            "serious": "serious",
+            "protective": "serious",
+            "annoyed": "playful",
+            "embarrassed": "playful",
+            "nostalgic": "neutral",
+            "curious": "neutral",
         }.get(segment.emotion, "neutral")
         return EngineControl(
             speed_factor=segment.prosody.pace,

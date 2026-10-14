@@ -1,7 +1,72 @@
-import type {RoutedOutput} from './AgentOutputRouter'
-import {useState} from 'react'
-export default function DiffModule({outputs,sessionId,onError}:{outputs:RoutedOutput[];sessionId?:string;onError?:(text:string)=>void}){
- const [busy,setBusy]=useState(false)
- async function action(id:string,apply:boolean){if(!sessionId)return;setBusy(true);try{if(apply)await window.desktopAPI?.saveVirtualDocument(sessionId,id,'apply');else await window.desktopAPI?.discardVirtualDocument(sessionId,id)}catch(e){onError?.(String(e))}finally{setBusy(false)}}
- return <div className="diff-module">{outputs.map(row=>{const diff=String(row.data.diff||''),lines=diff.split('\n'),added=lines.filter(l=>l.startsWith('+')&&!l.startsWith('+++')).length,removed=lines.filter(l=>l.startsWith('-')&&!l.startsWith('---')).length,id=String(row.data.document_id||'');return <article key={row.id}><p>{String(row.data.path||row.title)} <span className="diff-added">+{added}</span> <span className="diff-removed">−{removed}</span>{id&&<span className="draft-badge">{row.data.status==='applied'?'已应用':'未应用'}</span>}</p>{id&&row.data.status!=='applied'&&<div className="virtual-document-actions"><button type="button" disabled={busy} onClick={()=>void action(id,true)}>应用修改</button><button type="button" disabled={busy} onClick={()=>void action(id,false)}>放弃修改</button></div>}<pre>{lines.map((line,i)=><span className={line.startsWith('+')?'diff-added':line.startsWith('-')?'diff-removed':''} key={i}>{line}{'\n'}</span>)}</pre></article>})}</div>
+import type { RoutedOutput } from './AgentOutputRouter';
+import { useState } from 'react';
+export default function DiffModule({
+  outputs,
+  sessionId,
+  onError,
+}: {
+  outputs: RoutedOutput[];
+  sessionId?: string;
+  onError?: (text: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  async function action(id: string, apply: boolean) {
+    if (!sessionId) return;
+    setBusy(true);
+    try {
+      if (apply) await window.desktopAPI?.saveVirtualDocument(sessionId, id, 'apply');
+      else await window.desktopAPI?.discardVirtualDocument(sessionId, id);
+    } catch (e) {
+      onError?.(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="diff-module">
+      {outputs.map((row) => {
+        const diff = String(row.data.diff || ''),
+          lines = diff.split('\n'),
+          added = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++')).length,
+          removed = lines.filter((l) => l.startsWith('-') && !l.startsWith('---')).length,
+          id = String(row.data.document_id || '');
+        return (
+          <article key={row.id}>
+            <p>
+              {String(row.data.path || row.title)} <span className="diff-added">+{added}</span>{' '}
+              <span className="diff-removed">−{removed}</span>
+              {id && (
+                <span className="draft-badge">
+                  {row.data.status === 'applied' ? '已应用' : '未应用'}
+                </span>
+              )}
+            </p>
+            {id && row.data.status !== 'applied' && (
+              <div className="virtual-document-actions">
+                <button type="button" disabled={busy} onClick={() => void action(id, true)}>
+                  应用修改
+                </button>
+                <button type="button" disabled={busy} onClick={() => void action(id, false)}>
+                  放弃修改
+                </button>
+              </div>
+            )}
+            <pre>
+              {lines.map((line, i) => (
+                <span
+                  className={
+                    line.startsWith('+') ? 'diff-added' : line.startsWith('-') ? 'diff-removed' : ''
+                  }
+                  key={i}
+                >
+                  {line}
+                  {'\n'}
+                </span>
+              ))}
+            </pre>
+          </article>
+        );
+      })}
+    </div>
+  );
 }

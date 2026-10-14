@@ -6,6 +6,7 @@ from threading import RLock
 
 from pydantic import BaseModel, Field
 
+
 def is_clean_distribution() -> bool:
     return True  # Public edition never enables a legacy/private profile.
 
@@ -52,8 +53,13 @@ class Character(BaseModel):
 
 
 def neutral_assistant() -> Character:
-    return Character(id="assistant", name="通用助手", card_format="assistant", profile=CharacterProfile(),
-                     system_prompt="你是用户配置的通用 AI 助手。直接、清楚地回应当前问题，不假定虚拟角色、世界观或与用户的亲密关系。对于不知道的事实明确说明，不编造经历。")
+    return Character(
+        id="assistant",
+        name="通用助手",
+        card_format="assistant",
+        profile=CharacterProfile(),
+        system_prompt="你是用户配置的通用 AI 助手。直接、清楚地回应当前问题，不假定虚拟角色、世界观或与用户的亲密关系。对于不知道的事实明确说明，不编造经历。",
+    )
 
 
 class CharacterLoader:
@@ -82,15 +88,23 @@ class CharacterLoader:
                     continue
                 try:
                     character = Character.model_validate_json(path.read_text(encoding="utf-8"))
-                    if is_clean_distribution() and not character.id.startswith(("custom_", "import_")):
+                    if is_clean_distribution() and not character.id.startswith(
+                        ("custom_", "import_")
+                    ):
                         continue  # A clean profile must not auto-migrate a legacy persona.
-                    if character.id == path.stem and character.id not in {"assistant", "active"} and re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", character.id):
+                    if (
+                        character.id == path.stem
+                        and character.id not in {"assistant", "active"}
+                        and re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", character.id)
+                    ):
                         character.avatar_url = self._avatar_url(character.id)
                         loaded[character.id] = character
                 except (ValueError, OSError):
                     continue  # A corrupt imported file must not prevent startup.
             try:
-                active = json.loads((self.user_directory / "active.json").read_text(encoding="utf-8"))["id"]
+                active = json.loads(
+                    (self.user_directory / "active.json").read_text(encoding="utf-8")
+                )["id"]
                 if active in loaded:
                     self.active_id = active
             except (ValueError, OSError, KeyError, TypeError):
@@ -98,12 +112,21 @@ class CharacterLoader:
         self.characters = loaded
 
     def _avatar_url(self, identifier: str) -> str:
-        if self.user_directory and (self.user_directory / "avatars" / f"{identifier}.png").is_file():
+        if (
+            self.user_directory
+            and (self.user_directory / "avatars" / f"{identifier}.png").is_file()
+        ):
             return f"/api/characters/{identifier}/avatar"
         return ""
 
-    def import_character(self, character: Character, avatar: bytes | None = None, *, activate: bool = True) -> None:
-        if not self.user_directory or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", character.id) or character.id in {"active", "assistant"}:
+    def import_character(
+        self, character: Character, avatar: bytes | None = None, *, activate: bool = True
+    ) -> None:
+        if (
+            not self.user_directory
+            or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", character.id)
+            or character.id in {"active", "assistant"}
+        ):
             raise ValueError("角色 ID 必须为 1–64 个英文字母、数字、下划线或连字符")
         with self._lock:
             self.user_directory.mkdir(parents=True, exist_ok=True)

@@ -9,10 +9,20 @@ from app.services.character.loader import is_clean_distribution
 
 
 DEFAULTS = {
-    "personality": "", "relationship": "", "appellation": "", "user_name": "",
-    "user_nickname": "", "user_status": "", "user_interests": "", "user_games": "",
-    "user_foods": "", "user_dislikes": "", "user_notes": "", "custom_rules": "",
-    "reply_style": "natural", "intimacy": "natural",
+    "personality": "",
+    "relationship": "",
+    "appellation": "",
+    "user_name": "",
+    "user_nickname": "",
+    "user_status": "",
+    "user_interests": "",
+    "user_games": "",
+    "user_foods": "",
+    "user_dislikes": "",
+    "user_notes": "",
+    "custom_rules": "",
+    "reply_style": "natural",
+    "intimacy": "natural",
 }
 
 
@@ -37,16 +47,23 @@ def save_settings(db: Session, character_id: str, settings: dict) -> dict:
 
 
 def list_manual(db: Session, character_id: str) -> list[ManualMemory]:
-    return list(db.scalars(select(ManualMemory).where(ManualMemory.character_id == character_id)
-                           .order_by(ManualMemory.created_at.desc(), ManualMemory.id.desc())).all())
+    return list(
+        db.scalars(
+            select(ManualMemory)
+            .where(ManualMemory.character_id == character_id)
+            .order_by(ManualMemory.created_at.desc(), ManualMemory.id.desc())
+        ).all()
+    )
 
 
 def relevant_manual(db: Session, character_id: str, message: str, limit: int = 6) -> list[str]:
     rows = [row for row in list_manual(db, character_id) if row.enabled]
     query = message.casefold()
+
     def relevance(row: ManualMemory) -> int:
         text = row.content.casefold()
-        return sum(1 for index in range(len(query) - 1) if query[index:index + 2] in text)
+        return sum(1 for index in range(len(query) - 1) if query[index : index + 2] in text)
+
     rows.sort(key=relevance, reverse=True)
     if any(cue in query for cue in ("记得", "记住", "关于我", "我的记忆", "你知道我")):
         return [row.content for row in rows[:limit]]

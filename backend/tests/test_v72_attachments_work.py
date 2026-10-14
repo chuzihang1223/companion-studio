@@ -20,7 +20,10 @@ def source(name: str, raw: bytes):
 
 def test_text_attachment_extracts_bounded_relevant_context(tmp_path):
     service = AttachmentService(tmp_path)
-    items = service.prepare([source("notes.md", ("普通说明\n" * 1000 + "关键错误 8080 端口占用\n").encode())], vision=False)
+    items = service.prepare(
+        [source("notes.md", ("普通说明\n" * 1000 + "关键错误 8080 端口占用\n").encode())],
+        vision=False,
+    )
     context = service.context(items, "检查端口占用")
     assert "8080" in context
     metadata = service.save(items)
@@ -44,7 +47,9 @@ def test_pdf_extraction_and_image_gate(tmp_path):
 def test_work_session_persists_permission_and_progress():
     migrate(engine)
     state = WorkState()
-    id = state.create("检查项目", None, [{"id": "call-1", "name": "code.run", "requires_confirmation": True}])
+    id = state.create(
+        "检查项目", None, [{"id": "call-1", "name": "code.run", "requires_confirmation": True}]
+    )
     snapshot = state.snapshot(id)
     assert snapshot["status"] == "waiting_permission"
     assert snapshot["permissions"][0]["decision"] == "pending"

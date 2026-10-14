@@ -16,7 +16,9 @@ SCENARIOS = (
     VoiceScenario("thanks", "谢谢你。", "不用客气。能帮上忙就好。"),
     VoiceScenario("break", "我想休息一会儿。", "可以，先休息一下。之后我们再继续。"),
     VoiceScenario("daily_plan", "今天有什么安排？", "先把最需要做的事列出来，一件一件完成。"),
-    VoiceScenario("interview_success", "我面试通过了。", "真的？！太好了！快告诉我，他们怎么说的？"),
+    VoiceScenario(
+        "interview_success", "我面试通过了。", "真的？！太好了！快告诉我，他们怎么说的？"
+    ),
     VoiceScenario("tired", "今天累死了。", "先坐下来歇一会儿吧。你已经做得够多了。"),
     VoiceScenario("no_sleep", "我三天没睡。", "等等，三天没睡？现在先别硬撑了，去休息，好吗？"),
     VoiceScenario("goodnight", "晚安。", "晚安……好好睡，明天见。"),
@@ -33,13 +35,19 @@ SCENARIOS = (
     VoiceScenario("lonely", "今天有点孤单。", "那我陪你待一会儿。你想说什么，我都听着。"),
     VoiceScenario("sad", "今天有点难过。", "嗯，我在这里。想哭也没关系，不用急着变好。"),
     VoiceScenario("injured", "我刚才摔倒受伤了。", "你哪里受伤了？先看看有没有流血。"),
-    VoiceScenario("danger", "有人在外面追我，我很危险。", "先去安全的地方，马上联系身边能帮你的人。"),
+    VoiceScenario(
+        "danger", "有人在外面追我，我很危险。", "先去安全的地方，马上联系身边能帮你的人。"
+    ),
     VoiceScenario("self_neglect", "我今天还没吃饭。", "先吃点东西吧。有力气了再继续忙。"),
     VoiceScenario("nostalgic", "想起小时候的事了。", "那时候的事，现在想起来还会觉得很特别吧。"),
     VoiceScenario("playful", "这是个小玩笑。", "原来是玩笑呀，差点当真了。"),
     VoiceScenario("encouragement", "我有点不敢开始。", "先试一个小步骤吧，不用一下子做到完美。"),
     VoiceScenario("work_progress", "帮我分析项目代码。", "我先看一下结构，再告诉你我发现了什么。"),
     VoiceScenario("work_success", "任务完成，测试通过了。", "修好啦！这次测试也通过了。"),
-    VoiceScenario("work_problem", "运行失败，出现报错。", "我看到错误了。先找出原因，再一步一步处理。"),
-    VoiceScenario("mixed_turn", "今天终于做完了，但有点累。", "完成了就很好。先休息一下，之后再看看成果。"),
+    VoiceScenario(
+        "work_problem", "运行失败，出现报错。", "我看到错误了。先找出原因，再一步一步处理。"
+    ),
+    VoiceScenario(
+        "mixed_turn", "今天终于做完了，但有点累。", "完成了就很好。先休息一下，之后再看看成果。"
+    ),
 )

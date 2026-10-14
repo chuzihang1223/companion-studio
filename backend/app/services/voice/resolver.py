@@ -40,11 +40,19 @@ class EmotionResolver:
         # Narrow contradictions; the LLM remains the primary classifier.
         if "晚安" in user and emotion in {"excited", "annoyed", "playful"}:
             emotion, intensity = "gentle", min(intensity, 0.55)
-        elif any(word in user for word in ("想自杀", "不想活", "去世了")) and emotion in {"happy", "excited", "playful"}:
+        elif any(word in user for word in ("想自杀", "不想活", "去世了")) and emotion in {
+            "happy",
+            "excited",
+            "playful",
+        }:
             emotion, intensity = "serious", max(intensity, 0.65)
         elif "别拿自己冒险" in reply and emotion in {"happy", "excited", "playful"}:
             emotion = "concerned"
-        elif previous_emotion in self.policy.emotions and previous_emotion != emotion and intensity < 0.3:
+        elif (
+            previous_emotion in self.policy.emotions
+            and previous_emotion != emotion
+            and intensity < 0.3
+        ):
             emotion = previous_emotion
         return self.policy.style(emotion, intensity, expression)
 
@@ -66,8 +74,11 @@ class EmotionResolver:
                 intensity=segment.intensity if segment.intensity is not None else base.intensity,
             )
             style = self.resolve(
-                candidate, user_text=user_text, reply_text=segment.text,
-                previous_emotion=current, expression=expression,
+                candidate,
+                user_text=user_text,
+                reply_text=segment.text,
+                previous_emotion=current,
+                expression=expression,
             )
             result.append(ResolvedSpeechSegment(segment.text, style))
             current = style.emotion

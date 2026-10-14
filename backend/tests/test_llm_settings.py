@@ -21,13 +21,26 @@ def test_live_switch_requires_success_and_preserves_working_config(monkeypatch):
     monkeypatch.setattr(llm_settings, "create_llm_service", FakeService)
     app = FastAPI()
     app.include_router(llm_settings.router)
-    app.state.llm_service = FakeService(LLMConfig(
-        provider="openai-compatible", base_url="https://a.test/v1", model="old", api_key="good"))
+    app.state.llm_service = FakeService(
+        LLMConfig(
+            provider="openai-compatible", base_url="https://a.test/v1", model="old", api_key="good"
+        )
+    )
     headers = {"X-Companion-Control-Token": "test-control"}
-    new = {"provider": "openai-compatible", "base_url": "https://b.test/v1", "model": "new", "api_key": "good"}
+    new = {
+        "provider": "openai-compatible",
+        "base_url": "https://b.test/v1",
+        "model": "new",
+        "api_key": "good",
+    }
     with TestClient(app) as client:
         assert client.post("/api/llm/settings/apply", json=new, headers=headers).status_code == 409
-        assert client.post("/api/llm/settings/test", json={**new, "api_key": "wrong"}, headers=headers).status_code == 401
+        assert (
+            client.post(
+                "/api/llm/settings/test", json={**new, "api_key": "wrong"}, headers=headers
+            ).status_code
+            == 401
+        )
         assert app.state.llm_service.config.model == "old"
         assert client.post("/api/llm/settings/test", json=new, headers=headers).status_code == 200
         assert client.post("/api/llm/settings/apply", json=new, headers=headers).status_code == 200

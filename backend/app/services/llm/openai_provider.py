@@ -30,8 +30,16 @@ class LLMTimeoutError(LLMResponseError):
 
 
 class OpenAIProvider(LLMProvider):
-    def __init__(self, api_key: str, model: str, base_url: str, transport: httpx.AsyncBaseTransport | None = None,
-                 temperature: float | None = None, max_tokens: int | None = None, timeout: float = 60):
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str,
+        transport: httpx.AsyncBaseTransport | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        timeout: float = 60,
+    ):
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
@@ -47,8 +55,12 @@ class OpenAIProvider(LLMProvider):
             # Official DeepSeek Flash now defaults to thinking. Companion text
             # streaming uses its documented non-thinking mode to begin promptly;
             # tool planning and other compatible endpoints retain their defaults.
-            if urlsplit(self.base_url).hostname == 'api.deepseek.com' and self.model in {'deepseek-flash', 'deepseek-v4-flash', 'deepseek-v4-flash-vision-exp'}:
-                body['thinking'] = {'type': 'disabled'}
+            if urlsplit(self.base_url).hostname == "api.deepseek.com" and self.model in {
+                "deepseek-flash",
+                "deepseek-v4-flash",
+                "deepseek-v4-flash-vision-exp",
+            }:
+                body["thinking"] = {"type": "disabled"}
         if self.temperature is not None:
             body["temperature"] = self.temperature
         if self.max_tokens is not None:
@@ -62,10 +74,15 @@ class OpenAIProvider(LLMProvider):
         # System proxy settings can route a loopback Ollama endpoint elsewhere.
         # Local models must stay on this machine even when a proxy is configured.
         local = urlsplit(self.base_url).hostname in {"localhost", "127.0.0.1", "::1"}
-        return httpx.AsyncClient(timeout=self.timeout, transport=self.transport, trust_env=not local)
+        return httpx.AsyncClient(
+            timeout=self.timeout, transport=self.transport, trust_env=not local
+        )
 
     def _validate(self) -> None:
-        if not self.model or (not self.api_key and not self.base_url.startswith(("http://127.0.0.1:", "http://localhost:"))):
+        if not self.model or (
+            not self.api_key
+            and not self.base_url.startswith(("http://127.0.0.1:", "http://localhost:"))
+        ):
             raise LLMConfigurationError("请先在设置中填写模型名称和 API 密钥，或配置本地模型服务")
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
@@ -75,7 +92,8 @@ class OpenAIProvider(LLMProvider):
             async with self._client() as client:
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
-                    headers=self._headers(), json=self._payload(messages),
+                    headers=self._headers(),
+                    json=self._payload(messages),
                 )
                 response.raise_for_status()
                 content = response.json()["choices"][0]["message"]["content"]
@@ -99,10 +117,13 @@ class OpenAIProvider(LLMProvider):
         body.update({"tools": tools, "tool_choice": "auto"})
         try:
             async with self._client() as client:
-                response = await client.post(f"{self.base_url}/chat/completions",
-                                             headers=self._headers(), json=body)
+                response = await client.post(
+                    f"{self.base_url}/chat/completions", headers=self._headers(), json=body
+                )
                 if response.status_code in (400, 404, 422):
-                    raise LLMResponseError("当前模型或 API 不支持工具调用，请切换模型或使用聊天模式。")
+                    raise LLMResponseError(
+                        "当前模型或 API 不支持工具调用，请切换模型或使用聊天模式。"
+                    )
                 response.raise_for_status()
                 message = response.json()["choices"][0]["message"]
                 if not isinstance(message, dict):
@@ -121,8 +142,10 @@ class OpenAIProvider(LLMProvider):
         try:
             async with self._client() as client:
                 async with client.stream(
-                    "POST", f"{self.base_url}/chat/completions",
-                    headers=self._headers(), json=self._payload(messages, stream=True),
+                    "POST",
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=self._payload(messages, stream=True),
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
@@ -154,7 +177,9 @@ class OpenAIProvider(LLMProvider):
             async with self._client() as client:
                 response = await client.get(f"{self.base_url}/models", headers=self._headers())
                 response.raise_for_status()
-                return sorted(str(item["id"]) for item in response.json().get("data", []) if item.get("id"))
+                return sorted(
+                    str(item["id"]) for item in response.json().get("data", []) if item.get("id")
+                )
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 401:
                 raise LLMAuthenticationError("HTTP 401: API Key 无效") from exc

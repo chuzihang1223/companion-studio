@@ -48,8 +48,11 @@ def _resample(samples: array, source_rate: int, target_rate: int) -> array:
 
 def audio_file(row: MessageVoice) -> Path | None:
     legacy = row.audio_path == f"audio/{row.message_id}.wav"
-    fish_cache = bool(row.provider == "fish" and row.audio_path and
-                      re.fullmatch(r"voice_cache/fish/[0-9a-f]{64}\.wav", row.audio_path))
+    fish_cache = bool(
+        row.provider == "fish"
+        and row.audio_path
+        and re.fullmatch(r"voice_cache/fish/[0-9a-f]{64}\.wav", row.audio_path)
+    )
     if not (legacy or fish_cache):
         return None
     root = settings.data_root.resolve()
@@ -59,12 +62,21 @@ def audio_file(row: MessageVoice) -> Path | None:
 
 def index_audio_file(row: MessageVoice) -> Path | None:
     """Return supported cached voices; legacy ONNX files are not promoted."""
-    return audio_file(row) if row.engine == "indextts-2.5-expressive" or (row.engine or "").startswith("fish-") else None
+    return (
+        audio_file(row)
+        if row.engine == "indextts-2.5-expressive" or (row.engine or "").startswith("fish-")
+        else None
+    )
 
 
 def save_message_audio(
-    db: Session, message: Message, chunks: list[tuple[str, int, int]], engine_name: str,
-    expression: str = "natural", speed_factor: float = 1.0, reference_id: str | None = None,
+    db: Session,
+    message: Message,
+    chunks: list[tuple[str, int, int]],
+    engine_name: str,
+    expression: str = "natural",
+    speed_factor: float = 1.0,
+    reference_id: str | None = None,
 ) -> MessageVoice:
     """Each chunk is (base64 WAV, pause_before_ms, pause_after_ms)."""
     if not chunks:
@@ -82,7 +94,11 @@ def save_message_audio(
     is_fish = engine_name.startswith("fish-")
     audio_dir = settings.data_root / ("voice_cache/fish" if is_fish else "audio")
     audio_dir.mkdir(parents=True, exist_ok=True)
-    name = hashlib.sha256(f"{reference_id or ''}|{message.id}".encode("utf-8")).hexdigest() if is_fish else message.id
+    name = (
+        hashlib.sha256(f"{reference_id or ''}|{message.id}".encode("utf-8")).hexdigest()
+        if is_fish
+        else message.id
+    )
     final = audio_dir / f"{name}.wav"
     temporary = audio_dir / f"{name}.tmp"
     try:
@@ -97,7 +113,9 @@ def save_message_audio(
     row = db.get(MessageVoice, message.id) or MessageVoice(message_id=message.id)
     row.status = "ready"
     row.cache_key = hashlib.sha256(
-        f"{message.id}|{message.content}|{engine_name}|{PROFILE_VERSION}|{PLAN_VERSION}|{expression}|{speed_factor}".encode("utf-8")
+        f"{message.id}|{message.content}|{engine_name}|{PROFILE_VERSION}|{PLAN_VERSION}|{expression}|{speed_factor}".encode(
+            "utf-8"
+        )
     ).hexdigest()
     row.error_code = None
     row.error_message = None

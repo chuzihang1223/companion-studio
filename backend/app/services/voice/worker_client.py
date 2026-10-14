@@ -21,15 +21,27 @@ logger = logging.getLogger(__name__)
 
 
 class VoiceWorkerClient:
-    def __init__(self, model_dir: Path | None = None, references_dir: Path | None = None, engine: str = "onnx"):
+    def __init__(
+        self,
+        model_dir: Path | None = None,
+        references_dir: Path | None = None,
+        engine: str = "onnx",
+    ):
         self.engine = engine
         self.name = "indextts-2.5-expressive" if engine == "index" else "onnx-tts"
         default_model = settings.data_root / "voice_models" / engine
         default_refs = settings.data_root / "voice_references"
         model_env = "VOICE_INDEX_MODEL_DIR" if engine == "index" else "VOICE_MODEL_DIR"
         self.model_dir = Path(model_dir or os.getenv(model_env) or default_model)
-        self.references_dir = Path(references_dir or os.getenv("VOICE_REFERENCES_DIR") or default_refs)
-        self.python = (self.model_dir.parent if engine == "index" else self.model_dir) / ".venv" / "Scripts" / "python.exe"
+        self.references_dir = Path(
+            references_dir or os.getenv("VOICE_REFERENCES_DIR") or default_refs
+        )
+        self.python = (
+            (self.model_dir.parent if engine == "index" else self.model_dir)
+            / ".venv"
+            / "Scripts"
+            / "python.exe"
+        )
         self.process: subprocess.Popen | None = None
         self._ready = Event()
         self._responses: Queue[dict] = Queue()
@@ -48,9 +60,17 @@ class VoiceWorkerClient:
         """Give Windows native tokenizers an ASCII drive alias; the files stay on their original volume."""
         model, refs, python = self.model_dir, self.references_dir, self.python
         source = self.model_dir.parent if self.engine == "index" else self.model_dir
-        if self.engine != "index" or sys.platform != "win32" or all(ord(ch) < 128 for ch in str(model)):
+        if (
+            self.engine != "index"
+            or sys.platform != "win32"
+            or all(ord(ch) < 128 for ch in str(model))
+        ):
             return model, refs, python, source
-        root = Path(os.path.commonpath((str(model), str(refs), str(python), str(source), str(settings.data_root))))
+        root = Path(
+            os.path.commonpath(
+                (str(model), str(refs), str(python), str(source), str(settings.data_root))
+            )
+        )
         self._alias_root = root
         for letter in "VWXYZ":
             drive = Path(f"{letter}:\\")
@@ -63,8 +83,10 @@ class VoiceWorkerClient:
             else:
                 subprocess.run(["subst", f"{letter}:", str(root)], check=True, capture_output=True)
                 self._alias = f"{letter}:"
+
             def remap(path: Path) -> Path:
                 return drive / path.relative_to(root)
+
             return remap(model), remap(refs), remap(python), remap(source)
         raise RuntimeError("No free drive letter for local expressive voice model")
 
@@ -75,7 +97,9 @@ class VoiceWorkerClient:
         profile_file = self.references_dir / "profile.json"
         if self.engine == "index" and profile_file.is_file():
             try:
-                selected = json.loads(profile_file.read_text(encoding="utf-8"))["selected_reference"]
+                selected = json.loads(profile_file.read_text(encoding="utf-8"))[
+                    "selected_reference"
+                ]
                 reference_file = (self.references_dir / selected).resolve()
                 if not reference_file.is_relative_to(self.references_dir.resolve()):
                     return False
@@ -85,7 +109,12 @@ class VoiceWorkerClient:
 
     @property
     def ready(self) -> bool:
-        return self._ready.is_set() and self.process is not None and self.process.poll() is None and not self.error
+        return (
+            self._ready.is_set()
+            and self.process is not None
+            and self.process.poll() is None
+            and not self.error
+        )
 
     def start_background(self) -> None:
         with self._lifecycle_lock:
@@ -116,29 +145,47 @@ class VoiceWorkerClient:
         env = os.environ.copy()
         for secret in ("OPENAI_API_KEY",):
             env.pop(secret, None)
-        env.update({
-            "TEMP": str(cache), "TMP": str(cache),
-            "PYTHONPYCACHEPREFIX": str(cache / "pycache"),
-            "NUMBA_CACHE_DIR": str(cache / "numba"),
-            "MPLCONFIGDIR": str(cache / "matplotlib"),
-            "HF_HOME": str(cache / "hf"), "NLTK_DATA": str(cache / "nltk"),
-            "HF_HUB_OFFLINE": "1",
-            "VOICE_BACKEND_PID": str(os.getpid()),
-            "VOICE_ALIAS_DRIVE": self._alias or "",
-            "PYTHONPATH": os.pathsep.join(filter(None, (
-                os.getenv("VOICE_WORKER_SOURCE_DIR", str(settings.project_root / "backend")),
-                str(source) if self.engine == "index" else "",
-            ))),
-        })
+        env.update(
+            {
+                "TEMP": str(cache),
+                "TMP": str(cache),
+                "PYTHONPYCACHEPREFIX": str(cache / "pycache"),
+                "NUMBA_CACHE_DIR": str(cache / "numba"),
+                "MPLCONFIGDIR": str(cache / "matplotlib"),
+                "HF_HOME": str(cache / "hf"),
+                "NLTK_DATA": str(cache / "nltk"),
+                "HF_HUB_OFFLINE": "1",
+                "VOICE_BACKEND_PID": str(os.getpid()),
+                "VOICE_ALIAS_DRIVE": self._alias or "",
+                "PYTHONPATH": os.pathsep.join(
+                    filter(
+                        None,
+                        (
+                            os.getenv(
+                                "VOICE_WORKER_SOURCE_DIR", str(settings.project_root / "backend")
+                            ),
+                            str(source) if self.engine == "index" else "",
+                        ),
+                    )
+                ),
+            }
+        )
         if self.engine == "index":
             # The selected model snapshot and its auxiliary weights are local.
-            env.update({"USE_MODELSCOPE": "true", "XDG_CACHE_HOME": str(cache), "TORCH_HOME": str(cache),
-                        "PYTHONIOENCODING": "utf-8"})
+            env.update(
+                {
+                    "USE_MODELSCOPE": "true",
+                    "XDG_CACHE_HOME": str(cache),
+                    "TORCH_HOME": str(cache),
+                    "PYTHONIOENCODING": "utf-8",
+                }
+            )
         if getattr(sys, "frozen", False):
             # PyInstaller may add its Python DLL directory to a child's Windows
             # search path. The voice venv uses a different Python version.
             env["PATH"] = os.pathsep.join(
-                entry for entry in env.get("PATH", "").split(os.pathsep)
+                entry
+                for entry in env.get("PATH", "").split(os.pathsep)
                 if entry and not Path(entry).resolve().is_relative_to(settings.project_root)
             )
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
@@ -149,9 +196,23 @@ class VoiceWorkerClient:
             ctypes.windll.kernel32.SetDllDirectoryW(None)
         try:
             self.process = subprocess.Popen(
-                [str(python), "-u", "-m", "app.services.voice.worker_process", str(model_dir), str(references_dir), self.engine],
-                cwd=source, env=env, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+                [
+                    str(python),
+                    "-u",
+                    "-m",
+                    "app.services.voice.worker_process",
+                    str(model_dir),
+                    str(references_dir),
+                    self.engine,
+                ],
+                cwd=source,
+                env=env,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
                 creationflags=flags,
             )
         except Exception:
@@ -207,7 +268,12 @@ class VoiceWorkerClient:
         with self._request_lock:
             assert self.process and self.process.stdin
             request_id = str(uuid4())
-            request = {"command": "synthesize", "id": request_id, "text": text, "control": asdict(control)}
+            request = {
+                "command": "synthesize",
+                "id": request_id,
+                "text": text,
+                "control": asdict(control),
+            }
             self.process.stdin.write(json.dumps(request, ensure_ascii=False) + "\n")
             self.process.stdin.flush()
             try:

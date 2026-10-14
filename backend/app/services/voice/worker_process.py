@@ -13,6 +13,7 @@ import wave
 import traceback
 from threading import Thread
 
+
 def startup_stage(stage: str) -> None:
     if os.environ.get("VOICE_DEBUG_STARTUP") == "1":
         print(f"VOICE_STARTUP_STAGE {stage} {time.monotonic():.3f}", file=sys.stderr, flush=True)
@@ -20,9 +21,11 @@ def startup_stage(stage: str) -> None:
 
 startup_stage("before_numpy")
 import numpy as np
+
 startup_stage("after_numpy")
 
 from app.services.voice.prosody_planner import EngineControl
+
 startup_stage("after_project_imports")
 
 
@@ -88,11 +91,13 @@ def main() -> None:
     if engine_name == "index":
         startup_stage("before_index_provider_import")
         from app.services.voice.index_provider import IndexTTSVoiceProvider
+
         startup_stage("after_index_provider_import")
 
         provider = IndexTTSVoiceProvider(model_dir, references_dir)
     else:
         from app.services.voice.onnx_provider import ONNXVoiceProvider
+
         provider = ONNXVoiceProvider(model_dir, references_dir)
     try:
         send({"type": "status", "status": "loading_model"})
@@ -115,9 +120,16 @@ def main() -> None:
         probe = cache / f"voice-health-{os.getpid()}.tmp"
         probe.write_bytes(b"ok")
         probe.unlink()
-        send({"type": "ready", "engine": provider.name, "model_loaded": True,
-              "speaker_loaded": True, "device": "cuda" if engine_name == "index" else "cpu",
-              "warmup_ms": warmup_ms})
+        send(
+            {
+                "type": "ready",
+                "engine": provider.name,
+                "model_loaded": True,
+                "speaker_loaded": True,
+                "device": "cuda" if engine_name == "index" else "cpu",
+                "warmup_ms": warmup_ms,
+            }
+        )
     except Exception as exc:
         traceback.print_exc(file=sys.stderr)
         send({"type": "startup_error", "error": str(exc)})
@@ -138,18 +150,30 @@ def main() -> None:
             if running_rms and current_rms > 0.005:
                 samples *= float(np.clip(running_rms / current_rms, 0.84, 1.19))
             if current_rms > 0.005:
-                running_rms = current_rms if running_rms is None else 0.8 * running_rms + 0.2 * current_rms
+                running_rms = (
+                    current_rms if running_rms is None else 0.8 * running_rms + 0.2 * current_rms
+                )
             payload = {
-                "type": "audio", "id": request["id"], "engine": provider.name,
+                "type": "audio",
+                "id": request["id"],
+                "engine": provider.name,
                 "sample_rate": audio.sample_rate,
                 "generation_ms": round((time.perf_counter() - started) * 1000),
-                "audio_base64": base64.b64encode(wav_bytes(samples, audio.sample_rate)).decode("ascii"),
+                "audio_base64": base64.b64encode(wav_bytes(samples, audio.sample_rate)).decode(
+                    "ascii"
+                ),
             }
             send(payload)
             send({"type": "status", "status": "ready"})
         except Exception as exc:
             traceback.print_exc(file=sys.stderr)
-            send({"type": "error", "id": request.get("id") if "request" in locals() else None, "error": str(exc)})
+            send(
+                {
+                    "type": "error",
+                    "id": request.get("id") if "request" in locals() else None,
+                    "error": str(exc),
+                }
+            )
             send({"type": "status", "status": "ready"})
 
 

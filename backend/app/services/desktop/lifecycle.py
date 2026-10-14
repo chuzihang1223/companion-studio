@@ -22,16 +22,18 @@ class TaskHandle:
         try:
             await asyncio.wait_for(self.resumed.wait(), 600)
         except asyncio.TimeoutError:
-            self.control('cancel')
-            raise TaskCancelled('暂停等待已超时，请重新发送任务')
+            self.control("cancel")
+            raise TaskCancelled("暂停等待已超时，请重新发送任务")
         if self.cancelled:
-            raise TaskCancelled('目标应用已关闭，本次操作已结束' if self.exit_reason else '任务已停止')
+            raise TaskCancelled(
+                "目标应用已关闭，本次操作已结束" if self.exit_reason else "任务已停止"
+            )
 
     def control(self, action: str):
-        if action in {'pause', 'takeover'}:
+        if action in {"pause", "takeover"}:
             self.paused = True
             self.resumed.clear()
-        elif action == 'resume':
+        elif action == "resume":
             self.paused = False
             self.resumed.set()
         else:
@@ -39,6 +41,6 @@ class TaskHandle:
             self.aborted.set()
             self.resumed.set()
 
-    def target_exited(self, reason='APP_EXITED_BEFORE_READY'):
+    def target_exited(self, reason="APP_EXITED_BEFORE_READY"):
         self.exit_reason = reason
-        self.control('cancel')
+        self.control("cancel")

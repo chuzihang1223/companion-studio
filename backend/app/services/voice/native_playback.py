@@ -16,6 +16,7 @@ from .mp3_decoder import decode_mp3_to_wav
 class NativeAudioPlayer:
     def __init__(self, data_root: Path):
         from .native_pcm import NativePcmOutput
+
         self.pcm = NativePcmOutput()
         self.stream_owned = False
         self.cache = data_root / "audio" / "native-playback"
@@ -32,6 +33,7 @@ class NativeAudioPlayer:
     def _stop_output(self) -> None:
         if sys.platform == "win32":
             import winsound
+
             winsound.PlaySound(None, 0)
         if self.temporary:
             self.temporary.unlink(missing_ok=True)
@@ -66,10 +68,12 @@ class NativeAudioPlayer:
             raise OSError("Windows native playback is unavailable")
         import ctypes
         import winsound
+
         if ctypes.windll.winmm.waveOutGetNumDevs() < 1:
             raise OSError("No Windows audio output device")
         with self.lock:
-            self.pcm.stop(); self.stream_owned = False
+            self.pcm.stop()
+            self.stream_owned = False
             self._stop_output()
             if self.decoded:
                 self.decoded.unlink(missing_ok=True)
@@ -81,7 +85,11 @@ class NativeAudioPlayer:
                 self.decoded = decoded
                 source = decoded
             with wave.open(str(source), "rb") as reader:
-                if reader.getnchannels() not in (1, 2) or reader.getsampwidth() != 2 or reader.getframerate() <= 0:
+                if (
+                    reader.getnchannels() not in (1, 2)
+                    or reader.getsampwidth() != 2
+                    or reader.getframerate() <= 0
+                ):
                     raise ValueError("Unsupported WAV format")
                 duration = reader.getnframes() / reader.getframerate()
             if duration < 0.05:
@@ -91,13 +99,16 @@ class NativeAudioPlayer:
             self.position = 0
             self.volume = max(0, min(1, volume))
             output = self._render(0)
-            winsound.PlaySound(str(output), winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
+            winsound.PlaySound(
+                str(output), winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT
+            )
             self.started = time.monotonic()
             self.state = "playing"
             return self.status()
 
     def pause(self) -> dict:
-        if self.stream_owned: return self.pcm.pause()
+        if self.stream_owned:
+            return self.pcm.pause()
         with self.lock:
             if self.state == "playing":
                 self.position = min(self.duration, self.position + time.monotonic() - self.started)
@@ -106,23 +117,28 @@ class NativeAudioPlayer:
             return self.status()
 
     def resume(self) -> dict:
-        if self.stream_owned: return self.pcm.resume()
+        if self.stream_owned:
+            return self.pcm.resume()
         if sys.platform != "win32":
             raise OSError("Windows native playback is unavailable")
         import winsound
+
         with self.lock:
             if self.state != "paused" or not self.source:
                 return self.status()
             if self.position >= self.duration:
                 self.position = 0
             output = self._render(self.position)
-            winsound.PlaySound(str(output), winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
+            winsound.PlaySound(
+                str(output), winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT
+            )
             self.started = time.monotonic()
             self.state = "playing"
             return self.status()
 
     def stop(self) -> dict:
-        self.pcm.stop(); self.stream_owned = False
+        self.pcm.stop()
+        self.stream_owned = False
         with self.lock:
             self._stop_output()
             if self.decoded:
@@ -135,9 +151,12 @@ class NativeAudioPlayer:
             return self.status()
 
     def status(self) -> dict:
-        if self.stream_owned: return self.pcm.status()
+        if self.stream_owned:
+            return self.pcm.status()
         with self.lock:
-            current = self.position + (time.monotonic() - self.started if self.state == "playing" else 0)
+            current = self.position + (
+                time.monotonic() - self.started if self.state == "playing" else 0
+            )
             if self.state == "playing" and current >= self.duration:
                 self._stop_output()
                 if self.decoded:
@@ -145,5 +164,9 @@ class NativeAudioPlayer:
                     self.decoded = None
                 self.state = "stopped"
                 current = self.duration
-            return {"status": self.state, "position": round(min(current, self.duration), 3),
-                    "duration": round(self.duration, 3), "output": "Windows audio"}
+            return {
+                "status": self.state,
+                "position": round(min(current, self.duration), 3),
+                "duration": round(self.duration, 3),
+                "output": "Windows audio",
+            }

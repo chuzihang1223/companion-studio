@@ -15,13 +15,29 @@ def test_relationship_memory_quotes_only_saved_user_statements(tmp_path):
             deleted = Conversation(character_id="assistant", is_deleted=True)
             db.add_all((current, deleted))
             db.flush()
-            earlier = Message(character_id="assistant", conversation_id=current.id,
-                              role="user", content="你可以叫我小雨。")
-            db.add_all((earlier,
-                Message(character_id="assistant", conversation_id=current.id,
-                        role="assistant", content="我爱你。"),
-                Message(character_id="assistant", conversation_id=deleted.id,
-                        role="user", content="我们是恋人。")))
+            earlier = Message(
+                character_id="assistant",
+                conversation_id=current.id,
+                role="user",
+                content="你可以叫我小雨。",
+            )
+            db.add_all(
+                (
+                    earlier,
+                    Message(
+                        character_id="assistant",
+                        conversation_id=current.id,
+                        role="assistant",
+                        content="我爱你。",
+                    ),
+                    Message(
+                        character_id="assistant",
+                        conversation_id=deleted.id,
+                        role="user",
+                        content="我们是恋人。",
+                    ),
+                )
+            )
             db.commit()
             recalled = relationship_memory(db, "assistant")
             assert "你可以叫我小雨" in " ".join(recalled)

@@ -1,22 +1,30 @@
 """Only character-facing language belongs in TTS, never code or tool output."""
+
 import re
 
 
 def speakable_text(text: str) -> str:
-    text = re.sub(r'```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)', '', text)
-    text = re.sub(r'`[^`]*`', '', text)
-    lines = [line for line in text.splitlines() if not re.match(
-        r'\s*(?:Traceback|File "|at \S+\(|PS [A-Z]:|[A-Z]:[\\/]|[{}]\s*"?|[+-]{3} |(?:def|class|import|const|let|function)\s)', line)]
-    text = '\n'.join(lines)
-    text = re.sub(r'https?://\S+|[A-Z]:[\\/][^\s，。；]+', '', text)
-    text = re.sub(r'\b(?:print|console\.log)\([^\n]*?\)', '打印函数', text)
-    return re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)", "", text)
+    text = re.sub(r"`[^`]*`", "", text)
+    lines = [
+        line
+        for line in text.splitlines()
+        if not re.match(
+            r'\s*(?:Traceback|File "|at \S+\(|PS [A-Z]:|[A-Z]:[\\/]|[{}]\s*"?|[+-]{3} |(?:def|class|import|const|let|function)\s)',
+            line,
+        )
+    ]
+    text = "\n".join(lines)
+    text = re.sub(r"https?://\S+|[A-Z]:[\\/][^\s，。；]+", "", text)
+    text = re.sub(r"\b(?:print|console\.log)\([^\n]*?\)", "打印函数", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 class StreamingSpeechFilter:
     """Retain only a possible partial fence, so complete spoken phrases flush promptly."""
+
     def __init__(self):
-        self.pending = ''
+        self.pending = ""
         self.fenced = False
         self.code_seen = False
 
@@ -24,9 +32,9 @@ class StreamingSpeechFilter:
         self.pending += delta
         output = []
         while self.pending:
-            if not final and self.pending in {chr(96),chr(96)*2,'~','~~'}:
+            if not final and self.pending in {chr(96), chr(96) * 2, "~", "~~"}:
                 break
-            if self.pending.startswith(('```', '~~~')):
+            if self.pending.startswith(("```", "~~~")):
                 self.fenced = not self.fenced
                 self.code_seen = True
                 self.pending = self.pending[3:]
@@ -34,4 +42,4 @@ class StreamingSpeechFilter:
             char, self.pending = self.pending[0], self.pending[1:]
             if not self.fenced:
                 output.append(char)
-        return ''.join(output)
+        return "".join(output)

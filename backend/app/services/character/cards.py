@@ -1,4 +1,5 @@
 """Normalize local JSON and Tavern V2/V3 cards to our character format."""
+
 import json
 from uuid import uuid4
 
@@ -57,10 +58,18 @@ def parse_card(raw: bytes, filename: str) -> tuple[Character, bytes | None]:
         if data.get("extensions") or data.get("assets"):
             warnings.append("角色卡的扩展脚本、外部图片或资源未执行、未下载。")
         character = Character(
-            id=identifier, name=name, source="用户导入", card_format=spec or "tavern_json",
-            welcome_message=first, system_prompt=system or "依据用户导入的角色资料参与对话。",
-            profile=CharacterProfile(identity=description, personality=[personality] if personality else []),
-            scenario=scenario, style_examples=examples, post_history_instructions=instructions,
+            id=identifier,
+            name=name,
+            source="用户导入",
+            card_format=spec or "tavern_json",
+            welcome_message=first,
+            system_prompt=system or "依据用户导入的角色资料参与对话。",
+            profile=CharacterProfile(
+                identity=description, personality=[personality] if personality else []
+            ),
+            scenario=scenario,
+            style_examples=examples,
+            post_history_instructions=instructions,
             import_warnings=warnings,
         )
     return character, raw if png else None

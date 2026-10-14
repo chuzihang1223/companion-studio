@@ -38,14 +38,19 @@ class CharacterImport(BaseModel):
 
 
 @router.post("/api/character/import", response_model=CharacterPublic)
-def import_character(payload: CharacterImport, request: Request,
-                     x_companion_control_token: str | None = Header(default=None)) -> CharacterPublic:
+def import_character(
+    payload: CharacterImport,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> CharacterPublic:
     require_control(x_companion_control_token)
     if len(json.dumps(payload.config).encode("utf-8")) > 256 * 1024:
         raise HTTPException(413, "角色配置超过 256 KB")
     try:
         if is_clean_distribution():
-            character, _ = parse_card(json.dumps(payload.config, ensure_ascii=False).encode("utf-8"), "character.json")
+            character, _ = parse_card(
+                json.dumps(payload.config, ensure_ascii=False).encode("utf-8"), "character.json"
+            )
         else:
             character = Character.model_validate(payload.config)
         request.app.state.characters.import_character(character)
@@ -94,7 +99,9 @@ def bounded_config(value: dict) -> None:
         raise HTTPException(413, "角色设定超过 256 KB")
 
 
-def save(request: Request, character: Character, avatar: bytes | None = None, *, activate: bool = True) -> Character:
+def save(
+    request: Request, character: Character, avatar: bytes | None = None, *, activate: bool = True
+) -> Character:
     try:
         request.app.state.characters.import_character(character, avatar, activate=activate)
     except ValueError as exc:
@@ -111,8 +118,11 @@ def list_characters(request: Request) -> dict:
 
 
 @router.post("/api/characters/import", response_model=Character)
-def import_card(payload: CardFilePayload, request: Request,
-                x_companion_control_token: str | None = Header(default=None)) -> Character:
+def import_card(
+    payload: CardFilePayload,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> Character:
     require_control(x_companion_control_token)
     try:
         raw = base64.b64decode(payload.data_base64, validate=True)
@@ -126,23 +136,40 @@ def import_card(payload: CardFilePayload, request: Request,
 
 
 @router.post("/api/characters/custom", response_model=Character, status_code=201)
-def create_custom(payload: CustomCharacterPayload, request: Request,
-                  x_companion_control_token: str | None = Header(default=None)) -> Character:
+def create_custom(
+    payload: CustomCharacterPayload,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> Character:
     require_control(x_companion_control_token)
     values = payload.model_dump()
     bounded_config(values)
     if not payload.name.strip():
         raise HTTPException(422, "角色名字不能为空")
-    profile_fields = {key: values.pop(key) for key in ("identity", "personality", "speech_style", "behavior_rules", "relationship")}
+    profile_fields = {
+        key: values.pop(key)
+        for key in ("identity", "personality", "speech_style", "behavior_rules", "relationship")
+    }
     values["name"] = payload.name.strip()
     values["system_prompt"] = payload.system_prompt.strip() or "依据用户自定义的角色资料参与对话。"
-    return save(request, Character(id="custom_" + uuid4().hex[:20], source="用户自定义",
-                                  card_format="custom", profile=CharacterProfile(**profile_fields), **values))
+    return save(
+        request,
+        Character(
+            id="custom_" + uuid4().hex[:20],
+            source="用户自定义",
+            card_format="custom",
+            profile=CharacterProfile(**profile_fields),
+            **values,
+        ),
+    )
 
 
 @router.put("/api/characters/active", response_model=Character)
-def activate_character(payload: ActiveCharacter, request: Request,
-                       x_companion_control_token: str | None = Header(default=None)) -> Character:
+def activate_character(
+    payload: ActiveCharacter,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> Character:
     require_control(x_companion_control_token)
     try:
         return request.app.state.characters.activate(payload.id)
@@ -161,8 +188,12 @@ def get_character(character_id: str, request: Request) -> Character:
 
 
 @router.patch("/api/characters/{character_id}", response_model=Character)
-def update_character(character_id: str, payload: CharacterPatch, request: Request,
-                     x_companion_control_token: str | None = Header(default=None)) -> Character:
+def update_character(
+    character_id: str,
+    payload: CharacterPatch,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> Character:
     require_control(x_companion_control_token)
     character = get_character(character_id, request)
     if character_id == "assistant":
@@ -176,7 +207,9 @@ def update_character(character_id: str, payload: CharacterPatch, request: Reques
         if key in values:
             profile[key] = values.pop(key)
     if "system_prompt" in values:
-        values["system_prompt"] = values["system_prompt"].strip() or "依据用户自定义的角色资料参与对话。"
+        values["system_prompt"] = (
+            values["system_prompt"].strip() or "依据用户自定义的角色资料参与对话。"
+        )
     updated = Character.model_validate({**character.model_dump(), **values, "profile": profile})
     bounded_config(updated.model_dump())
     return save(request, updated, activate=request.app.state.characters.active_id == character_id)

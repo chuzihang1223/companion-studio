@@ -1,4 +1,5 @@
 """由用户偏好、动作类别和本地风险决定权限；模型不能选择模式。"""
+
 from app.services.desktop.preferences import read_preferences
 
 
@@ -11,28 +12,42 @@ class PermissionPolicyEngine:
         task_allowed 只覆盖本任务的低/中风险操作。智能和自动模式都不
         绕过高风险确认；本方法不使用模型声称的权限或旧版持久授权。
         """
-        mode = read_preferences()['permission_mode']
-        category = action.split(':', 1)[0]
+        mode = read_preferences()["permission_mode"]
+        category = action.split(":", 1)[0]
         # Critical includes unknown executables and attempts at security/admin access.
-        if risk not in {'low', 'medium', 'high'}:
-            return 'deny'
-        if risk == 'high':
-            return 'ask'
-        readonly = category in {'app.detect', 'app.status', 'system.get_status',
-                                 'media.current', 'media.sessions', 'code.read_file',
-                                 'filesystem.read', 'filesystem.list', 'workspace.read',
-                                 'workspace.list', 'workspace.search'}
+        if risk not in {"low", "medium", "high"}:
+            return "deny"
+        if risk == "high":
+            return "ask"
+        readonly = category in {
+            "app.detect",
+            "app.status",
+            "system.get_status",
+            "media.current",
+            "media.sessions",
+            "code.read_file",
+            "filesystem.read",
+            "filesystem.list",
+            "workspace.read",
+            "workspace.list",
+            "workspace.search",
+        }
         if readonly:
-            return 'allow'
-        if task_allowed and risk not in {'high', 'critical'}:
-            return 'allow'
-        if mode == 'ask':
-            return 'ask'
-        if mode == 'smart':
-            return 'ask' if risk == 'high' else 'allow'
+            return "allow"
+        if task_allowed and risk not in {"high", "critical"}:
+            return "allow"
+        if mode == "ask":
+            return "ask"
+        if mode == "smart":
+            return "ask" if risk == "high" else "allow"
         # High-risk execution already returned ask above in every mode.
         # No UAC interaction or system-permission bypass is implemented.
-        if category in {'filesystem.delete', 'workspace.delete', 'app.close',
-                         'system.install', 'system.modify'}:
-            return 'ask'
-        return 'allow'
+        if category in {
+            "filesystem.delete",
+            "workspace.delete",
+            "app.close",
+            "system.install",
+            "system.modify",
+        }:
+            return "ask"
+        return "allow"

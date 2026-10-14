@@ -31,11 +31,20 @@ def _now() -> datetime:
 
 def error_category(error: Exception) -> tuple[str, str, bool]:
     if isinstance(error, FishAudioError):
-        descriptions = {401: "Fish Audio API 密钥无效或未正确授权", 402: "Fish 账户当前不能使用所选模型",
-                        403: "Fish 账户无权使用该声音", 404: "Fish 角色声音 ID 无效或没有访问权限",
-                        422: "Fish 请求参数错误", 429: "Fish 请求过于频繁或达到服务限制",
-                        503: "Fish 服务暂时不可用"}
-        return f"fish_http_{error.status_code}", descriptions.get(error.status_code, str(error)), error.status_code in {0, 429, 500, 502, 503, 504}
+        descriptions = {
+            401: "Fish Audio API 密钥无效或未正确授权",
+            402: "Fish 账户当前不能使用所选模型",
+            403: "Fish 账户无权使用该声音",
+            404: "Fish 角色声音 ID 无效或没有访问权限",
+            422: "Fish 请求参数错误",
+            429: "Fish 请求过于频繁或达到服务限制",
+            503: "Fish 服务暂时不可用",
+        }
+        return (
+            f"fish_http_{error.status_code}",
+            descriptions.get(error.status_code, str(error)),
+            error.status_code in {0, 429, 500, 502, 503, 504},
+        )
     message = str(error).lower()
     if "out of memory" in message or "cuda oom" in message:
         return "cuda_oom", "显存不足；请关闭占用显存的程序后重试", True
@@ -66,8 +75,10 @@ class VoiceJobManager:
         logs = self.data_root / "logs"
         logs.mkdir(parents=True, exist_ok=True)
         voice_log = logs / "voice.log"
-        if not any(isinstance(handler, logging.FileHandler) and handler.baseFilename == str(voice_log)
-                   for handler in self.logger.handlers):
+        if not any(
+            isinstance(handler, logging.FileHandler) and handler.baseFilename == str(voice_log)
+            for handler in self.logger.handlers
+        ):
             handler = logging.FileHandler(voice_log, encoding="utf-8")
             handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
             self.logger.addHandler(handler)
@@ -75,8 +86,11 @@ class VoiceJobManager:
 
     def start(self) -> None:
         with self.session_factory() as db:
-            interrupted = db.scalars(select(VoiceJob).where(
-                VoiceJob.status.in_(("queued", "loading", "synthesizing", "saving")))).all()
+            interrupted = db.scalars(
+                select(VoiceJob).where(
+                    VoiceJob.status.in_(("queued", "loading", "synthesizing", "saving"))
+                )
+            ).all()
             for job in interrupted:
                 job.status = "failed"
                 job.error_code = "interrupted"
@@ -95,17 +109,27 @@ class VoiceJobManager:
             self.runner.cancel()
             await asyncio.gather(self.runner, return_exceptions=True)
 
-    def enqueue(self, message_id: str, *, regenerate: bool = False,
-                expression: str = "natural", speed_factor: float = 1.0,
-                prefetched: tuple[str, asyncio.Task] | None = None) -> dict:
+    def enqueue(
+        self,
+        message_id: str,
+        *,
+        regenerate: bool = False,
+        expression: str = "natural",
+        speed_factor: float = 1.0,
+        prefetched: tuple[str, asyncio.Task] | None = None,
+    ) -> dict:
         with self.session_factory() as db:
             message = db.get(Message, message_id)
             if message is None or message.role != "assistant":
                 raise LookupError("Assistant message not found")
             voice = db.get(MessageVoice, message_id)
             if voice and index_audio_file(voice) and not regenerate:
-                return {"message_id": message_id, "status": "ready",
-                        "audio_url": f"/api/voice/audio/{message_id}", "job_id": voice.job_id}
+                return {
+                    "message_id": message_id,
+                    "status": "ready",
+                    "audio_url": f"/api/voice/audio/{message_id}",
+                    "job_id": voice.job_id,
+                }
             if voice and voice.job_id:
                 old = db.get(VoiceJob, voice.job_id)
                 if old and old.status in {"queued", "loading", "synthesizing", "saving"}:
@@ -113,8 +137,13 @@ class VoiceJobManager:
                         return self.payload(old)
                     old.status = "cancelled"
                     old.finished_at = _now()
-            job = VoiceJob(id=str(uuid4()), message_id=message_id, status="queued",
-                           expression=expression, speed_factor=speed_factor)
+            job = VoiceJob(
+                id=str(uuid4()),
+                message_id=message_id,
+                status="queued",
+                expression=expression,
+                speed_factor=speed_factor,
+            )
             db.add(job)
             if voice is None:
                 voice = MessageVoice(message_id=message_id)
@@ -133,14 +162,25 @@ class VoiceJobManager:
 
     def payload(self, job: VoiceJob) -> dict:
         paths = json.loads(job.segment_paths_json or "[]")
-        return {"job_id": job.id, "message_id": job.message_id, "status": job.status,
-                "engine": job.engine, "error_code": job.error_code, "error_message": job.error_message,
-                "segments_done": job.segments_done, "segments_total": job.segments_total,
-                "segments": [{"index": i, "audio_url": f"/api/voice/jobs/{job.id}/segments/{i}/audio"}
-                             for i in range(len(paths))],
-                "audio_url": f"/api/voice/audio/{job.message_id}" if job.status == "ready" else None,
-                "queue_length": self.queue.qsize(), "model_load_ms": job.model_load_ms,
-                "synthesis_ms": job.synthesis_ms, "duration_ms": job.duration_ms}
+        return {
+            "job_id": job.id,
+            "message_id": job.message_id,
+            "status": job.status,
+            "engine": job.engine,
+            "error_code": job.error_code,
+            "error_message": job.error_message,
+            "segments_done": job.segments_done,
+            "segments_total": job.segments_total,
+            "segments": [
+                {"index": i, "audio_url": f"/api/voice/jobs/{job.id}/segments/{i}/audio"}
+                for i in range(len(paths))
+            ],
+            "audio_url": f"/api/voice/audio/{job.message_id}" if job.status == "ready" else None,
+            "queue_length": self.queue.qsize(),
+            "model_load_ms": job.model_load_ms,
+            "synthesis_ms": job.synthesis_ms,
+            "duration_ms": job.duration_ms,
+        }
 
     def segment_file(self, job: VoiceJob, index: int) -> Path | None:
         paths = json.loads(job.segment_paths_json or "[]")
@@ -151,8 +191,12 @@ class VoiceJobManager:
         return target if target.is_relative_to(root) and target.is_file() else None
 
     def _log(self, job_id: str, message_id: str, stage: str, **data) -> None:
-        self.logger.info(json.dumps({"job_id": job_id, "message_id": message_id, "stage": stage,
-                                     **data}, ensure_ascii=False))
+        self.logger.info(
+            json.dumps(
+                {"job_id": job_id, "message_id": message_id, "stage": stage, **data},
+                ensure_ascii=False,
+            )
+        )
 
     async def _loop(self) -> None:
         while True:
@@ -173,7 +217,11 @@ class VoiceJobManager:
                             row.finished_at = _now()
                             voice = db.get(MessageVoice, row.message_id)
                             if voice and voice.job_id == job_id:
-                                voice.status, voice.error_code, voice.error_message = "failed", code, message
+                                voice.status, voice.error_code, voice.error_message = (
+                                    "failed",
+                                    code,
+                                    message,
+                                )
                             db.commit()
                 except Exception:
                     self.logger.exception("Could not mark voice job %s failed", job_id)
@@ -190,20 +238,35 @@ class VoiceJobManager:
             if job is None or job.status == "cancelled":
                 return
             message = db.get(Message, job.message_id)
-            conversation = db.get(Conversation, message.conversation_id) if message.conversation_id else None
+            conversation = (
+                db.get(Conversation, message.conversation_id) if message.conversation_id else None
+            )
             history = visible_messages(db, conversation) if conversation else [message]
-            position = next((i for i, item in enumerate(history) if item.id == message.id), len(history) - 1)
+            position = next(
+                (i for i, item in enumerate(history) if item.id == message.id), len(history) - 1
+            )
             prior = history[:position]
             user_text = next((row.content for row in reversed(prior) if row.role == "user"), "")
             job.status = "loading"
             job.started_at = _now()
-            job.queue_wait_ms = round((_now() - job.created_at.replace(tzinfo=timezone.utc)).total_seconds() * 1000)
+            job.queue_wait_ms = round(
+                (_now() - job.created_at.replace(tzinfo=timezone.utc)).total_seconds() * 1000
+            )
             db.commit()
-            message_id, reply = message.id, speakable_text(message.content) or '代码放在工作区了，可以直接查看。'
+            message_id, reply = (
+                message.id,
+                speakable_text(message.content) or "代码放在工作区了，可以直接查看。",
+            )
             recent_context = [{"role": row.role, "content": row.content} for row in prior[-8:]]
-            work_state = {"work_mode": "active"} if conversation and conversation.preferred_mode == "work" else None
+            work_state = (
+                {"work_mode": "active"}
+                if conversation and conversation.preferred_mode == "work"
+                else None
+            )
             expression, speed = job.expression, job.speed_factor
-        self._log(job_id, message_id, "loading", queue_wait_ms=job.queue_wait_ms, engine=self.voice.name)
+        self._log(
+            job_id, message_id, "loading", queue_wait_ms=job.queue_wait_ms, engine=self.voice.name
+        )
         try:
             provider = self.voice.choose() if hasattr(self.voice, "choose") else self.voice
             provider.start_background()
@@ -217,16 +280,32 @@ class VoiceJobManager:
                     raise TimeoutError("model load timeout")
                 await asyncio.sleep(0.25)
             load_ms = round((time.perf_counter() - started) * 1000)
-            plan = SpeechDirector().plan(user_message=user_text, current_reply=reply,
-                                         previous_messages=recent_context, character_state=work_state,
-                                         expression=expression)
-            if provider.name.startswith('fish-'):
-                plan = fish_request_plan(reply,user_text,recent_context,expression,work_state)
-            prefix = self.prefetched.get(job_id, ('', None))[0]
+            plan = SpeechDirector().plan(
+                user_message=user_text,
+                current_reply=reply,
+                previous_messages=recent_context,
+                character_state=work_state,
+                expression=expression,
+            )
+            if provider.name.startswith("fish-"):
+                plan = fish_request_plan(reply, user_text, recent_context, expression, work_state)
+            prefix = self.prefetched.get(job_id, ("", None))[0]
             if prefix and reply.startswith(prefix):
-                first = SpeechDirector().plan(user_message=user_text,current_reply=prefix,previous_messages=recent_context,character_state=work_state,expression=expression)
-                rest = SpeechDirector().plan(user_message=user_text,current_reply=reply[len(prefix):],previous_messages=recent_context,character_state=work_state,expression=expression)
-                plan = replace(plan, segments=first.segments+rest.segments)
+                first = SpeechDirector().plan(
+                    user_message=user_text,
+                    current_reply=prefix,
+                    previous_messages=recent_context,
+                    character_state=work_state,
+                    expression=expression,
+                )
+                rest = SpeechDirector().plan(
+                    user_message=user_text,
+                    current_reply=reply[len(prefix) :],
+                    previous_messages=recent_context,
+                    character_state=work_state,
+                    expression=expression,
+                )
+                plan = replace(plan, segments=first.segments + rest.segments)
             if not plan.segments:
                 raise ValueError("No speakable text")
             with self.session_factory() as db:
@@ -249,12 +328,23 @@ class VoiceJobManager:
                 control = replace(control, speed_factor=control.speed_factor * speed)
                 control = replace(control, style_spans=segment.style_spans)
                 prefetch = self.prefetched.pop(job_id, None) if index == 0 else None
-                if provider.name.startswith('fish-'):
-                    for next_index in (index, index+1):
-                        if next_index>=len(plan.segments) or next_index in pending or (next_index==0 and prefetch):continue
-                        upcoming=plan.segments[next_index]
-                        direction=replace(ProsodyPlanner().for_expressive(upcoming),speed_factor=speed*upcoming.prosody.pace,style_spans=upcoming.style_spans)
-                        pending[next_index]=asyncio.create_task(asyncio.to_thread(provider.synthesize,upcoming.tts_text,direction))
+                if provider.name.startswith("fish-"):
+                    for next_index in (index, index + 1):
+                        if (
+                            next_index >= len(plan.segments)
+                            or next_index in pending
+                            or (next_index == 0 and prefetch)
+                        ):
+                            continue
+                        upcoming = plan.segments[next_index]
+                        direction = replace(
+                            ProsodyPlanner().for_expressive(upcoming),
+                            speed_factor=speed * upcoming.prosody.pace,
+                            style_spans=upcoming.style_spans,
+                        )
+                        pending[next_index] = asyncio.create_task(
+                            asyncio.to_thread(provider.synthesize, upcoming.tts_text, direction)
+                        )
                 result = None
                 for attempt in range(2):
                     try:
@@ -264,17 +354,43 @@ class VoiceJobManager:
                                 if result.get("engine") != provider.name:
                                     raise ValueError("Prefetch used another voice provider")
                             except Exception:
-                                self.logger.exception("Prefetched first segment failed; generating normally")
-                                result = await pending.pop(index) if attempt==0 and index in pending else await asyncio.to_thread(provider.synthesize, segment.tts_text, control)
+                                self.logger.exception(
+                                    "Prefetched first segment failed; generating normally"
+                                )
+                                result = (
+                                    await pending.pop(index)
+                                    if attempt == 0 and index in pending
+                                    else await asyncio.to_thread(
+                                        provider.synthesize, segment.tts_text, control
+                                    )
+                                )
                         else:
-                            result = await pending.pop(index) if attempt==0 and index in pending else await asyncio.to_thread(provider.synthesize, segment.tts_text, control)
+                            result = (
+                                await pending.pop(index)
+                                if attempt == 0 and index in pending
+                                else await asyncio.to_thread(
+                                    provider.synthesize, segment.tts_text, control
+                                )
+                            )
                         break
                     except Exception as exc:
-                        alternate = self.voice.fallback(provider, exc) if index == 0 and hasattr(self.voice, "fallback") else None
+                        alternate = (
+                            self.voice.fallback(provider, exc)
+                            if index == 0 and hasattr(self.voice, "fallback")
+                            else None
+                        )
                         if alternate and attempt == 0:
-                            self._log(job_id, message_id, "fallback", reason=type(exc).__name__, engine=alternate.name)
-                            for future in pending.values():future.cancel()
-                            await asyncio.gather(*pending.values(),return_exceptions=True);pending.clear()
+                            self._log(
+                                job_id,
+                                message_id,
+                                "fallback",
+                                reason=type(exc).__name__,
+                                engine=alternate.name,
+                            )
+                            for future in pending.values():
+                                future.cancel()
+                            await asyncio.gather(*pending.values(), return_exceptions=True)
+                            pending.clear()
                             provider = alternate
                             provider.start_background()
                             if not provider.ready:
@@ -282,10 +398,13 @@ class VoiceJobManager:
                             prefetch = None
                             continue
                         code, _, transient = error_category(exc)
-                        self.logger.exception("Voice job %s segment %s attempt %s failed", job_id, index, attempt)
+                        self.logger.exception(
+                            "Voice job %s segment %s attempt %s failed", job_id, index, attempt
+                        )
                         if attempt or not transient:
-                            if index>0 and transient:
-                                failed_segments.append(index);break
+                            if index > 0 and transient:
+                                failed_segments.append(index)
+                                break
                             raise
                         if code == "cuda_oom" and hasattr(provider, "restart"):
                             provider.restart()
@@ -303,8 +422,15 @@ class VoiceJobManager:
                 temporary.write_bytes(raw)
                 os.replace(temporary, target)
                 relative = target.relative_to(self.data_root).as_posix()
-                chunks.append((result["audio_base64"], 0 if provider.name.startswith("fish-") else segment.delivery.pause_before_ms,
-                               0 if provider.name.startswith("fish-") else segment.delivery.pause_after_ms))
+                chunks.append(
+                    (
+                        result["audio_base64"],
+                        0
+                        if provider.name.startswith("fish-")
+                        else segment.delivery.pause_before_ms,
+                        0 if provider.name.startswith("fish-") else segment.delivery.pause_after_ms,
+                    )
+                )
                 engines.add(result["engine"])
                 paths.append(relative)
                 with self.session_factory() as db:
@@ -316,8 +442,14 @@ class VoiceJobManager:
                     job.segments_done = len(paths)
                     job.synthesis_ms = round((time.perf_counter() - synthesis_started) * 1000)
                     db.commit()
-                self._log(job_id, message_id, "segment_ready", index=index, generation_ms=result.get("generation_ms"),
-                          transport=result.get("transport"))
+                self._log(
+                    job_id,
+                    message_id,
+                    "segment_ready",
+                    index=index,
+                    generation_ms=result.get("generation_ms"),
+                    transport=result.get("transport"),
+                )
             if failed_segments:
                 raise RuntimeError("部分语音片段生成失败，后续片段已继续生成；可重新生成完整语音。")
             with self.session_factory() as db:
@@ -329,12 +461,23 @@ class VoiceJobManager:
             save_started = time.perf_counter()
             with self.session_factory() as db:
                 message = db.get(Message, message_id)
-                saved = save_message_audio(db, message, chunks,
-                                           next(iter(engines)) if len(engines) == 1 else "mixed",
-                                           expression=expression, speed_factor=speed,
-                                           reference_id=provider.config.reference_id if provider is getattr(self.voice, "fish", None) else None)
-                saved.voice_profile = "studio_fish" if saved.provider == "fish" else "studio_indextts"
-                saved.style_plan = json.dumps({"expression": expression, "segments": len(chunks)}, ensure_ascii=False)
+                saved = save_message_audio(
+                    db,
+                    message,
+                    chunks,
+                    next(iter(engines)) if len(engines) == 1 else "mixed",
+                    expression=expression,
+                    speed_factor=speed,
+                    reference_id=provider.config.reference_id
+                    if provider is getattr(self.voice, "fish", None)
+                    else None,
+                )
+                saved.voice_profile = (
+                    "studio_fish" if saved.provider == "fish" else "studio_indextts"
+                )
+                saved.style_plan = json.dumps(
+                    {"expression": expression, "segments": len(chunks)}, ensure_ascii=False
+                )
                 saved.generation_ms = job.synthesis_ms
                 job = db.get(VoiceJob, job_id)
                 job.status = "ready"
@@ -344,9 +487,16 @@ class VoiceJobManager:
                 job.finished_at = _now()
                 saved.status = "ready"
                 db.commit()
-            self._log(job_id, message_id, "ready", engine=saved.engine,
-                      duration_ms=job.duration_ms, model_load_ms=load_ms,
-                      synthesis_ms=job.synthesis_ms, save_ms=job.save_ms)
+            self._log(
+                job_id,
+                message_id,
+                "ready",
+                engine=saved.engine,
+                duration_ms=job.duration_ms,
+                model_load_ms=load_ms,
+                synthesis_ms=job.synthesis_ms,
+                save_ms=job.save_ms,
+            )
         except Exception as exc:
             code, message, _ = error_category(exc)
             self.logger.exception("Voice job %s failed", job_id)
@@ -367,5 +517,6 @@ class VoiceJobManager:
 
         finally:
             for future in pending.values():
-                if not future.done():future.cancel()
-            await asyncio.gather(*pending.values(),return_exceptions=True)
+                if not future.done():
+                    future.cancel()
+            await asyncio.gather(*pending.values(), return_exceptions=True)

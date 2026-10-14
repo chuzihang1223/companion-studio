@@ -16,7 +16,9 @@ class Personalization(Base):
 
     character_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     settings_json: Mapped[str] = mapped_column(Text, default="{}")
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now_utc, onupdate=now_utc
+    )
 
 
 class ManualMemory(Base):
@@ -27,4 +29,6 @@ class ManualMemory(Base):
     content: Mapped[str] = mapped_column(Text)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now_utc, onupdate=now_utc
+    )

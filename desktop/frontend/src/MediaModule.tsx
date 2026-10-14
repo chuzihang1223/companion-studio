@@ -1,10 +1,109 @@
-import {useEffect,useState} from 'react'
-import Icon from './Icon'
+import { useEffect, useState } from 'react';
+import Icon from './Icon';
 
-export default function MediaModule({visible,onError}:{visible:boolean;onError:(message:string)=>void}){
- const [snapshot,setSnapshot]=useState<MediaSnapshot|null>(null),[busy,setBusy]=useState(false)
- useEffect(()=>{if(!visible)return;let live=true,pending=false;const poll=async()=>{if(pending)return;pending=true;try{const value=await window.desktopAPI?.mediaSnapshot();if(live&&value)setSnapshot(value)}catch(e){if(live)onError(String(e))}finally{pending=false}};void poll();const timer=setInterval(()=>void poll(),4000);return()=>{live=false;clearInterval(timer)}},[visible])
- const current=snapshot?.current
- async function control(action:'play'|'pause'|'next'|'previous'){if(!current)return;setBusy(true);try{setSnapshot(await window.desktopAPI!.mediaControl(action,current.id))}catch(e){onError(String(e))}finally{setBusy(false)}}
- return <div className="media-module"><small>{current?.source_app||'桌面音乐客户端'}</small><h3>{current?.title||'还没有正在播放的音乐'}</h3><p>{current?.artist||''}</p><p>{current?.status==='playing'?'正在播放':current?.status==='paused'?'已暂停':'等待客户端提供媒体状态'}</p>{current?.thumbnail&&<img alt="当前歌曲封面" src={current.thumbnail} style={{width:96,height:96,borderRadius:10}}/>}<div className="virtual-document-actions"><button aria-label="媒体上一首" disabled={busy||!current?.controls.previous} onClick={()=>void control('previous')}><Icon name="back"/>上一首</button><button aria-label="媒体播放暂停" disabled={busy||!(current?.status==='playing'?current.controls.pause:current?.controls.play)} onClick={()=>void control(current?.status==='playing'?'pause':'play')}><Icon name={current?.status==='playing'?'pause':'volume'}/>{current?.status==='playing'?'暂停':'播放'}</button><button aria-label="媒体下一首" disabled={busy||!current?.controls.next} onClick={()=>void control('next')}>下一首</button></div><div className="virtual-document-actions">{(['netease','qqmusic'] as const).map(id=><button key={id} onClick={()=>void window.desktopAPI?.launchKnownApp(id).catch(e=>onError(String(e)))}>{id==='netease'?'打开网易云音乐':'打开 QQ 音乐'}</button>)}</div></div>
+export default function MediaModule({
+  visible,
+  onError,
+}: {
+  visible: boolean;
+  onError: (message: string) => void;
+}) {
+  const [snapshot, setSnapshot] = useState<MediaSnapshot | null>(null),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!visible) return;
+    let live = true,
+      pending = false;
+    const poll = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const value = await window.desktopAPI?.mediaSnapshot();
+        if (live && value) setSnapshot(value);
+      } catch (e) {
+        if (live) onError(String(e));
+      } finally {
+        pending = false;
+      }
+    };
+    void poll();
+    const timer = setInterval(() => void poll(), 4000);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [visible]);
+  const current = snapshot?.current;
+  async function control(action: 'play' | 'pause' | 'next' | 'previous') {
+    if (!current) return;
+    setBusy(true);
+    try {
+      setSnapshot(await window.desktopAPI!.mediaControl(action, current.id));
+    } catch (e) {
+      onError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="media-module">
+      <small>{current?.source_app || '桌面音乐客户端'}</small>
+      <h3>{current?.title || '还没有正在播放的音乐'}</h3>
+      <p>{current?.artist || ''}</p>
+      <p>
+        {current?.status === 'playing'
+          ? '正在播放'
+          : current?.status === 'paused'
+            ? '已暂停'
+            : '等待客户端提供媒体状态'}
+      </p>
+      {current?.thumbnail && (
+        <img
+          alt="当前歌曲封面"
+          src={current.thumbnail}
+          style={{ width: 96, height: 96, borderRadius: 10 }}
+        />
+      )}
+      <div className="virtual-document-actions">
+        <button
+          aria-label="媒体上一首"
+          disabled={busy || !current?.controls.previous}
+          onClick={() => void control('previous')}
+        >
+          <Icon name="back" />
+          上一首
+        </button>
+        <button
+          aria-label="媒体播放暂停"
+          disabled={
+            busy ||
+            !(current?.status === 'playing' ? current.controls.pause : current?.controls.play)
+          }
+          onClick={() => void control(current?.status === 'playing' ? 'pause' : 'play')}
+        >
+          <Icon name={current?.status === 'playing' ? 'pause' : 'volume'} />
+          {current?.status === 'playing' ? '暂停' : '播放'}
+        </button>
+        <button
+          aria-label="媒体下一首"
+          disabled={busy || !current?.controls.next}
+          onClick={() => void control('next')}
+        >
+          下一首
+        </button>
+      </div>
+      <div className="virtual-document-actions">
+        {(['netease', 'qqmusic'] as const).map((id) => (
+          <button
+            key={id}
+            onClick={() =>
+              void window.desktopAPI?.launchKnownApp(id).catch((e) => onError(String(e)))
+            }
+          >
+            {id === 'netease' ? '打开网易云音乐' : '打开 QQ 音乐'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
