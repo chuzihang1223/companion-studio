@@ -159,6 +159,7 @@ async function run() {
   );
   await driver.screenshot('chat-local-reply');
 
+  const modelRequestsBeforeWork = driver.report.localModelRequests;
   await driver.click('工作模式');
   await driver.c.until("!!document.querySelector('.workbench')");
   await driver.send('查看系统状态');
@@ -178,11 +179,26 @@ async function run() {
   const workHistory = await driver.json(
     '/api/chat/history?character_id=assistant&conversation_id=' + work.id,
   );
+  const workReply = workHistory.find((row) => row.role === 'assistant' && row.content.trim());
   driver.check(
-    workHistory.some((row) => row.role === 'assistant' && row.content.includes(MOCK_REPLY)),
-    'Work completion uses the local model and persists its reply',
+    workReply &&
+      (await driver.c.evaluate(
+        `document.querySelector('.work-dialogue')?.innerText.includes(${q(workReply.content)})`,
+      )),
+    'Work completion persists and displays its actual task feedback',
+    {
+      localModelRequestsDelta: driver.report.localModelRequests - modelRequestsBeforeWork,
+      actualFeedbackPersisted: true,
+      actualFeedbackDisplayed: true,
+    },
   );
-  await browserFixture();
+  const browserSkipped = process.env.COMPANION_TEST_SKIP_BROWSER === '1';
+  if (browserSkipped) {
+    driver.report.skipped = ['Native workspace browser fixture'];
+    driver.report.manual.push(
+      '原生网页检查被显式跳过；本次结果仅用于其余阶段，不能称全部验收成功。',
+    );
+  } else await browserFixture();
   const layout = await exerciseWorkbench(driver);
   await applicationDiscovery();
   await driver.close();
@@ -219,7 +235,12 @@ async function run() {
   driver.report.manual.push(
     'CDP 指针覆盖真实 Chromium 事件和布局持久化；不等于高 DPI/多显示器、系统抢焦点、长期使用的人工验收或真实 FPS 基准。',
   );
-  driver.report.success = true;
+  driver.report.enabledChecksPassed = true;
+  driver.report.success = !browserSkipped;
+  if (browserSkipped) {
+    driver.report.error = 'Incomplete acceptance: browser stage explicitly skipped';
+    process.exitCode = 2;
+  }
   driver.persist();
 }
 

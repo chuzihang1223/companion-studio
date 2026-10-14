@@ -17,11 +17,13 @@ node .\tests\ui\installed-studio-smoke.cjs
 
 程序和本地 mock 使用动态选择的回环端口。测试采用假的本地 API Key，启动时清空继承的模型和语音凭据，不导入个人角色或聊天。默认不开启语音、不启动第三方软件、不运行编码任务。
 
+脚本为隔离验收实例开启回环 CDP/主进程 inspector。主进程表达式由测试脚本自身生成，使用 `process.getBuiltinModule('module').createRequire(process.execPath)` 获得测试专用 CommonJS 加载器；加载器不会暴露给渲染层。这个调试入口不能用于日常启动，也不能监听公网。
+
 ## 真实覆盖
 
 - 核验已打包程序版本信息、干净发行标志和通用助手，初始消息与模型凭据为空。
 - 在实际 Chat 输入框发送消息，后端调用本地 OpenAI-compatible mock，并保存用户/助手记录。
-- 在实际 Work 输入框发送“查看系统状态”，执行系统观察，接收步骤/工具事件，由本地模型生成反馈并保存。
+- 在实际 Work 输入框发送“查看系统状态”，执行系统观察，接收步骤/工具事件，验证实际任务反馈的界面显示及保存。确定性任务可直接本地反馈，不要求额外模型调用；报告只记录本地模型请求数的变化与实际反馈，不据此推断反馈的确切来源。
 - 通过 Chromium `Input.dispatchMouseEvent` 真正长按拖动 Dock 模块、拖动共享分割线，验证相邻模块尺寸、松开后捕获清理和布局存储。没有直接调用布局计算函数来模拟通过。
 - 通过界面网页工具打开并关闭真实 `WebContentsView`，验证页面正文、关闭销毁及无应用 preload/Node 能力。
 - 通过实际应用发现与目录接口检查记事本入口；报告区分动态候选和有效系统入口。
@@ -47,6 +49,8 @@ node .\tests\ui\installed-studio-smoke.cjs
 脚本不自动关闭用户记事本，以免误关已有窗口或未保存内容。测试完需人工确认并按需退出。不开此开关时报告明确标记实际启动尚未验证。
 
 ## 其他边界
+
+诊断时可显式设置 `COMPANION_TEST_SKIP_BROWSER=1`，独立收集 Workbench 和重启检查。此时报告包含 `skipped`，即使其余项通过仍为 `success:false`、`enabledChecksPassed:true`，退出码为 2；不能当成安装版全部通过。正常完整验收不设置此开关。
 
 这组测试没有覆盖角色卡导入/编辑的全部路径；已有 `clean-character-studio.cjs` 使用另一独立档案，覆盖自定义角色、JSON/PNG 导入、无效卡拒绝、角色历史隔离及重启，继续保留。
 

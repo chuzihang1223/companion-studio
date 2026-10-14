@@ -125,6 +125,9 @@ class StudioSmokeDriver {
         '--compat',
         '--remote-debugging-port=' + this.ports.renderer,
         '--inspect=' + this.ports.main,
+        ...(process.env.COMPANION_TEST_CHROMIUM_LOGGING === '1'
+          ? ['--enable-logging=stderr', '--v=1']
+          : []),
       ],
       {
         cwd: path.dirname(this.exe),
@@ -159,7 +162,16 @@ class StudioSmokeDriver {
     this.child.stderr.pipe(log, { end: false });
     this.child.once('close', () => log.end());
     this.c = await connect(this.ports.renderer);
-    this.m = await connectMain(this.ports.main, 65000);
+    const inspector = await connectMain(this.ports.main, 65000);
+    // Node inspector evaluates in global scope, where a CommonJS module's require
+    // is not guaranteed. Supply a test-local loader; never expose it to a renderer.
+    this.m = {
+      close: () => inspector.close(),
+      evaluate: (expression) =>
+        inspector.evaluate(
+          `(()=>{const require=process.getBuiltinModule('module').createRequire(process.execPath);return eval(${q(expression)})})()`,
+        ),
+    };
     await this.c.until(
       "!!document.querySelector('[aria-label=输入消息]') && !document.querySelector('[aria-label=输入消息]').disabled",
       50000,
