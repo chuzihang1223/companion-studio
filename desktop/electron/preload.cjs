@@ -1,5 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
+/**
+ * 主窗口的固定能力入口：参数交给主进程验证，不暴露 Node、原始 IPC 或控制 Token。
+ * 事件订阅返回取消函数，调用者在组件/会话清理时解除对应监听。
+ * 增减方法时同步 main.cjs handler、前端 vite-env.d.ts 与相关回归。
+ */
 contextBridge.exposeInMainWorld('desktopAPI', {
   appInfo:()=>ipcRenderer.invoke('app-info'),
   importCharacter:()=>ipcRenderer.invoke('character-import'),

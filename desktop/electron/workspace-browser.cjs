@@ -3,6 +3,10 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const paths=require('./paths.cjs')
 const {SITES,domReady,fillSearch,readPage,searchResults}=require('./browser-automation.cjs')
 
+/**
+ * 主进程拥有的隔离网页标签管理器；网页没有应用 preload/Node 能力。
+ * 标签由任务 ID 关联，URL 与导航经注入策略检查，结果须带实际 DOM 证据。
+ */
 class WorkspaceBrowserManager {
  constructor(window,compatibility,safeUrl,audit) {
   this.window=window;this.compatibility=compatibility;this.safeUrl=safeUrl;this.audit=audit
@@ -18,6 +22,7 @@ class WorkspaceBrowserManager {
   })
   this.session.webRequest.onCompleted(({url,statusCode,resourceType})=>{if(resourceType==='mainFrame'){this.log('response',{url,statusCode});for(const tab of this.tabs.values())if(url===tab.url||url===tab.view.webContents.getURL())tab.responseStatus=statusCode}})
  }
+ /** 诊断日志去除 URL 查询/凭据及常见秘密字段，不保存完整网页正文。 */
  log(event,detail={}) {
   const scrub=value=>typeof value==='string'?value.replace(/https?:\/\/[^\s"<>]+/g,raw=>{try{const u=new URL(raw);u.username='';u.password='';u.search='';u.hash='';return u.toString()}catch{return '[url]'}}).replace(/(bearer\s+|(?:api[_-]?key|token|password|secret)\s*[:=]\s*)[^\s,;]+/gi,'$1[redacted]'):value
   this.audit('workspace-browser.log',event,JSON.stringify(detail,(_key,value)=>scrub(value)))
@@ -48,6 +53,7 @@ class WorkspaceBrowserManager {
  }
  hide(){const tab=this.tabs.get(this.active);if(tab){try{this.window.contentView.removeChildView(tab.view)}catch{}}this.active=null}
  show(id){const tab=this.tabs.get(id);if(!tab||tab.view.webContents.isDestroyed())return;this.hide();this.active=id;this.window.contentView.addChildView(tab.view);tab.view.setBounds(this.rect)}
+ /** 创建/复用标签并等待主页面就绪；网络或渲染失败返回 failed 状态。 */
  async open(url,rect,context={}) {
   const safe=this.safeUrl(url);const id=String(context.tabId||crypto.randomUUID());let tab=this.tabs.get(id)
   if(!tab||tab.view.webContents.isDestroyed())tab=this.create(id)
@@ -79,6 +85,12 @@ class WorkspaceBrowserManager {
   await domReady(this.tabs.get(tabId).view.webContents)
   return state
  }
+ /**
+ * 搜索须确认查询反映、导航及结果链接；验证码/登录未通过不宣告完成。
+ * @param {string} operation 已批准的 browser 操作。
+ * @param {{query?: string, site?: string, url?: string}} args
+ * @param {string} taskId 隔离任务标签的归属标识。
+ */
  async automate(operation,args,taskId){
   const tabId='agent-browser-'+taskId,query=String(args.query||'').trim().slice(0,160),site=String(args.site||'')
   const definition=SITES[site],url=operation==='browser.search'?'https://www.bing.com/search?q='+encodeURIComponent(query):definition?.home||args.url
@@ -106,6 +118,7 @@ class WorkspaceBrowserManager {
   return {...this.state(this.tabs.get(tabId)),...content,tabId,query,method,selector:selector?.selector,verified:search?content.verified:true,action:'desktop_completed',summary:search?'网页搜索结果已验证':'网页内容已读取',diagnostic:this.lastDiagnostic}
  }
  async readPage(wc,site){return readPage(wc,site)}
+ /** 主窗口关闭时释放当前 manager 拥有的网页视图。 */
  dispose(){this.hide();for(const tab of this.tabs.values())if(!tab.view.webContents.isDestroyed())tab.view.webContents.close();this.tabs.clear()}
 }
 module.exports={WorkspaceBrowserManager}

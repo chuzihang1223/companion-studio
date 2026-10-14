@@ -9,8 +9,8 @@ const interval=(p:ModulePlacement,axis:'x'|'y')=>axis==='x'?[p.y,p.y+p.height]:[
 const size=(p:ModulePlacement,axis:'x'|'y')=>axis==='x'?p.width:p.height
 const origin=(p:ModulePlacement,axis:'x'|'y')=>axis==='x'?p.x:p.y
 
-/** A boundary graph preserves existing free layouts, including T junctions.
- * Connected pairs on the same boundary share a divider; disjoint edges do not.
+/** 从现有自由矩形建立边界图，保留 T 形连接。
+ * 同一边界的连通窗格共享分割线，不把分离的边缘合成同一手势。
  */
 export function workspaceDividers(l:WorkbenchLayout):WorkspaceDivider[]{
  const ids=visible(l),result:WorkspaceDivider[]=[]
@@ -39,14 +39,14 @@ function prepareAxis(dividers:WorkspaceDivider[],id:ModuleId,edge:string,axis:'x
  return {axis,before:new Set(divider?.before??(leading?[]:[id])),after:new Set(divider?.after??(leading?[id]:[]))}
 }
 
+/** 求解本轴移动的线性约束；顺序和浮点容差属于现有几何行为。 */
 function applyAxis(input:WorkbenchLayout,id:ModuleId,ids:ModuleId[],plan:AxisPlan,delta:number):WorkbenchLayout{
  if(!Number.isFinite(delta)||!delta)return input
  const {axis,before,after}=plan,minimum=axis==='x'?64:40
  let lower=-Infinity,upper=Infinity
  for(const key of before){const p=input.modules[key];lower=Math.max(lower,Math.min(minimum,size(p,axis))-size(p,axis));if(axis==='x')upper=Math.min(upper,input.canvasWidth-origin(p,axis)-size(p,axis))}
  for(const key of after){const p=input.modules[key];upper=Math.min(upper,size(p,axis)-Math.min(minimum,size(p,axis)));lower=Math.max(lower,-origin(p,axis));if(p.pinned_position&&key!==id){lower=Math.max(lower,0);upper=Math.min(upper,0)}}
- // Only moving edges constrain collisions. Solve their linear inequalities
- // directly, instead of cloning the whole layout for 24 binary-search probes.
+  // 仅移动的边缘参与碰撞约束；直接求线性上下界，避免逐帧深拷贝探测。
  const constrain=(left:ModuleId,right:ModuleId)=>{
   const p=input.modules[left],q=input.modules[right],coefficient=Number(before.has(left))-Number(after.has(right))
   if(!coefficient)return
@@ -76,9 +76,9 @@ function dividerGeometry(input:WorkbenchLayout,plan:DividerPlan):WorkspaceDivide
  return {...d,position,start:Math.min(...pairs.map(p=>p.start)),end:Math.max(...pairs.map(p=>p.end)),ratio:(position-low)/(high-low)}
 }
 
-/** Capture adjacency once per gesture. Frames allocate only pane records that
- * change; history, legacy migration data, and module instances stay untouched.
- * A new gesture recomputes topology from its newly committed geometry. */
+/** 每次手势只准备一次邻接关系，dx/dy 始终相对于开始时的几何。
+ * 帧更新只复制变化窗格，保留 history/legacy 引用；下一次手势再重算拓扑。
+ */
 export function createWorkspaceResize(input:WorkbenchLayout,id:ModuleId,edge:string):WorkspaceResize{
  const modules=Object.fromEntries(moduleIds.map(key=>[key,{...input.modules[key]}])) as WorkbenchLayout['modules']
  const start={...input,modules},ids=visible(start),dividers=workspaceDividers(start)

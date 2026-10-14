@@ -1,11 +1,19 @@
-"""Two-stage tool calling: preview first, execute approved work, then speak in character."""
+"""协调 Agent 规划和执行：先保存用户任务，再按本机策略执行并反馈。
+
+规划模型选择工具，桌面运行时提供真实观察，角色模型负责一般任务的
+自然语言总结；简单本地动作可绕过规划模型，但仍经过参数和权限检查。
+"""
+
+from __future__ import annotations
 
 import asyncio
 import base64
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 import json
 from pathlib import Path
 import time
+from typing import TYPE_CHECKING, Any, TypeAlias
 from uuid import uuid4
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,12 +21,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
 from app.database.session import SessionLocal
 from app.models import Conversation, Message, WorkPermission
-from app.services.agent_tools import PermissionManager, ToolExecutor, ToolRegistry
+from app.services.agent_tools import PermissionManager, ToolExecutor, ToolRegistry, ToolCall
 from app.services.character.prompt_builder import CharacterPromptBuilder
 from app.services.character.relationship_memory import relationship_memory
 from app.services.character.personalization import read_settings, relevant_manual
 from app.services.conversation import touch_after_user_message, visible_messages
-from app.services.attachment_service import AttachmentService
+from app.services.attachment_service import AttachmentService, PreparedAttachment
 from app.services.trusted_actions import trusted_actions, action_for, risk_for
 from app.services.desktop.preferences import read_preferences
 from app.services.workspace_service import validate_root
@@ -31,34 +39,55 @@ from app.services.local_action_intent import LocalActionIntentResolver
 from app.services.llm.model_roles import ExecutionModelUnavailable
 from app.services.desktop.lifecycle import TaskCancelled
 
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from app.schemas.chat import AttachmentInput
+
+TextCallback: TypeAlias = Callable[[str], Awaitable[None]]
+StartedCallback: TypeAlias = Callable[[dict[str, Any]], Awaitable[None]]
+
 
 @dataclass
 class AgentContext:
+    """一次计划的上下文及所有权，不是已执行结果或自动恢复检查点。
+
+    created 为内存上下文的单调时间；从待执行持久计划恢复时重新计时。
+    prepared_attachments 为已校验格式和大小的附件，附件元数据与消息另行保存。
+    """
+
     character_id: str
     conversation_id: str | None
     user_text: str
-    prompt: list[dict]
-    assistant_plan: dict
-    calls: list[dict]
+    prompt: list[dict[str, Any]]
+    assistant_plan: dict[str, Any]
+    calls: list[ToolCall]
     created: float
     work_session_id: str | None = None
-    prepared_attachments: list | None = None
+    prepared_attachments: list[PreparedAttachment] | None = None
     executor: ToolExecutor | None = None
     user_message_id: str | None = None
     coding_mode: str = 'virtual_only'
-    local_resolution: dict | None = None
+    local_resolution: dict[str, Any] | None = None
     renderer_id: str | None = None
     task_id: str | None = None
 
 
 class AgentService:
-    def __init__(self):
+    """协调角色上下文、工具计划、工作会话和最终回复，不代替权限执行层。"""
+
+    def __init__(self) -> None:
         self.registry = ToolRegistry()
         self.executor = ToolExecutor(settings.data_root / "agent_workspace")
         self.pending: dict[str, AgentContext] = {}
 
-    async def plan(self, app, character_id: str, conversation_id: str | None, user_text: str,
-                   attachments: list | None = None, workspace_folder: str | None = None, renderer_id: str | None = None) -> dict:
+    async def plan(self, app: FastAPI, character_id: str, conversation_id: str | None, user_text: str,
+                   attachments: list[AttachmentInput] | None = None, workspace_folder: str | None = None, renderer_id: str | None = None) -> dict[str, Any]:
+        """构建并保存计划，返回编号、工具调用和关联的 Work Session。
+
+        输入会话须属于当前角色；工作目录只采用用户已保存的目录。
+        本阶段在执行注册器之外，先保存用户消息再等待授权。目录/写入
+        意图校验失败时不交给模型擅自选择路径；简单动作无需模型规划。
+        """
         character = app.state.characters.get(character_id)
         if character is None:
             raise LookupError("角色不存在")
@@ -149,6 +178,8 @@ class AgentService:
                     'type':'function','function':{'name':intent.operation.replace('.', '_'),
                                                 'arguments':json.dumps(arguments, ensure_ascii=False)}}]}
         if intent and not intent.complex:
+            # 单一可识别本地动作无需付费规划；仍统一进入 parse_calls 和
+            # 本机权限链路。复杂动作只在模型不可用时保留明确的本地部分。
             assistant_plan = deterministic or {'role':'assistant','content':None}
         else:
             try:
@@ -185,6 +216,8 @@ class AgentService:
         if not calls and local_resolution is None:
             local_resolution = {'error':str(ExecutionModelUnavailable()), 'remaining_unavailable':True}
         now = time.monotonic()
+        # 仅清理内存计划；持久 waiting_permission/planning 记录仍可恢复，
+        # 因而这里不等同所有计划统一在300秒后永久失效。
         self.pending = {key: value for key, value in self.pending.items() if now - value.created < 300}
         plan_id = str(uuid4())
         # Store the user's request before waiting for permissions or running tools.
@@ -223,7 +256,12 @@ class AgentService:
                 'conversation_id': conversation_id, 'user_message_id': user_message_id,
                 "work_session_id": work_session_id, "local_resolution": local_resolution}
 
-    async def select_application(self, app, plan_id: str, app_id: str) -> dict:
+    async def select_application(self, app: FastAPI, plan_id: str, app_id: str) -> dict[str, Any]:
+        """将用户从当前候选列表选定的已注册应用补入原计划。
+
+        候选和当前可用状态都要校验，不能用任意 app_id 或可执行路径
+        绕过应用发现；补全后重新生成权限项并准备可见步骤。
+        """
         context = self.pending.get(plan_id)
         stored = app.state.work_state.restore_plan(plan_id)
         if context is None and stored:
@@ -266,7 +304,12 @@ class AgentService:
                 'local_resolution':context.local_resolution}
 
     @staticmethod
-    def _restore_context(app, stored):
+    def _restore_context(app: FastAPI, stored: dict[str, Any]) -> AgentContext:
+        """重建尚待执行计划的上下文，不恢复已运行工具或旧协程。
+
+        工作目录取当前持久快照，created 重新设为单调时间；附件内容
+        已在规划阶段保存，恢复只保留现有消息与计划所有权。
+        """
         mode=stored.get('coding_mode') or CodingWriteIntentResolver().resolve(stored['user_text'])
         root=app.state.work_state.snapshot(stored['work_session_id']).get('workspace_root')
         executor=CodingWorkspaceExecutor(Path(root) if root else None,mode,
@@ -275,8 +318,14 @@ class AgentService:
             stored['prompt'],stored['assistant_plan'],stored['calls'],time.monotonic(),
             stored['work_session_id'],[],executor,stored['user_message_id'],mode,stored.get('local_resolution'),stored.get('renderer_id'))
 
-    async def execute(self, app, plan_id: str, approved_ids: set[str], expression: str,
-                      voice_enabled: bool, speed_factor: float, on_text=None, on_started=None) -> dict:
+    async def execute(self, app: FastAPI, plan_id: str, approved_ids: set[str], expression: str,
+                      voice_enabled: bool, speed_factor: float, on_text: TextCallback | None = None,
+                      on_started: StartedCallback | None = None) -> dict[str, Any]:
+        """取出/恢复计划后进入执行注册器，返回保存的回复及工具明细。
+
+        注册器限制同类会话并发、拒绝已执行编号，并负责超时释放。
+        取消/错误会更新工作状态；finally 只清理本任务授权和 Handle。
+        """
         context = self.pending.pop(plan_id, None)
         if context is None:
             stored = app.state.work_state.restore_plan(plan_id)
@@ -309,7 +358,16 @@ class AgentService:
             if getattr(app.state,'task_runtime',None):
                 app.state.task_runtime.handles.pop(context.work_session_id,None)
 
-    async def _execute_context(self,app,context,approved_ids,expression,voice_enabled,speed_factor,on_text=None,on_started=None):
+    async def _execute_context(self, app: FastAPI, context: AgentContext, approved_ids: set[str],
+                               expression: str, voice_enabled: bool, speed_factor: float,
+                               on_text: TextCallback | None = None,
+                               on_started: StartedCallback | None = None) -> dict[str, Any]:
+        """执行工具、结合真实观察生成回复，再保存消息和完成事件。
+
+        正式路径使用 AgentTaskRuntime；保留无运行时的请求型兼容分支。
+        on_started 在最终回复前提供所有权，on_text 输出统一文本增量。
+        流式语音由调用方管线负责，非流式回复可另外排入语音队列。
+        """
         work = getattr(app.state, "work_state", None)
         work_id = context.work_session_id
         if work and work_id:
@@ -366,6 +424,8 @@ class AgentService:
                 'conversation_id':context.conversation_id,'user_text':context.user_text,'messages':context.prompt,
                 'task_id':context.task_id,'work_session_id':work_id,'renderer_id':context.renderer_id})
         music_resolved = len(details) == 1 and details[0]['name'] in {'music.play','music.search'} and context.calls[0]['arguments'].get('provider') in {'qqmusic','netease'}
+        # 已确定的本地结果采用本地反馈，其余任务才请求角色模型总结。
+        # 不把 queued 请求或部分完成的本地首步描述为整项任务成功。
         if music_resolved:
             from app.services.desktop.music_task import music_feedback
             answer = music_feedback(context.calls[0], details[0]['result'], details[0]['status'] != 'done')
@@ -451,6 +511,8 @@ class AgentService:
         except SQLAlchemyError:
             raise RuntimeError("Agent 回复保存失败")
         if voice_enabled and on_text is None:
+            # 回复已持久化后才排入语音任务；生成音频错误单独返回，不回滚
+            # 已保存文字，也不能被当成桌面工具没有执行。
             try:
                 response["voice_job"] = app.state.voice_jobs.enqueue(
                     response["message_id"], expression=expression, speed_factor=speed_factor)

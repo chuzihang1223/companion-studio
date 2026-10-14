@@ -2,8 +2,9 @@ import type {AttachmentInput,ChatMessage,AgentCall,AgentPlan} from './api'
 export type PendingWork={planId:string;calls:AgentCall[];approved:string[];conversationId:string|null}
 export const rendererId=sessionStorage.getItem('renderer-id')||crypto.randomUUID()
 sessionStorage.setItem('renderer-id',rendererId)
+/** 仅为渲染器运行状态；完整历史由后端保存，草稿另按会话存 localStorage。 */
 type Runtime={draft:string;attachments:AttachmentInput[];messages:ChatMessage[]|null;generating:boolean;status:string;error:string;completed:boolean;queued:number;pending:PendingWork|null;apps:AgentPlan|null;work_session_id:string|null;voice_state:string;pending_request_id:string|null;is_streaming:boolean}
-/** Ownership survives navigation. React's visible state is only a projection. */
+/** 导航不转移请求归属；React 可见状态只是当前会话的投影。 */
 export class ConversationRuntimeStore{
  private rows=new Map<string,Runtime>()
  private queues=new Map<string,Promise<unknown>>()
@@ -18,6 +19,7 @@ export class ConversationRuntimeStore{
  patch(id:string,patch:Partial<Runtime>){Object.assign(this.get(id),patch);this.changed()}
  draft(id:string,text:string){this.get(id).draft=text;localStorage.setItem('draft:'+id,text)}
  messages(id:string,update:(rows:ChatMessage[])=>ChatMessage[]){const row=this.get(id);row.messages=update(row.messages||[]);this.changed();return row.messages}
+ /** 同一会话串行，不同会话使用独立 Promise 链；前次失败不阻断后续任务。 */
  async enqueue(id:string,run:()=>Promise<unknown>){
   const row=this.get(id);row.queued++;this.changed()
   const predecessor=this.queues.get(id)||Promise.resolve()

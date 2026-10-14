@@ -4,10 +4,15 @@ const {NetEaseMusicAdapter,QQMusicAdapter}=require('./music-adapters.cjs')
 const {AsyncLocalStorage}=require('node:async_hooks')
 const {ApplicationMonitor}=require('./application-monitor.cjs')
 const launchLabels={launching:'正在启动应用…',launch_submitted:'启动请求已交给 Windows',process_detected:'已检测到应用进程',window_detected:'已找到窗口，正在恢复',window_ready:'窗口已就绪',existing_window_observed:'已找到正在运行的应用',windows_shell_launch:'正在使用 Windows 启动入口',candidate_failed:'正在尝试备用启动入口',launch_failed:'应用启动未通过验证',focus_unavailable:'窗口已找到，未能切换到前台'}
+/**
+ * 执行后端已授权的桌面操作，隔离任务上下文及音乐客户端适配器状态。
+ * AsyncLocalStorage 使并发观察的任务 guard 始终检查原会话，不依赖当前 UI。
+ */
 class DesktopAppAgent {
  constructor(registry,paths,audit,browser){this.registry=registry;this.paths=paths;this.audit=audit;this.browser=browser;this.scope=new AsyncLocalStorage();this.guard=async()=>{};this.controller=new ComputerController(registry,paths.cache,audit,action=>this.guard(this.scope.getStore(),action));registry.setController(this.controller,audit);this.monitor=new ApplicationMonitor(this.controller,registry);this.adapters=new Map();this.cpuSample=null}
  adapter(app,session){const key=app+':'+session;if(!this.adapters.has(key))this.adapters.set(key,app==='qqmusic'?new QQMusicAdapter(this.controller):new NetEaseMusicAdapter(this.controller,app));return this.adapters.get(key)}
- async execute(operation,args,session){return this.scope.run(session,async()=>{
+  /** 执行结果保留 verified/错误证据；请求提交不等于目标已完成。 */
+  async execute(operation,args,session){return this.scope.run(session,async()=>{
   await this.guard(session)
   const app=args.app||args.provider,contextual=['qqmusic','netease'].includes(app)&&(args.music_context||/^(music|media)\./.test(operation)),adapter=contextual?this.adapter(app,session):null
   if(adapter)adapter.bindTask({...args.music_context,applicationId:this.registry.detect(app).id||args.music_context?.applicationId,currentStep:operation},session)
@@ -55,10 +60,15 @@ class DesktopAppAgent {
  }
  stop(){this.monitor.stop();this.controller.stop()}
 }
+/**
+ * 消费 DesktopBridge 私有队列并按命令 ID 回传结果。
+ * 最多四个命令在途；需要鼠标/键盘的操作另外串行，观察可并发。
+ */
 class DesktopCommandPump {
  constructor(url,token,agent){this.url=url;this.headers={'Content-Type':'application/json','X-Companion-Control-Token':token};this.agent=agent;this.stopped=false;agent.guard=async(session,action)=>{if(!session)return;const s=await this.state(session);if(['cancelled','stopped','failed'].includes(s.status))throw Error('task_cancelled');if((['paused','waiting_user'].includes(s.status)&&!['list','state','observe'].includes(action))||!s.automation_enabled)throw Error('automation_paused')};agent.monitor.active=async session=>!['done','completed','cancelled','stopped','failed'].includes((await this.state(session)).status);agent.monitor.publish=async(session_id,kind,title,data)=>{await fetch(this.url+'/api/desktop/observation',{method:'POST',headers:this.headers,body:JSON.stringify({session_id,kind,title,data}),signal:AbortSignal.timeout(4000)})}}
  async state(session){const r=await fetch(this.url+'/api/desktop/state/'+encodeURIComponent(session),{headers:this.headers,signal:AbortSignal.timeout(4000)});if(!r.ok)throw Error('任务状态无法读取');return r.json()}
- async handle(command){
+  /** heartbeat 只表示仍执行，不作为成功证据；finally 必须释放该命令计时器。 */
+  async handle(command){
   let result={},error=null
   const heartbeat=setInterval(()=>{void this.agent.monitor.publish(command.session_id,'heartbeat','桌面操作仍在执行',{operation:command.operation}).catch(()=>{})},3000)
   try{
@@ -77,6 +87,7 @@ class DesktopCommandPump {
    const task=this.handle(command).catch(()=>{}).finally(()=>this.inflight.delete(task));this.inflight.add(task)
   }
  }catch{if(!this.stopped)await new Promise(r=>setTimeout(r,750))}}}
- stop(){this.stopped=true;this.agent.stop()}
+  /** 停止接收新命令并关闭本实例观察器/worker；不关闭目标应用。 */
+  stop(){this.stopped=true;this.agent.stop()}
 }
 module.exports={DesktopAppAgent,DesktopCommandPump}

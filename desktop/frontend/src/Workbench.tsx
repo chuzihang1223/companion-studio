@@ -27,10 +27,12 @@ const eventNames:Record<string,string>={plan_updated:'任务计划',tool_started
 const tools:Record<string,string>={'music.play':'搜索并播放歌曲','music.search':'搜索歌曲','coding.task':'修改项目并运行测试','app.launch':'启动应用','app.close':'关闭应用','browser.search_site':'网页搜索','system.get_status':'读取系统状态'}
 const ended=new Set(['idle','done','completed','failed','stopped','cancelled'])
 
+/** 组合工作模块；工具结果独立展示，任务状态与布局分别按会话归属。 */
 export default function Workbench({visible,conversationId,session,pending,messages,onApproval,onExecute,onStop,renderMessage,onError,onStatus}:Props){
  const sessionKeys=useRef<{conversation:string|null;id:string|null;previous:string|null}>({conversation:null,id:null,previous:null})
  if(sessionKeys.current.conversation!==conversationId)sessionKeys.current={conversation:conversationId,id:null,previous:null}
  if(session?.id&&sessionKeys.current.id!==session.id){sessionKeys.current.previous=sessionKeys.current.id;sessionKeys.current.id=session.id}
+ // 实际任务生成前使用 pending key；任务更替保留前一个 key 供布局回退。
  const layoutKey=sessionKeys.current.id||'pending:'+(conversationId||'new-work')
  const {layout,loaded,restored,saveError,setLayout,change,restore,reset,undo,undoCount,template,saveDefault}=useWorkbenchLayout(layoutKey,sessionKeys.current.previous||conversationId||undefined)
  const [requestedUrl,setRequestedUrl]=useState(''),[allModules,setAllModules]=useState(false)
@@ -38,6 +40,8 @@ export default function Workbench({visible,conversationId,session,pending,messag
  const routed=useMemo(()=>new AgentOutputRouter().route(session,messages),[session,messages])
  const active=layout.active
  const running=!!session&&!ended.has(session.status),paused=['paused','waiting_user'].includes(session?.status||''),step=session?.steps.find(s=>s.status==='active')
+ // 自动开启只处理首次出现的输出模块；已有精确布局和用户最小化状态优先。
+ // 依赖保留当前事件/输出数量触发方式，不将每次重新创建的回调加入其中。
  useEffect(()=>{if(!loaded)return;if(seen.current.key!==layoutKey){seen.current={key:layoutKey,modules:new Set(restored?routed.outputs.map(row=>row.module):[])}}
   const fresh=[...new Set(routed.outputs.map(row=>row.module))].filter(id=>!seen.current.modules.has(id));fresh.forEach(id=>seen.current.modules.add(id))
   if(pending&&!seen.current.modules.has('permissions')){fresh.push('permissions');seen.current.modules.add('permissions')}

@@ -395,6 +395,7 @@ export async function* streamMessage(
   yield* readEventStream(response)
 }
 
+/** 分网络块保留未完成 SSE 事件；按到达顺序产出，并在结束/取消时释放 reader。 */
 async function* readEventStream(response:Response):AsyncGenerator<ChatStreamEvent>{
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))

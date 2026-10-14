@@ -1,6 +1,10 @@
 'use strict'
 const ids=['conversation','workflow','collaboration','code','diff','terminal','browser','files','application','media','system','preview','artifacts','permissions']
 const finite=(v,f)=>Number.isFinite(Number(v))?Number(v):f
+/**
+ * 验证自由布局与共享分割线，拒绝重叠或无效结构，避免覆盖已有有效布局。
+ * history=false 用于单层历史快照，防止递归复制全部撤销历史。
+ */
 function cleanFree(value,history=true){
  if(value.version!==3||!ids.includes(value.active)||!value.modules||JSON.stringify(value).length>256000)throw Error('无效自由布局')
  const canvasWidth=Math.max(64,finite(value.canvasWidth,1000)),modules={}

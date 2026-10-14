@@ -14,7 +14,7 @@ export type PlaybackDiagnostic = {
 
 type PlaybackListener = (voiceId: string | null, diagnostic: PlaybackDiagnostic | null) => void
 
-/** One audio element owns all voice playback, including the diagnostic sample. */
+/** 协调当前回复/试听的播放所有权；支持连续 PCM、原生播放与浏览器回退。 */
 export class AudioPlaybackService {
   private audio: HTMLAudioElement | null = null
   private objectUrl: string | null = null

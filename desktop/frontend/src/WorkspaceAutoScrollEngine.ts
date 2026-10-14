@@ -1,6 +1,7 @@
 export const RESIZE_SCROLL_MARGIN = 80
 const MIN_SPEED = 360, MAX_SPEED = 1200
 
+/** 只为带纵向边缘的缩放计算像素/秒速度；停留边缘时由控制器继续调度。 */
 export function resizeScrollVelocity(clientY:number,top:number,bottom:number,edge:string){
  if(!edge.includes('n')&&!edge.includes('s'))return 0
  const band=Math.min(RESIZE_SCROLL_MARGIN,(bottom-top)/3)
@@ -9,7 +10,7 @@ export function resizeScrollVelocity(clientY:number,top:number,bottom:number,edg
  return 0
 }
 
-/** Read before writes; refresh bounds only when the viewport changes. */
+/** 先读几何后写样式；视口失效时才重新测量，避免逐帧强制布局。 */
 export class WorkspaceAutoScrollEngine {
  top=0;bottom=0;left=0;viewportHeight=0;gridOffset=0;tail=0
  private dirty=true

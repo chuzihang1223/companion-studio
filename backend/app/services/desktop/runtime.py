@@ -1,6 +1,14 @@
-"""Visible plans with execution, observation, bounded recovery and goal verification."""
+"""按计划执行工具，将实际观察、验证和有界恢复发布到工作台。
+
+当前模块协调步骤和桌面桥，不让模型直接操作窗口。暂停/取消检查点、
+工具超时和目标验证各有职责，正常返回不等同用户所有子目标均被覆盖。
+"""
+from __future__ import annotations
+
 import asyncio
+from collections.abc import Awaitable, Callable
 import json
+from typing import TYPE_CHECKING, Any
 from app.services.desktop.lifecycle import TaskHandle, TaskCancelled
 from app.services.desktop.preferences import read_preferences
 from app.services.trusted_actions import trusted_actions, action_for, risk_for
@@ -9,6 +17,11 @@ from app.services.desktop.goal_verifier import GoalVerifier
 from app.services.desktop.task_waiter import TaskWaiter
 from app.services.desktop.music_task import music_context
 
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from app.services.agent_service import AgentContext
+    from app.services.agent_tools import ToolCall, ToolDetail, ToolResult
+
 LABELS = {'app.launch':'启动应用','app.detect':'检测应用','app.status':'观察应用','app.focus':'聚焦应用',
           'music.play':'搜索并播放歌曲','music.search':'搜索歌曲','coding.task':'修改项目并验证测试',
           'system.get_status':'读取系统状态','browser.search_site':'网页搜索','browser.open_url':'打开网页',
@@ -16,18 +29,23 @@ LABELS = {'app.launch':'启动应用','app.detect':'检测应用','app.status':'
 
 
 class VerificationFailure(RuntimeError):
-    def __init__(self, result):
+    """携带原始失败观察，便于重试结束时保留可展示错误。"""
+
+    def __init__(self, result: ToolResult) -> None:
         super().__init__(result.get('error') or '此步骤未通过验证')
         self.result = result
 
 
 class AgentTaskRuntime:
-    def __init__(self, app):
+    """持有当前 Work Session 的 Handle，协调工具步骤与结果检查。"""
+
+    def __init__(self, app: FastAPI) -> None:
         self.app = app
         self.handles: dict[str, TaskHandle] = {}
         self.logger = file_logger('app.runtime', 'agent-runtime.log')
 
-    def prepare(self, context):
+    def prepare(self, context: AgentContext) -> None:
+        """从工具生成可见步骤并准备 Handle；此阶段不执行任何工具。"""
         titles = []
         for call in context.calls:
             if call['name'] in {'music.play', 'music.search'} and call['arguments'].get('provider') != 'local':
@@ -40,7 +58,8 @@ class AgentTaskRuntime:
         self.app.state.work_state.set_steps(context.work_session_id, titles)
         self.handles.setdefault(context.work_session_id,TaskHandle())
 
-    def control(self, session_id: str, action: str):
+    def control(self, session_id: str, action: str) -> None:
+        """变更暂停/接管/取消状态，取消时同时唤醒注册器中的任务。"""
         handle = self.handles.get(session_id)
         if handle:
             handle.control(action)
@@ -49,7 +68,12 @@ class AgentTaskRuntime:
         status = {'pause':'paused', 'takeover':'waiting_user', 'resume':'observing'}.get(action, 'cancelled')
         self.app.state.work_state.emit(session_id, 'task_'+action, {}, status=status)
 
-    async def run(self, context, approved_ids: set[str]) -> tuple[list[dict], list[dict], bool]:
+    async def run(self, context: AgentContext, approved_ids: set[str]) -> tuple[list[dict[str, Any]], list[ToolDetail], bool]:
+        """逐个检查权限和执行工具，返回模型观察、工具明细及目标判定。
+
+        每次操作前过检查点，拒绝权限会形成失败结果而不进入执行器。
+        后续事件/持久回复由 AgentService 处理，运行配额由注册器清理。
+        """
         session = context.work_session_id
         work = self.app.state.work_state
         handle = self.handles.setdefault(session, TaskHandle())
@@ -76,7 +100,14 @@ class AgentTaskRuntime:
         finally:
             if handle.cancelled:self.handles.pop(session, None)
 
-    async def step(self, context, title: str, operation, handle: TaskHandle, max_attempts=3, music_identity=None):
+    async def step(self, context: AgentContext, title: str,
+                   operation: Callable[[], Awaitable[ToolResult]], handle: TaskHandle,
+                   max_attempts: int = 3, music_identity: dict[str, Any] | None = None) -> ToolResult:
+        """运行一个步骤并验证结果，普通等待65秒、编码等待1200秒。
+
+        启动、完整编码和超时不整步重复；音乐调用明确使用一次尝试，
+        由适配器内部恢复。用户干扰会等待接管，再观察当前步骤。
+        """
         session = context.work_session_id
         work = self.app.state.work_state
         await handle.checkpoint()
@@ -104,6 +135,8 @@ class AgentTaskRuntime:
                     work.step_status(session, position, 'failed')
                     return {'error':'应用刚打开就被关闭了，已结束这次操作。', 'code':'APP_EXITED_BEFORE_READY', 'verified':False}
                 if any(code in str(exc) for code in ('user_interruption','automation_paused','desktop_locked')):
+                    # 不越过焦点/锁屏保护。checkpoint 最多等待600秒，恢复后
+                    # 重新执行当前观察步骤，而不是声称干扰期间已完成操作。
                     handle.control('takeover')
                     summary='Windows 已锁屏；解锁后点击继续重新观察。' if 'desktop_locked' in str(exc) else '自动操作已暂停；点击继续后重新观察目标窗口。'
                     work.emit(session, 'user_interruption', {'summary':summary, **bound}, status='waiting_user')
@@ -124,7 +157,12 @@ class AgentTaskRuntime:
                 await asyncio.sleep(.3)
         return {'error':'步骤未完成', 'verified':False}
 
-    async def execute_call(self, context, call, handle):
+    async def execute_call(self, context: AgentContext, call: ToolCall, handle: TaskHandle) -> ToolResult:
+        """按工具类别分发，并将实际结果放入对应工作台模块。
+
+        桌面工具通过 Electron 桥回传观察；文件工具在线程中执行。
+        code.run 传递取消/暂停回调，但协程取消不能强制停止所有线程。
+        """
         name, args = call['name'], call['arguments']
         session, work = context.work_session_id, self.app.state.work_state
         desktop = self.app.state.desktop_bridge
@@ -135,6 +173,8 @@ class AgentTaskRuntime:
         identity = music_context(context, args.get('provider') or read_preferences()['music_player'], args['query']) if music_bound else None
         work.emit(session, 'tool_started', {'name':name, 'summary':LABELS.get(name, name), **({'music_context':identity} if identity else {})})
         if name in {'music.play','music.search'} and args.get('provider') != 'local':
+            # 音乐每阶段绑定同一任务/应用上下文，避免跨会话误用搜索结果；
+            # 仅在适配器真实验证播放后才形成已播放反馈。
             app = args.get('provider') or read_preferences()['music_player']
             target = {'app':app, 'query':args['query'], 'music_context':identity}
             stages = [('检测音乐客户端','app.detect'),('启动并等待窗口','app.launch'),('定位搜索框并搜索歌曲','music.search')]

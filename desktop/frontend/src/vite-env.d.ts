@@ -17,7 +17,8 @@ interface Window {
     feedNativePcm:(body:{pcm_base64:string;segment_id:string;end_segment?:boolean;session_id?:string;sequence?:number})=>Promise<{status:string}>
     finishNativePcm:()=>Promise<unknown>
     cancelVoiceStream:(session_id:string)=>Promise<unknown>
-    workbenchLayout:(key:string,value?:import('./WorkbenchLayout').WorkbenchLayout)=>Promise<import('./WorkbenchLayout').WorkbenchLayout|null>
+    // 读取可能返回旧版布局；由 migrateLayout 从 unknown 兼容恢复。
+    workbenchLayout:(key:string,value?:import('./WorkbenchLayout').WorkbenchLayout)=>Promise<unknown>
     getVirtualDocument:(sessionId:string,id:string)=>Promise<import('./CodeModule').VirtualCodeDocument>
     editVirtualDocument:(sessionId:string,id:string,content:string)=>Promise<Record<string,unknown>>
     saveVirtualDocument:(sessionId:string,id:string,mode:'save'|'saveAs'|'apply')=>Promise<{cancelled?:boolean;path?:string;dirty?:boolean}>

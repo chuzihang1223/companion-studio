@@ -97,6 +97,7 @@ async function openSafePage(url) {
   return true
 }
 
+// 主进程拥有窗口、系统能力和凭据；渲染层只能调用下面注册的固定通道。
 const logFile = path.join(paths.logs, 'electron.log')
 function log(message) {
   fs.appendFileSync(logFile, `${new Date().toISOString()} ${message}\n`)
@@ -123,6 +124,7 @@ else app.on('second-instance', () => {
   }
 })
 
+/** 创建可信主窗口；网站内容使用独立视图，不能继承本窗口 preload。 */
 function createWindow() {
   mainWindow = new BrowserWindow({
     title: brand.appName,
@@ -185,17 +187,24 @@ ipcMain.handle('character-import',async(event)=>{
  return characterConfig.importCard({filename:path.basename(file),data_base64:fs.readFileSync(file).toString('base64')})
 })
 ipcMain.handle('work-clear-folder',(event,conversationId)=>{requireMainWindow(event);return privateBackend('/api/work/workspace',{conversation_id:conversationId,root:null})})
+/**
+ * IPC 边界检查：只接受已登记主窗口的 WebContents，不接受网页视图。
+ * 后端还会对控制接口核验控制 Token，并对工作目录/权限单独检查。
+ * @param {Electron.IpcMainInvokeEvent} event
+ */
 function requireMainWindow(event) {
   if (!mainWindow || event.sender !== mainWindow.webContents) throw new Error('Unauthorized window')
 }
 ipcMain.handle('window-state',event=>{requireMainWindow(event);return {maximized:mainWindow.isMaximized(),minimized:mainWindow.isMinimized()}})
 ipcMain.handle('window-control',(event,action)=>{requireMainWindow(event);if(action==='minimize')mainWindow.minimize();else if(action==='toggleMaximize'){mainWindow.isMaximized()?mainWindow.unmaximize():mainWindow.maximize()}else if(action==='close')mainWindow.close();else throw Error('无效窗口操作');return true})
 ipcMain.handle('theme-settings',(event,value)=>{requireMainWindow(event);return value?appearanceConfig.apply(value):appearanceConfig.current()})
+/** 代理本地控制接口；Token 留在主进程，不返回给渲染层。 */
 async function privateBackend(route,body,method='POST'){
  const response=await fetch(backend.url+route,{method:body?method:'GET',headers:{'Content-Type':'application/json','X-Companion-Control-Token':backendManager.controlToken},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)})
  const result=await response.json();if(!response.ok)throw Error(result.detail||'操作未完成');return result
 }
 require('./virtual-documents.cjs')({ipcMain,requireMainWindow,request:privateBackend,getWindow:()=>mainWindow})
+// 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher=null,projectWatchTimer=null,projectWatchRevision=0
 ipcMain.handle('work-files',async(event,sessionId,options)=>{requireMainWindow(event);const query=new URLSearchParams();for(const key of ['path','query','read','show_ignored'])if(options?.[key]!==undefined)query.set(key,String(options[key]));return privateBackend(`/api/work/${encodeURIComponent(sessionId)}/files?${query}`)})
 ipcMain.handle('work-open-folder',async(event,sessionId)=>{requireMainWindow(event);const row=await privateBackend(`/api/work/${encodeURIComponent(sessionId)}`);if(!row.workspace_root)throw Error('尚未选择工作文件夹');const error=await shell.openPath(row.workspace_root);if(error)throw Error(error);return true})
@@ -409,5 +418,6 @@ if (haveLock) app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => app.quit())
+// 释放本实例拥有的资源；禁止按应用通用名称结束其他安装版/个人版进程。
 app.on('before-quit', () => {projectWatcher?.close();clearTimeout(projectWatchTimer);mediaService?.stop();desktopPump?.stop();backendManager.stopBackend()})
 app.on('will-quit', () => backendManager.stopBackend())

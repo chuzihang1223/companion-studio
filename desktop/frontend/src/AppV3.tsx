@@ -49,6 +49,7 @@ export default function AppV3() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [branches, setBranches] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  // store 跨可见会话切换存在；页面状态只投影当前会话，不拥有后台请求。
   const runtimeRef=useRef(new ConversationRuntimeStore())
   const runtime=runtimeRef.current
   const [,renderRuntime]=useState(0)
@@ -101,6 +102,7 @@ export default function AppV3() {
   const gateRef=useRef<FirstSpeechGate|null>(null)
   const navigatorRef=useRef(new ConversationNavigator())
   useEffect(installNativeContextMenus,[])
+  // 一次注册 store 订阅；draftKey 经 refs 读取当前角色/模式/会话归属。
   useEffect(()=>runtime.subscribe(()=>{
     renderRuntime(value=>value+1)
     const row=runtime.get(draftKey());busyRef.current=row.generating;setBusy(row.generating)
@@ -133,6 +135,7 @@ export default function AppV3() {
   const seenSegmentsRef = useRef(new Map<string, number>())
   const currentQueuedAfterRef = useRef(0)
   const avatarSrc = customAvatar ?? avatar
+  // 默认使用按会话排队的提交服务；下方旧串行分支仅保留兼容入口。
   const concurrentRuntime=saved('v85-concurrent-runtime','true')==='true'
   const submitTimesRef=useRef(new Map<string,number>())
   const submissionRef=useRef<ConversationSubmissionService|null>(null)
@@ -155,7 +158,7 @@ export default function AppV3() {
   function stopAudio() {
     if(concurrentRuntime)submissionRef.current?.silence()
     speechRef.current?.detach();speechRef.current=null
-    // Each request owns its stream. Navigation only detaches the playback device.
+    // 请求拥有自己的流；导航仅分离播放，后台文字及语音缓存仍继续完成。
     gateRef.current=null
     playbackSeqRef.current += 1
     activeJobRef.current = null

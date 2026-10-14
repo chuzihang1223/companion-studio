@@ -11,6 +11,7 @@ type Gesture={controller:ResizeSessionController;calculator:WorkspaceResize;next
 const heightOf=(layout:WorkbenchLayout)=>Math.max(240,...visibleIds(layout).map(id=>layout.modules[id].y+layout.modules[id].height))
 const dividerStyle=(d:WorkspaceDivider)=>d.axis==='x'?{left:d.position-4,top:d.start,width:8,height:d.end-d.start}:{left:d.start,top:d.position-4,width:d.end-d.start,height:8}
 
+/** 绘制可见坐标；缩放帧直接更新 DOM，仅指针松开后提交 React/持久布局。 */
 export default function WorkspaceGrid({layout,onCommit,renderModule,onChange,drag,target}:Props){
  const grid=useRef<HTMLDivElement>(null),[width,setWidth]=useState(750),pendingWidth=useRef(750)
  const gesture=useRef<Gesture|null>(null),latest=useRef({layout,onCommit})
@@ -46,8 +47,7 @@ export default function WorkspaceGrid({layout,onCommit,renderModule,onChange,dra
  function update(frame:ResizeFrame){
   const state=gesture.current;if(!state)return {scrollTop:frame.scrollTop,changed:false}
   let scroll=frame.scrollTop+frame.scrollDelta,next=state.calculator.update(frame.dx,frame.dy+frame.scrollDelta)
-  // Derive consumed scroll before the sole DOM write. A constrained edge may
-  // need another cheap calculation, but never another paint or queued frame.
+  // 先计算允许消耗的滚动，再唯一绘制；约束重算不应增加 paint 或排队帧。
   const allowed=frame.engine.clampScroll(scroll,heightOf(next))
   if(Math.abs(allowed-scroll)>.001){scroll=allowed;next=state.calculator.update(frame.dx,frame.dy+scroll-frame.scrollTop)}
   state.next=next
@@ -59,6 +59,7 @@ export default function WorkspaceGrid({layout,onCommit,renderModule,onChange,dra
   setResizing(false,state.controller.options.container);log(state,reason)
   if(pendingWidth.current!==width)setWidth(pendingWidth.current)
  }
+ // ResizeObserver 不在手势中触发 React 尺寸重建，改为刷新控制器几何。
  useEffect(()=>{
   const element=grid.current;if(!element)return
   const observer=new ResizeObserver(entries=>{
@@ -70,6 +71,8 @@ export default function WorkspaceGrid({layout,onCommit,renderModule,onChange,dra
   })
   observer.observe(element);return()=>observer.disconnect()
  },[])
+ // 原生监听仅注册一次；gesture/latest/viewRef 提供当前会话与提交对象。
+ // 不机械加入每次渲染变化的依赖，以免清理函数中断正在进行的手势。
  useEffect(()=>{
   const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')cancel('escape')},blur=()=>cancel('blur'),resize=()=>gesture.current?.controller.invalidateGeometry()
   window.addEventListener('keydown',escape);window.addEventListener('blur',blur);window.addEventListener('resize',resize)
@@ -91,6 +94,7 @@ export default function WorkspaceGrid({layout,onCommit,renderModule,onChange,dra
  function move(e:PointerEvent){const state=gesture.current;if(!state||state.controller.options.pointerId!==e.pointerId)return;e.preventDefault();state.controller.pointer(e.clientX,e.clientY)}
  function up(e:PointerEvent){
   const state=gesture.current;if(!state||state.controller.options.pointerId!==e.pointerId)return
+  // 最后位置刷新 → 停止/释放捕获 → 网页恢复 → 转回持久坐标并提交。
   state.controller.flush(e.clientX,e.clientY)
   gesture.current=null;state.controller.stop()
   setResizing(false,state.controller.options.container);log(state,'pointer_up')

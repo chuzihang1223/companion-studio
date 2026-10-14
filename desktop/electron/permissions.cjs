@@ -1,11 +1,20 @@
 const {dialog}=require('electron')
 const backend=require('./backend.cjs')
+/** 通过控制接口查询/保存后端权限；网页内容或模型文本不能替代授权结果。 */
 async function request(route,body) {
  const response=await fetch(`${backend.address.url}/api/permissions${route}`,{method:body?'POST':'GET',
   headers:{'Content-Type':'application/json','X-Companion-Control-Token':backend.controlToken},body:body?JSON.stringify(body):undefined})
  if(!response.ok)throw Error((await response.json()).detail||'权限设置失败')
  return response.json()
 }
+/**
+ * 检查持久/任务范围的许可，必要时询问用户；高风险操作只提供单次批准。
+ * @param {Electron.BrowserWindow} window
+ * @param {string} action 工具和目标组成的权限标识。
+ * @param {string|undefined} title 对话框显示的操作说明。
+ * @param {string|undefined} taskId 任务范围许可归属，不能跨任务复用。
+ * @returns {Promise<boolean>} 是否允许当前操作。
+ */
 async function authorize(window,action,title,taskId) {
  const state=await request(`/check?${new URLSearchParams({action,...(taskId?{task_id:taskId}:{})})}`)
  if(state.allowed)return true

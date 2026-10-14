@@ -1,6 +1,25 @@
 'use strict'
 const path=require('node:path'),crypto=require('node:crypto'),fs=require('node:fs')
+/**
+ * @typedef {Object} LaunchCandidate
+ * @property {string} id 由类型、目标和参数生成的稳定入口标识。
+ * @property {string} launch_type EXE、快捷方式、AppsFolder 或已登记协议类型。
+ * @property {string} target 登记的启动目标；路径入口必须是 Windows 绝对路径。
+ * @property {string} arguments 登记的参数，不能作为 shell 命令执行。
+ * @property {string} working_directory 启动工作目录。
+ * @property {number} launch_success_count
+ * @property {number} launch_failure_count
+ *
+ * @typedef {Object} ApplicationRecord
+ * @property {string} app_id 应用标识，和某次启动的 PID 不同。
+ * @property {string} name
+ * @property {string[]} aliases 多来源名称及成功匹配的别名。
+ * @property {string[]} sources 索引来源，用于诊断和部分扫描合并。
+ * @property {LaunchCandidate[]} launch_candidates
+ * @property {boolean} installed 表示登记入口可用，不表示已启动或窗口已就绪。
+ */
 const normalizeName=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/\b(?:v?\d+(?:\.\d+){1,4}|x64|x86|64-bit|32-bit|user)\b/g,'').replace(/[\s\p{P}\p{S}_]+/gu,'')
+/** @param {unknown} value @returns {string} 合法绝对路径的归一形式，非法值返回空串。 */
 function windowsPath(value){
  const candidate=String(value||'').trim().replace(/^"(.*)"$/,'$1').replace(/%([^%]+)%/g,(match,name)=>Object.entries(process.env).find(([key])=>key.toLowerCase()===name.toLowerCase())?.[1]||match)
  if(!candidate||/[\r\n\0]/.test(candidate)||!path.win32.isAbsolute(candidate))return ''
@@ -14,6 +33,11 @@ function candidate(type,target,row={}){
   arguments:args,working_directory:cwd,name:row.name||'',source:row.source||'custom',confidence:row.source==='custom'?1:.9,
   executable_path:windowsPath(row.executable_path||row.executable),launch_success_count:0,launch_failure_count:0}
 }
+/**
+ * 归一多个 Windows 发现来源的记录，不启动程序、不提升权限。
+ * @param {Record<string, unknown>} row 扫描或已有缓存记录，允许保留扩展元数据。
+ * @returns {ApplicationRecord|null} 无名称、卸载入口或没有启动候选时返回 null。
+ */
 function normalizeRecord(row){
  const executable=windowsPath(row.executable_path||row.executable||row.path),shortcut=windowsPath(row.shortcut_path||row.launch_target)
  const aumid=String(row.app_user_model_id||'').trim(),protocol=String(row.protocol||'').trim(),name=String(row.display_name||row.name||'').trim()
@@ -40,6 +64,7 @@ function normalizeRecord(row){
   launch_success_count:row.launch_success_count||0,launch_failure_count:row.launch_failure_count||0,
   sources:row.sources||[row.source||'custom'],installed:row.installed!==false}
 }
+/** 先采用已验证的成功入口，再考虑来源类型和失败计数；不修改输入数组。 */
 function rankCandidates(record){
  const name=normalizeName(record.display_name||record.name)
  const score=item=>(item.id===record.preferred_launch_method?10000:0)+(item.launch_success_count||0)*120-(item.launch_failure_count||0)*25+
@@ -47,5 +72,6 @@ function rankCandidates(record){
   (!item.arguments?60:0)+(normalizeName(item.name)===name?40:0)
  return [...record.launch_candidates||[]].sort((a,b)=>score(b)-score(a))
 }
+/** 登记入口存在性检查；实际运行状态必须由进程/窗口观察确认。 */
 function available(record){return record.installed!==false&&record.launch_candidates.some(item=>['exe','shortcut','launcher','custom','start_app'].includes(item.launch_type)?fs.existsSync(item.target):Boolean(item.target))}
 module.exports={windowsPath,normalizeName,normalizeRecord,rankCandidates,available,nonApp,candidate}

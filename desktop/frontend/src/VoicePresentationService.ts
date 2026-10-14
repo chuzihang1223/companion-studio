@@ -1,6 +1,6 @@
 import type {ChatStreamEvent} from './api'
 import type {AudioPlaybackService} from './AudioPlaybackService'
-/** One consumer for live Chat and Work. Metadata fences every reply and PCM frame. */
+/** Chat/Work 共用消费器；回复、会话及序号共同限定可播放的 PCM 片段。 */
 export class VoicePresentationService {
  private id=''
  private session=''
@@ -13,7 +13,7 @@ export class VoicePresentationService {
   if(item.event==='assistant_started'){this.begin(String(d.message_id),String(d.session_id||''));return false}
   if(!['audio_pcm','audio_segment_end','audio_end','voice_error','audio_aborted'].includes(item.event))return false
   if(this.stopped)return true
-  // Keep consuming the stream so its voice cache is saved, without playing a background reply.
+   // 后台仍消费事件供后端保存语音，但不抢占当前回复的输出设备。
   if(!this.eligible())return true
   if(d.session_id&&d.session_id!==this.session||d.message_id&&d.message_id!==this.id)return true
   if(item.event==='audio_pcm'){

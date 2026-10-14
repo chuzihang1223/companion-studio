@@ -1,6 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),paths=require('./paths.cjs')
 const ids=['conversation','workflow','collaboration','code','diff','terminal','browser','files','application','media','system','preview','artifacts','permissions']
 const file=path.join(paths.userData,'workbench-layout.json')
+/** 按已有版本验证布局；只保存模块几何/可见性，不保存对话、凭据或任务权限。 */
 function clean(value){
  if(value?.version===3)return require('./free-layout-storage.cjs').cleanFree(value)
  if(value?.version===2)return cleanGrid(value)
@@ -20,6 +21,7 @@ function cleanGrid(value){
  }
  return {version:2,active:value.active,locked:!!value.locked,columns,rows,modules,...(value.legacy?{legacy:value.legacy}:{})}
 }
+/** 以工作会话/默认模板键存储布局；版本迁移前保留旧文件，不重排业务任务。 */
 module.exports=function layout(key,value){
  if(typeof key!=='string'||!key.length||key.length>100)throw Error('无效会话')
  let state={};try{state=JSON.parse(fs.readFileSync(file,'utf8'))}catch{}

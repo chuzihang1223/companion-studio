@@ -5,9 +5,10 @@ import type {AudioPlaybackService} from './AudioPlaybackService'
 import {VoicePresentationService} from './VoicePresentationService'
 import {FirstSpeechGate} from './FirstSpeechGate'
 
+/** 提交时的角色、模式和附件快照，不从后续切换的可见页面重新取值。 */
 export type Submission={conversationId:string|null;character:CharacterInfo;text:string;mode:'chat'|'agent';folder:string|null;attachments:AttachmentInput[];replyTo?:string;voice:boolean;expression:api.ExpressionLevel;speed:number;volume:number;prefetch:boolean;autoWork:boolean}
 type Hooks={visible:(id:string)=>boolean;created:(origin:string|null,id:string,mode:'chat'|'agent',characterId:string)=>void;messages:(id:string,rows:ChatMessage[])=>void;work:(id:string,session:api.WorkSession)=>void;changed:()=>void}
-/** Immutable request ownership; streams outlive navigation, presentation does not. */
+/** 请求归属固定；导航分离播放展示，后台仍可消费流并保存自己的语音。 */
 export class ConversationSubmissionService{
  private requests=new Map<string,{conversationId:string;abort:AbortController;workId?:string}>()
  private voices=new Set<VoicePresentationService>()
@@ -73,6 +74,7 @@ export class ConversationSubmissionService{
   if(this.hooks.visible(id)){this.silence();this.audible=ticket}
   await this.consume(request,ticket,'',planId,signal=>this.sdk.streamAgent(planId,approved,request.voice,request.expression,request.speed,signal),true)
  }
+ /** 文字、语音共用有序事件流；文本完成与音频消费结束是不同生命周期。 */
  private async consume(request:Submission,ticket:string,userDraft:string,assistantDraft:string,eventSource:(signal:AbortSignal)=>AsyncGenerator<api.ChatStreamEvent>,work:boolean){
   const id=request.conversationId!,abort=new AbortController()
   this.requests.set(ticket,{conversationId:id,abort,workId:this.store.get(id).work_session_id||undefined})
@@ -81,14 +83,15 @@ export class ConversationSubmissionService{
   const gate=new FirstSpeechGate(replyId,request.voice,delta=>this.rows(id,rows=>rows.map(row=>row.id===replyId?{...row,content:row.content+delta}:row)))
   this.gates.set(ticket,{id:replyId,gate})
   this.voices.add(voice);this.store.patch(id,{voice_state:request.voice?'generating':'idle'})
-  // Queue releases when the text is saved; long speech continues consuming and caching.
+  // 文字保存即可释放本会话排队；长语音继续消费/缓存，不能在这里截断流。
   let resolveText!:()=>void,rejectText!:(cause:unknown)=>void
   const textDone=new Promise<void>((resolve,reject)=>{resolveText=resolve;rejectText=reject})
   const drain=async()=>{
    try{
     for await(const item of eventSource(abort.signal)){
      if(abort.signal.aborted)throw Error('本次回复已停止')
-     if(item.data.conversation_id&&item.data.conversation_id!==id)continue
+      // 先核对会话，再交给语音消费者核对回复、声音会话及片段序号。
+      if(item.data.conversation_id&&item.data.conversation_id!==id)continue
      if(await voice.accept(item))continue
      if(item.event==='user_saved'&&userDraft&&item.data.message_id)this.rows(id,rows=>rows.map(row=>row.id===userDraft?{...row,id:String(item.data.message_id)}:row))
      else if(item.event==='assistant_started'){
@@ -111,7 +114,8 @@ export class ConversationSubmissionService{
   }
   void drain();await textDone
  }
- async stop(id:string){
+  /** 只取消目标会话，不因一个页面的停止操作中断其他后台会话。 */
+  async stop(id:string){
   for(const context of this.requests.values())if(context.conversationId===id){context.abort.abort();if(context.workId)await this.sdk.stopWorkSession(context.workId)}
   const workId=this.store.get(id).work_session_id;if(workId)await this.sdk.stopWorkSession(workId)
   if(this.hooks.visible(id))this.silence()

@@ -1,5 +1,12 @@
-"""A small, explicit tool registry with workspace boundaries."""
+"""定义工具协议、校验模型参数，并在限定工作目录内分发文件操作。
 
+模型只提出操作数据；本机权限由运行时另行检查。本执行器的目录限制
+不是操作系统沙箱，获准运行的 Python 脚本仍具有当前账号的权限。
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
 from dataclasses import dataclass
 from copy import deepcopy
 import difflib
@@ -9,6 +16,7 @@ import os
 import subprocess
 import sys
 import threading
+from typing import Any, NotRequired, TypeAlias, TypedDict
 from app.services.workspace_paths import scoped_path
 from urllib.parse import quote, urlsplit
 
@@ -17,16 +25,46 @@ from app.core.config import settings
 from app.services.application_catalog import application_ids
 
 
+ToolResult: TypeAlias = dict[str, Any]
+ToolSchema: TypeAlias = dict[str, Any]
+
+
+class ToolCall(TypedDict):
+    """已解析调用的共同字段；计划阶段补充权限和代码意图元数据。"""
+
+    id: str
+    name: str
+    arguments: dict[str, Any]
+    risk_level: str
+    requires_confirmation: bool
+    coding_mode: NotRequired[str]
+    target_text: NotRequired[str]
+    bulk_overwrite: NotRequired[bool]
+    action_id: NotRequired[str]
+    permission_required: NotRequired[bool]
+
+
+class ToolDetail(TypedDict):
+    """工具状态与实际结果；用于工作台展示和目标检查，不包含模型推测。"""
+
+    name: str
+    status: str
+    result: ToolResult
+
+
 @dataclass(frozen=True)
 class Tool:
+    """不可变工具描述；字段提示不能取代执行前的本地风险判定。"""
+
     name: str
     description: str
-    properties: dict
+    properties: dict[str, Any]
     required: list[str]
     risk_level: str
     requires_confirmation: bool = False
 
-    def schema(self) -> dict:
+    def schema(self) -> ToolSchema:
+        """输出 Function Calling Schema，保留内部点号命名的协议映射。"""
         return {"type": "function", "function": {"name": self.name.replace(".", "_"),
                 "description": self.description,
                 "parameters": {"type": "object", "properties": deepcopy(self.properties),
@@ -69,14 +107,21 @@ TOOLS = [
 
 
 class ToolRegistry:
-    def __init__(self):
+    """统一管理工具描述与模型返回值，确定性本地调用也走相同解析入口。"""
+
+    def __init__(self) -> None:
         self.by_api_name = {tool.name.replace(".", "_"): tool for tool in TOOLS}
 
-    def schemas(self) -> list[dict]:
+    def schemas(self) -> list[ToolSchema]:
+        """返回完整公开工具描述，不授予任何本地执行权限。"""
         return [tool.schema() for tool in TOOLS]
 
-    def schemas_for(self, user_text: str) -> list[dict]:
-        """Give the model only the tools needed by an explicit, narrow request."""
+    def schemas_for(self, user_text: str) -> list[ToolSchema]:
+        """按明确任务缩小模型工具集合，并加入已注册的自定义应用 ID。
+
+        这是规划提示范围；parse_calls 仍使用完整注册表，实际操作还需
+        风险、权限和路径校验，不能把 Schema 筛选视为权限隔离。
+        """
         text = user_text.lower()
         names: set[str] | None = None
         if any(word in text for word in ('暂停','下一首','上一首','继续播放')) and any(word in text for word in ('音乐','歌','网易云','下一首','上一首')):
@@ -124,7 +169,12 @@ class ToolRegistry:
                 schema['function']['description']+=' Known custom applications: '+json.dumps({key:item['name'] for key,item in custom.items()},ensure_ascii=False)
         return schemas
 
-    def parse_calls(self, message: dict) -> list[dict]:
+    def parse_calls(self, message: dict[str, Any]) -> list[ToolCall]:
+        """解析最多五个调用，检查名称、JSON 参数、必填项、类型与编号。
+
+        风险来自注册工具，后续还会按本机动作重新计算。当前并非完整
+        JSON Schema 验证器；畸形列表成员的形状限制见工程审计。
+        """
         raw = message.get("tool_calls") or []
         if not isinstance(raw, list) or len(raw) > 5:
             raise ValueError("工具调用数量异常")
@@ -158,17 +208,29 @@ class ToolRegistry:
 
 
 class PermissionManager:
+    """保留的简单确认辅助接口；正式执行由 TrustedActionStore 再检查。"""
+
     @staticmethod
-    def permitted(call: dict, approved_ids: set[str]) -> bool:
+    def permitted(call: ToolCall, approved_ids: set[str]) -> bool:
+        """根据调用确认标记和已批准编号返回辅助判断，不选择权限模式。"""
         return not call["requires_confirmation"] or call["id"] in approved_ids
 
 
 class ToolExecutor:
-    def __init__(self, workspace: Path):
+    """在工作目录分发文件工具；旧桌面分支只返回待处理请求。"""
+
+    def __init__(self, workspace: Path) -> None:
         self.workspace = workspace.resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
 
-    def _run_python(self, target: Path, on_output=None, cancelled=None, paused=None) -> dict:
+    def _run_python(self, target: Path, on_output: Callable[[str], None] | None = None,
+                    cancelled: Callable[[], bool] | None = None,
+                    paused: Callable[[], bool] | None = None) -> ToolResult:
+        """运行获准脚本，限制环境、15 秒执行时间和 16 KB 输出。
+
+        输出回调来自读取线程；取消和暂停回调由执行线程轮询。暂停时
+        恢复计时预算。只终止父进程的现有清理不保证结束所有后代进程。
+        """
         if target.suffix.lower()!='.py' or not target.is_file():
             raise ValueError('只能执行项目中的 Python 脚本')
         executable = Path(os.getenv("AGENT_PYTHON", sys.executable))
@@ -192,7 +254,7 @@ class ToolExecutor:
         output = bytearray()
         exceeded = threading.Event()
 
-        def read_output():
+        def read_output() -> None:
             assert process.stdout is not None
             while chunk := process.stdout.readline():
                 output.extend(chunk[:max(0, 16_384 - len(output))])
@@ -232,9 +294,15 @@ class ToolExecutor:
                 "output_truncated": exceeded.is_set()}
 
     def _path(self, value: str) -> Path:
+        """统一检查相对路径、链接解析、私密文件及应用资料目录边界。"""
         return scoped_path(self.workspace, value)
 
-    def execute(self, call: dict) -> dict:
+    def execute(self, call: ToolCall) -> ToolResult:
+        """分发单个已校验调用，返回文件/输出或旧版待处理请求字典。
+
+        调用者负责权限检查；新建拒绝覆盖，编辑/删除保存恢复副本。
+        queued 桌面返回只代表提出请求，不能用来证明应用或歌曲已就绪。
+        """
         name, args = call["name"], call["arguments"]
         if name == 'workspace.list':
             from app.services.workspace_service import tree

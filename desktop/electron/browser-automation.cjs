@@ -5,6 +5,7 @@ const SITES={
  baidu:{home:'https://www.baidu.com/',search:q=>'https://www.baidu.com/s?wd='+encodeURIComponent(q)},
  github:{home:'https://github.com/',search:q=>'https://github.com/search?q='+encodeURIComponent(q)+'&type=repositories'}
 }
+/** 执行预定义 DOM 读取/搜索表达式；文本参数用 JSON 编码，错误向调用方报告。 */
 async function evaluateDOM(wc,expression){
  // CDP can inspect DOMContentLoaded without waiting for ads/subresources to finish.
  if(!wc.debugger.isAttached())wc.debugger.attach('1.3')
@@ -12,6 +13,7 @@ async function evaluateDOM(wc,expression){
  try{const reply=await Promise.race([wc.debugger.sendCommand('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:false}),new Promise((_r,reject)=>{timer=setTimeout(()=>reject(Error('网页 DOM 操作超时')),3000)})]);if(reply.exceptionDetails)throw Error(reply.exceptionDetails.text);return reply.result?.value}
  finally{clearTimeout(timer)}
 }
+/** 等待主文档而非广告子资源；expected 指定时核验目标站点。 */
 async function domReady(wc,timeout=20000,expected){
  const end=Date.now()+timeout
  do{try{const state=await evaluateDOM(wc,'({ready:document.readyState,url:location.href,body:!!document.body})'),actual=new URL(state.url),wanted=expected&&new URL(expected);if(state.body&&state.ready!=='loading'&&actual.protocol==='https:'&&(!wanted||actual.hostname.replace(/^www\./,'')===wanted.hostname.replace(/^www\./,'')))return state}catch{}await sleep(120)}while(Date.now()<end)
@@ -35,6 +37,7 @@ async function readPage(wc,site=''){
  const links=[...new Map(elements.filter(e=>e.innerText.trim().length>2).map(e=>({title:e.innerText.trim().slice(0,160),url:e.href})).filter(e=>/^https?:/.test(e.url)).map(e=>[e.url,e])).values()].slice(0,50);
  return {title:document.title,url:location.href,text:(document.body?.innerText||'').slice(0,14000),links,resultSelector,ready:document.readyState}})()`)
 }
+/** 网页打开不等于搜索成功，须同时观察查询、导航及至少两个结果链接。 */
 async function searchResults(wc,site,query,original,timeout=18000){
  const end=Date.now()+timeout;let content
  do{

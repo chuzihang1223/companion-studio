@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {addWorkTab,changeWorkTab,type WorkSession} from './api'
 type Tab={id:string;recordId?:string;url:string;title:string;state?:BrowserTabState}
+/** React 管标签和裁剪区域，原生网页由主进程持有；缩放期间临时隐藏网页。 */
 export default function WorkspaceBrowser({visible,session,initialUrl,onError}:{visible:boolean;session:WorkSession|null;initialUrl?:string;onError:(message:string)=>void}){
  const [tabs,setTabs]=useState<Tab[]>(()=>session?.tabs.filter(t=>t.kind==='web').map(t=>({id:String(t.data.tabId||t.id),recordId:t.id,url:String(t.data.url),title:t.title}))||[])
  const [active,setActive]=useState<string|null>(null),[address,setAddress]=useState(initialUrl||'https://www.bilibili.com/')
@@ -21,6 +22,7 @@ export default function WorkspaceBrowser({visible,session,initialUrl,onError}:{v
  async function select(tab:Tab){setActive(tab.id);activeRef.current=tab.id;setAddress(tab.url);const state=await window.desktopAPI?.workspaceBrowserAction('show',tab.id);if(!state?.id)await open(tab.url,tab.id)}
  async function close(id:string){await window.desktopAPI?.workspaceBrowserAction('close',id);if(session)await changeWorkTab(session.id,tabs.find(t=>t.id===id)?.recordId||id);setTabs(rows=>rows.filter(t=>t.id!==id));if(activeRef.current===id){setActive(null);activeRef.current=null}}
  useEffect(()=>{if(!session)return;const incoming=session.tabs.filter(t=>t.kind==='web').map(t=>({id:String(t.data.tabId||t.id),recordId:t.id,url:String(t.data.url||''),title:t.title}));setTabs(rows=>[...rows,...incoming.filter(t=>!rows.some(r=>r.id===t.id))]);if(visible&&!activeRef.current&&incoming.length){const tab=incoming[incoming.length-1];setActive(tab.id);activeRef.current=tab.id;setAddress(tab.url);void window.desktopAPI?.resizeWorkspaceBrowser(bounds());void window.desktopAPI?.workspaceBrowserAction('show',tab.id)}},[session?.tabs.length,visible])
+ // 按工作会话注册监听，active/visible 由 refs 更新；保留既有依赖与事件顺序。
  useEffect(()=>{
   const unsubscribe=window.desktopAPI?.onWorkspaceBrowserState(state=>{
    if(!state.id)return
@@ -30,6 +32,7 @@ export default function WorkspaceBrowser({visible,session,initialUrl,onError}:{v
    if(session&&state.status==='loaded'){const record=session.tabs.find(t=>t.id===state.id||t.data.tabId===state.id);if(record)void changeWorkTab(session.id,record.id,{...record.data,url:state.url,title:state.title,active:state.id===activeRef.current}).catch(()=>{})}
   })
   const resize=()=>{if(resizingRef.current||!visibleRef.current||!activeRef.current)return;const rect=bounds();if(rect.width>1&&rect.height>1){void window.desktopAPI?.resizeWorkspaceBrowser(rect);void window.desktopAPI?.workspaceBrowserAction('show',activeRef.current)}else void window.desktopAPI?.workspaceBrowserAction('hide')}
+  // 容器匹配限制事件归属：开始先隐藏，结束再按最新裁剪区域调整并显示。
   const gesture=(event:Event)=>{const detail=(event as CustomEvent<{active:boolean;container:HTMLElement}>).detail;if(detail.container!==canvas.current?.closest('.workbench'))return;resizingRef.current=detail.active;if(detail.active){if(visibleRef.current&&activeRef.current)void window.desktopAPI?.workspaceBrowserAction('hide')}else resize()}
   const observer=new ResizeObserver(resize);if(canvas.current)observer.observe(canvas.current)
   window.addEventListener('resize',resize)

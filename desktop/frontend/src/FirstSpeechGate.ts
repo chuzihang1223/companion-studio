@@ -1,4 +1,4 @@
-/** Buffer only until first playback or a bounded timeout. Text then streams freely. */
+/** 首次实际播放或有限等待后释放文字；后续逐步展示，避免无限等音频。 */
 export class FirstSpeechGate {
  private buffer=''
  private released=false
@@ -44,7 +44,8 @@ export class FirstSpeechGate {
   }
   tick()
  }
- async finish(){if(!this.buffer)return; if(!this.released){await new Promise<void>(resolve=>{const poll=()=>{if(this.released||this.stopped)resolve();else setTimeout(poll,30)};poll()})}while(this.buffer&&!this.stopped)await new Promise(r=>setTimeout(r,25))}
+  /** 完成事件等缓冲文字展示完；停止可解除等待，不改变音频流本身。 */
+  async finish(){if(!this.buffer)return; if(!this.released){await new Promise<void>(resolve=>{const poll=()=>{if(this.released||this.stopped)resolve();else setTimeout(poll,30)};poll()})}while(this.buffer&&!this.stopped)await new Promise(r=>setTimeout(r,25))}
  stop(){this.stopped=true;if(this.timer)clearTimeout(this.timer);if(this.flushTimer)clearTimeout(this.flushTimer)}
  private log(event:string,detail:Record<string,unknown>){void window.desktopAPI?.logDiagnostic('voice-sync.log',{id:this.id,event,...detail})}
 }

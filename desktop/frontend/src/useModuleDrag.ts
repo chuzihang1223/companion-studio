@@ -3,11 +3,13 @@ import type {ModuleId} from './WorkspaceModuleRegistry'
 export const MODULE_DRAG_THRESHOLD=180
 export type DropTarget={module?:ModuleId;edge:string}
 
+/** 停靠模块的延迟拖拽；帧用于落点展示，松开仅提交一次并抑制随后的点击。 */
 export function useModuleDrag(onDrop:(id:ModuleId,target:DropTarget)=>void){
  const [drag,setDrag]=useState<ModuleId|null>(null),[target,setTarget]=useState<DropTarget|null>(null)
  const ghost=useRef<HTMLDivElement>(null),pending=useRef<{id:ModuleId;x:number;y:number;at:number;active:boolean;target:DropTarget|null}|null>(null),frame=useRef(0),suppressed=useRef<ModuleId|null>(null)
  const handlers=useRef<{move:(e:PointerEvent)=>void;up:(e:PointerEvent)=>void}|null>(null)
  function cancel(){if(pending.current?.active)suppressed.current=pending.current.id;pending.current=null;cancelAnimationFrame(frame.current);setDrag(null);setTarget(null)}
+ // 窗口监听稳定注册；handlers ref 转发当前 move/up，避免旧 onDrop 闭包。
  useEffect(()=>{const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')cancel()},move=(e:PointerEvent)=>handlers.current?.move(e),up=(e:PointerEvent)=>handlers.current?.up(e);window.addEventListener('keydown',escape);window.addEventListener('blur',cancel);window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',cancel);return()=>{window.removeEventListener('keydown',escape);window.removeEventListener('blur',cancel);window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',cancel);cancelAnimationFrame(frame.current)}},[])
  function down(e:ReactPointerEvent,id:ModuleId){if(e.button!==0)return;suppressed.current=null;pending.current={id,x:e.clientX,y:e.clientY,at:performance.now(),active:false,target:null};e.currentTarget.setPointerCapture(e.pointerId)}
  function move(e:ReactPointerEvent|PointerEvent){const state=pending.current;if(!state)return

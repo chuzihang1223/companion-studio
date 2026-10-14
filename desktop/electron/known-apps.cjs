@@ -27,6 +27,7 @@ const DEFINITIONS = Object.freeze({
   qq: {label:'QQ',exe:['QQ.exe'],dirs:['Tencent/QQNT','Tencent/QQ/Bin'],official:''},
 })
 
+/** 按登记 ID/客户端别名读取安装信息；不把 installed 当作启动成功。 */
 function detect(id) {
   if(registry.custom[id]&&discovery.find(id)){const row=discovery.find(id);return {...row,id,path:row.executable||null,last_used:registry.last_used[id]||null}}
   const discovered=discovery.find(id)||discovery.list().find(row=>row.installed&&DEFINITIONS[id]?.exe.some(exe=>path.basename(row.executable||'').toLowerCase()===exe.toLowerCase()))
@@ -47,10 +48,12 @@ function detect(id) {
   return {id,name:item.label,installed:false,path:null,official:item.official}
 }
 
+/** 由桌面 Agent 注入本实例的窗口控制器，保持索引和操作的目标来源一致。 */
 function setController(value,audit=()=>{}){
  controller=value;discovery.audit=audit
  launcher=new AppLauncher({discovery,shell,controller,audit})
 }
+/** 已授权应用经 AppLauncher 验证后才更新最后使用时间。 */
 async function launch(id,options={}){
  if(!launcher)throw Error('桌面应用验证服务尚未就绪')
  const found=normalizeRecord(detect(id));found.id=id

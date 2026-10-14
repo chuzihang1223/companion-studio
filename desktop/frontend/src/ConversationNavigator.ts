@@ -1,5 +1,5 @@
 import {getConversation,loadConversation,listBranches,loadWorkForConversation} from './api'
-/** The stored type is the only source of truth for every history entry point. */
+/** 历史入口只依据后端保存的会话类型选择聊天/工作模式。 */
 export class ConversationNavigator {
   async open(id: string) {
     const conversation = await getConversation(id)

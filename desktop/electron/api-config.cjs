@@ -66,6 +66,7 @@ function initialize() {
     fs.renameSync(`${legacy.file}.${process.pid}.tmp`, legacy.file)
   }
 }
+/** 渲染层只接收预设元数据与 has_key，不返回明文或加密后的凭据内容。 */
 function listPresets() {
   initialize()
   const data = store(), saved = secrets()
@@ -75,6 +76,7 @@ function listPresets() {
     has_key: Boolean(saved[item.id] || (item.id === 'legacy' && legacyEnvironment().key)),
   })) }
 }
+/** 合并待编辑配置与安全存储的密钥，只用于主进程向后端发起配置请求。 */
 function configFor(draft) {
   if (!draft || typeof draft !== 'object') throw new Error('缺少 API 配置')
   const saved = secrets()
@@ -104,6 +106,10 @@ async function testConnection(draft) {
   lastTest = JSON.stringify(config)
   return result
 }
+/**
+ * 按测试/保存流程应用配置。加密可行后才变更后端，成功后保存预设及角色路由。
+ * force 只控制配置测试步骤，不能作为工具或项目写入的授权。
+ */
 async function apply(draft, force = false) {
   const config = configFor(draft)
   // Check secure storage before changing the running backend configuration.
@@ -156,6 +162,7 @@ async function restoreActive() {
   await restoreRoles()
 }
 const roleNames=['character_model','planning_model','tool_execution_model','coding_model']
+/** 模型职责引用预设 ID；解密密钥留在本地控制请求，不写入公开角色状态。 */
 async function restoreRoles(selection=store().roles||{}){
   const data=store(),roles={}
   for(const [role,id] of Object.entries(selection)){

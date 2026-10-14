@@ -1,13 +1,18 @@
 const {NetEaseMusicAdapter,QQMusicAdapter}=require('./music-adapters.cjs')
 const names={netease:'网易云音乐',qqmusic:'QQ音乐'}
 const browserSource=source=>/chrome|msedge|firefox|opera|brave|vivaldi|browser/i.test(source)
+/**
+ * 读取 Windows 媒体 session，缺失时按已安装播放器适配器补充观察。
+ * UI 选择 session 不授予未知控制能力；操作后须重新验证真实播放状态。
+ */
 class MediaSessionService {
  constructor({controller,registry,cache,audit=()=>{},adapterFor}){
   this.controller=controller;this.registry=registry;this.cache=cache;this.audit=audit;this.allowBrowserMedia=false;this.adapters=new Map();this.selectedId=null;this.cached=null;this.pending=null;this.stopped=false
   this.adapterFor=adapterFor||((app)=>{if(!this.adapters.has(app))this.adapters.set(app,app==='qqmusic'?new QQMusicAdapter(controller):new NetEaseMusicAdapter(controller,app));return this.adapters.get(app)})
  }
  configure({allowBrowserMedia}={}){if(typeof allowBrowserMedia==='boolean'&&allowBrowserMedia!==this.allowBrowserMedia){this.allowBrowserMedia=allowBrowserMedia;this.cached=null}return {allow_browser_media:this.allowBrowserMedia}}
- async snapshot({selectedId,force=false}={}){
+  /** 合并在途读取并短期缓存观察；force=true 用于操作后的状态验证。 */
+  async snapshot({selectedId,force=false}={}){
   if(selectedId!==undefined)this.selectedId=String(selectedId||'')||null
   if(this.stopped)return {available:false,sessions:[],current:null,diagnostics:['媒体服务已关闭']}
   if(!force&&this.cached&&Date.now()-this.cached.at<850)return this.select(this.cached.value)
@@ -35,7 +40,8 @@ class MediaSessionService {
   const value={available:!!raw.available||sessions.length>0,sessions,active_id:sessions.find(s=>s.active)?.id||null,allow_browser_media:this.allowBrowserMedia,observed_at,diagnostics}
   this.cached={at:Date.now(),value};return value
  }
- async control(action,sessionId,value){
+  /** 只操作当前仍存在且声明支持该动作的来源，不向其他应用发送通用媒体键。 */
+  async control(action,sessionId,value){
   if(!['play','pause','next','previous','seek'].includes(action))throw Error('当前来源不支持该媒体操作')
   const state=await this.snapshot({selectedId:sessionId,force:true}),session=state.current
   if(!session||session.id!==sessionId)throw Error('媒体来源已关闭，请刷新后重试')

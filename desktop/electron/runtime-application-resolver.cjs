@@ -1,5 +1,6 @@
 'use strict'
 const {normalizeName}=require('./application-record.cjs')
+/** 名称候选只用于选择应用；同分候选不等于已获准启动任何一个应用。 */
 function matchApplications(target,records){
  const query=normalizeName(target)
  if(!query)return []
@@ -9,6 +10,7 @@ function matchApplications(target,records){
   return {app_id:r.app_id,name:r.name,score,sources:r.sources,launch_candidates:r.launch_candidates}
  }).filter(r=>r.score).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name)).slice(0,8)
 }
+/** 从索引到已登记来源/运行进程/Start Apps 分层补查；相同查询复用在途 Promise。 */
 class RuntimeApplicationResolver{
  constructor(discovery){this.discovery=discovery;this.pending=new Map();this.last=null}
  resolve(target,diagnostic=false){
@@ -17,6 +19,7 @@ class RuntimeApplicationResolver{
   if(!this.pending.has(key))this.pending.set(key,this.perform(target,diagnostic).finally(()=>this.pending.delete(key)))
   return this.pending.get(key)
  }
+ /** diagnostic=true 保留各层证据，即使已有命中也继续诊断来源。 */
  async perform(target,diagnostic){
   const started=Date.now(),levels=[],cached=matchApplications(target,this.discovery.list())
   levels.push({source:'index',matches:cached.length,scanner_version:this.discovery.originalVersion})

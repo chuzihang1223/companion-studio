@@ -3,6 +3,12 @@ const fs=require('node:fs'),path=require('node:path'),{spawn}=require('node:chil
 const {rankCandidates,windowsPath}=require('./application-record.cjs')
 const {ProcessLifecycleWatcher}=require('./process-lifecycle-watcher.cjs')
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+/**
+ * 从授权应用的观察结果选择可操作窗口，排除系统宿主和播放器工具提示。
+ * @param {Record<string, unknown>} state 进程和窗口的最新观察快照。
+ * @param {Record<string, unknown>} record 已登记目标应用及确认过的可执行路径。
+ * @returns {Array<Record<string, unknown>>} 按主窗口可见性、归属和面积排序。
+ */
 function applicationWindows(state,record={}){
  const primary=new Set([record.executable_path,record.executable,record.path,...record.verified_process_paths||[]].filter(Boolean).map(value=>windowsPath(value).toLowerCase()))
  const owners=new Map((state.processes||[]).map(row=>[row.pid,windowsPath(row.path).toLowerCase()]))
@@ -12,6 +18,7 @@ function applicationWindows(state,record={}){
    ||Number(primary.has(owners.get(b.pid)))-Number(primary.has(owners.get(a.pid)))
    ||b.bounds[2]*b.bounds[3]-a.bounds[2]*a.bounds[3])
 }
+/** 将登记参数按 Windows 引号/反斜杠规则解析成 argv，不交给 shell 求值。 */
 function windowsArguments(raw){
  const result=[];let part='',quoted=false,slashes=0,active=false
  for(const char of String(raw||'')){
@@ -23,6 +30,7 @@ function windowsArguments(raw){
  part+='\\'.repeat(slashes);if(active)result.push(part);if(quoted)throw Error('登记的启动参数引号不完整')
  return result
 }
+/** 进程创建只是中间状态；窗口就绪和生命周期证据决定能否继续操作。 */
 class AppLaunchVerifier{
  constructor(controller,record={}){this.controller=controller;this.record=record}
  async observe(id){return this.controller.observe_app(id)}
@@ -41,8 +49,10 @@ class AppLaunchVerifier{
   return {...last,verified:!!last.processes?.length,window:null,window_ready:false}
  }
 }
+/** 在授权后的目标记录中尝试入口；成功提交后不会盲目重开已关闭的目标应用。 */
 class AppLauncher{
  constructor({discovery,shell,controller,audit=()=>{},spawnProcess=spawn}){this.discovery=discovery;this.shell=shell;this.controller=controller;this.audit=audit;this.spawn=spawnProcess;this.pending=new Map()}
+ /** 同应用/任务的在途启动复用，防止重复提交；结束后释放 pending。 */
  launch(record,options={}){
   const key=(record.app_id||record.id)+':'+(options.taskId||'direct')
   if(this.pending.has(key))return this.pending.get(key)
@@ -113,6 +123,7 @@ class AppLauncher{
   }
   await progress('launch_failed');return {...record,status:'launch_failed',verified:false,error:'没有验证到应用启动：'+failures.map(item=>item.error).join('；'),attempts:failures}
  }
+ /** 创建独立应用进程；shell:false 防止登记参数成为命令文本。 */
  spawnEntry(target,args,cwd){return new Promise((resolve,reject)=>{
   const child=this.spawn(target,args,{cwd,windowsHide:true,detached:true,stdio:'ignore',shell:false})
   child.once('error',reject);child.once('spawn',()=>{child.unref();resolve(child.pid)})

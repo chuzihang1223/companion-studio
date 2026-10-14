@@ -18,6 +18,7 @@ function atomicJson(filePath, value) {
   fs.writeFileSync(temporary, JSON.stringify(value, null, 2), 'utf8')
   fs.renameSync(temporary, filePath)
 }
+/** 返回语音配置元数据；has_key 表示已保存密钥，不代表连接测试已通过。 */
 function current() {
   const data = readJson(file, {})
   const encrypted = readJson(keyFile, {}).encrypted
@@ -28,6 +29,7 @@ function current() {
     latency: ['balanced', 'normal'].includes(data.latency) ? data.latency : 'normal',
     has_key: Boolean(encrypted) }
 }
+/** 只在主进程解密当前 Windows 用户的语音凭据，不提供给渲染层。 */
 function decryptKey() {
   const encrypted = readJson(keyFile, {}).encrypted
   if (!encrypted) return ''
@@ -43,6 +45,7 @@ async function callBackend(route, body) {
   if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`)
   return data
 }
+/** persist=false 用于启动恢复，不重写随机化加密密钥或用户保存的设置。 */
 async function apply(draft, { persist = true } = {}) {
   const old = current()
   const key = draft.api_key ? String(draft.api_key).trim() : draft.clear_key ? '' : decryptKey()

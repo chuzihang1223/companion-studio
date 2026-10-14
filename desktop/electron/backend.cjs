@@ -6,6 +6,7 @@ const crypto = require('node:crypto')
 const paths = require('./paths.cjs')
 const brand = require('./brand.cjs')
 
+/** 当前产品拥有的后端配置；不从另一产品的数据目录恢复设置。 */
 const envFile = app.isPackaged ? path.join(paths.userData, '.env') : path.join(paths.projectRoot, '.env')
 const contents = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : ''
 function readEnv(key, fallback) {
@@ -19,11 +20,13 @@ const host = '127.0.0.1'
 const port = Number(readEnv('BACKEND_PORT', '8000'))
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid BACKEND_PORT')
 const address = { host, port, url: `http://${host}:${port}` }
+/** 单次启动的控制凭据，只传给本进程启动的后端，不暴露给 preload。 */
 const controlToken = crypto.randomBytes(32).toString('hex')
 let child = null
 let stopping = false
 let lastError = ''
 
+/** @returns {Promise<boolean>} 回环 HTTP 健康探针；失败作为未就绪处理。 */
 async function isHealthy() {
   try {
     const response = await fetch(`${address.url}/health`, { signal: AbortSignal.timeout(1000) })
@@ -34,6 +37,11 @@ async function isHealthy() {
   }
 }
 
+/**
+ * 启动本产品后端并等待健康。发行版不接管已占用端口的其他后端。
+ * @param {() => void} onUnexpectedExit 非主动关闭时通知主进程退出。
+ * @returns {Promise<boolean>} 是否由本管理器创建后端子进程。
+ */
 async function startBackend(onUnexpectedExit = () => {}) {
   if (await isHealthy()) {
     if (app.isPackaged) throw new Error(`Port ${port} is already in use. Close the other application or change BACKEND_PORT in UserData\\.env.`)
@@ -91,6 +99,7 @@ async function startBackend(onUnexpectedExit = () => {}) {
   throw new Error(`Backend did not become healthy within 20 seconds. Check ${path.join(paths.logs, 'backend.log')}.`)
 }
 
+/** 仅结束本管理器拥有的 child；不按名称关闭其他产品的后端。 */
 function stopBackend() {
   stopping = true
   if (child) child.kill()

@@ -1,4 +1,4 @@
-/** A reply owns one output device. Later segments arrive while it plays. */
+/** 一个回复拥有连续输出；后续片段可在已有片段播放时继续入队。 */
 export type AudioQueueState='pending'|'generating'|'ready'|'playing'|'done'|'failed'
 type Observer=(event:string,detail?:string)=>void
 const log=(event:string,segment_id:string,values:Record<string,unknown>={})=>void window.desktopAPI?.logDiagnostic('voice-continuity.log',{event,segment_id,monotonic_ms:performance.now(),...values}).catch(()=>{})
@@ -19,7 +19,8 @@ export class BufferedAudioQueue{
  paused=false
  private resolveDone!:()=>void
  private stopped=false
- private chain:Promise<unknown>=Promise.resolve()
+  // 设备初始化、PCM 入队、分段结束与最终结束按同一链执行，禁止并行重排。
+  private chain:Promise<unknown>=Promise.resolve()
  private native=false
  private initialized:Promise<void>|null=null
  private context:AudioContext|null=null
@@ -36,7 +37,8 @@ export class BufferedAudioQueue{
  private prebufferSeconds=0
  private segmentStarts=new Map<string,number>()
  constructor(private id:string,private volume:number,private observer:Observer,private ended:()=>void,private previousStop:Promise<unknown>,private initialBufferMs=300){this.done=new Promise(resolve=>this.resolveDone=resolve)}
- private initialize(rate:number,channels:number){
+  /** 等前一回复的设备释放后初始化；原生 PCM 不可用时回退浏览器音频。 */
+  private initialize(rate:number,channels:number){
   if(!this.initialized)this.initialized=(async()=>{await this.previousStop;if(this.stopped)return;this.rate=rate;this.channels=channels;this.native=!!(await window.desktopAPI?.nativePcmCapability())?.supported;if(this.stopped)return;
    if(this.native){await window.desktopAPI!.startNativePcm({message_id:this.id,session_id:this.session,sample_rate:rate,channels,volume:this.volume,initial_buffer_ms:Math.max(200,Math.min(1200,this.initialBufferMs))});if(this.stopped){await window.desktopAPI!.stopNativeAudio();return}let polling=false;this.ticker=window.setInterval(()=>{if(polling||this.stopped)return;polling=true;void window.desktopAPI!.nativeAudioStatus().then(status=>{if(this.stopped)return;if(!this.started&&status.position>.01){this.started=true;this.observer('native-pcm-started')}if(this.finished&&status.status==='stopped')this.complete()}).catch(e=>this.fail(e)).finally(()=>polling=false)},40)}
    else{this.context=new AudioContext({sampleRate:rate});this.gain=this.context.createGain();this.gain.gain.value=this.volume;this.gain.connect(this.context.destination);await this.context.resume()}

@@ -1,6 +1,10 @@
 const path=require('node:path'),fs=require('node:fs')
 const {dialog}=require('electron'),paths=require('./paths.cjs'),permissions=require('./permissions.cjs')
 
+/**
+ * 注册虚拟代码草稿的固定 IPC。编辑草稿不写项目；保存/应用经路径选择与权限检查。
+ * 文件系统最终校验由后端执行器负责，不能把渲染层的相关文件字段当作授权。
+ */
 module.exports=function register({ipcMain,requireMainWindow,request,getWindow}){
  const route=(session,id)=>{if(typeof session!=='string'||typeof id!=='string'||session.length>100||id.length>100)throw Error('无效草稿');return `/api/work/${encodeURIComponent(session)}/documents/${encodeURIComponent(id)}`}
  ipcMain.handle('virtual-document-get',(event,session,id)=>{requireMainWindow(event);return request(route(session,id))})

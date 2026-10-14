@@ -1,7 +1,27 @@
 const {spawn}=require('node:child_process')
 const readline=require('node:readline'),fs=require('node:fs'),path=require('node:path')
+/**
+ * @typedef {Object} WindowSnapshot
+ * @property {number} handle Win32 窗口句柄，只能用于刚观察到的授权窗口。
+ * @property {number} pid
+ * @property {string} title
+ * @property {number[]} bounds [left, top, width, height]，与桌面截图坐标系一致。
+ * @property {boolean} responding
+ * @property {boolean} visible
+ * @property {boolean} minimized
+ *
+ * @typedef {Object} AppObservation
+ * @property {Array<{pid: number, path: string}>} processes
+ * @property {WindowSnapshot[]} windows
+ */
+/**
+ * 本实例拥有的 JSON 行协议 worker；输入/窗口观察共享串行通道。
+ * 每次调用先执行任务 guard，再由 worker 验证目标进程和窗口归属。
+ * request ID 只用于结果关联，不提供跨任务授权。
+ */
 class ComputerController {
  constructor(registry,cache,audit=()=>{},guard=async()=>{}){this.registry=registry;this.guard=guard;this.cache=path.join(cache,'desktop-automation');fs.mkdirSync(this.cache,{recursive:true});this.audit=audit;this.pending=new Map();this.sequence=0;this.serial=Promise.resolve();this.worker=null;this.launchSeeds=new Map()}
+ /** 懒启动 Windows worker；只读取本安装版解包的自动化脚本。 */
  start(){
   if(this.worker)return
   const root=path.join(__dirname.replace('app.asar','app.asar.unpacked'),'automation')
@@ -11,6 +31,12 @@ class ComputerController {
   const child=this.worker
   child.on('exit',()=>{if(this.worker===child)this.worker=null;for(const [id,slot] of this.pending){if(slot.child!==child)continue;clearTimeout(slot.timer);slot.reject(Error('Desktop worker stopped'));this.pending.delete(id)}})
  }
+ /**
+ * @param {string} app 授权记录中的应用 ID，不能由任意窗口标题替代。
+ * @param {string} action worker 支持的操作名。
+ * @param {Record<string, unknown>} args 操作参数，目标句柄仍由 worker 验证。
+ * @returns {Promise<Record<string, unknown>>} 观察/操作结果；请求失败向上层报告。
+ */
  call(app,action,args={}){
   const run=async()=>{await this.guard(action);return new Promise((resolve,reject)=>{
    const globalMedia=action==='media_all'
@@ -33,6 +59,7 @@ class ComputerController {
  }
  async list_windows(app){return (await this.call(app,'list')).windows}
  observe_app(app){return this.call(app,'observe')}
+ /** 仅使用当前应用登记的候选入口；记录父进程创建时间以防 PID 复用误匹配。 */
  async launch_entry(app,candidateId){
   const entry=this.registry.detect(app),candidate=entry?.launch_candidates?.find(row=>row.id===candidateId)
   if(!candidate||!['exe','launcher','shortcut','custom','start_app'].includes(candidate.launch_type))throw Error('启动入口不在已授权应用中')
@@ -63,6 +90,7 @@ class ComputerController {
  verify_window_state(app,handle){return this.call(app,'state',{handle})}
  media(app,operation='get'){return this.call(app,'media',{operation})}
  media_sessions(operation='get',options={}){return this.call('system-media','media_all',{...options,operation})}
+ /** 结束本控制器拥有的 worker，不结束被操作的用户应用。 */
  stop(){const child=this.worker;this.worker=null;child?.kill()}
 }
 module.exports={ComputerController}

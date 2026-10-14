@@ -4,7 +4,7 @@ export type ResizeFrame={dx:number;dy:number;scrollTop:number;scrollDelta:number
 type Options={id:string;dividerId:string|null;edge:string;layoutVersion:number;pointerId:number;handle:HTMLElement;container:HTMLElement;grid:HTMLElement;clientX:number;clientY:number;startSize:{width:number;height:number};update:(frame:ResizeFrame)=>{scrollTop:number;changed:boolean}}
 const summary=(values:number[])=>{const sorted=[...values].sort((a,b)=>a-b);return {count:values.length,p50:sorted[Math.floor(sorted.length*.5)]||0,p95:sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))]||0,max:sorted.at(-1)||0}}
 
-/** One pointer session, one scheduler, no React state or persistence per frame. */
+/** 一次指针手势拥有一个 rAF 调度器；每帧不改 React 状态、不保存磁盘。 */
 export class ResizeSessionController {
  readonly engine:WorkspaceAutoScrollEngine
  readonly started=performance.now()
@@ -19,7 +19,7 @@ export class ResizeSessionController {
   this.origin={x:this.clientX-this.engine.left+options.container.scrollLeft,y:this.clientY-this.engine.top+options.container.scrollTop}
   this.oldAnchor=options.container.style.overflowAnchor;this.oldBehavior=options.container.style.scrollBehavior
   options.container.style.overflowAnchor='none';options.container.style.scrollBehavior='auto'
-  options.container.scrollTop=options.container.scrollTop // Stop a pending smooth message scroll.
+  options.container.scrollTop=options.container.scrollTop // 中止消息触发但尚未完成的平滑滚动。
   this.lastTime=performance.now();this.schedule()
  }
  pointer(x:number,y:number){if(this.stopped)return;this.clientX=x;this.clientY=y;this.dirty=true;this.moves++;this.schedule()}
@@ -32,6 +32,7 @@ export class ResizeSessionController {
   if(this.dirty||velocity){this.frameIntervals.push(dt);if(this.frameIntervals.length>360)this.frameIntervals.shift();this.apply(velocity*dt/1000)}
   if(!this.stopped&&(this.dirty||this.autoScrolling))this.schedule()
  }
+ // update 先求允许的几何并绘制，返回后仅写一次滚动，顺序不可随意交换。
  private apply(delta:number){
   const start=performance.now(),{container}=this.options
   this.engine.measure()
@@ -44,6 +45,7 @@ export class ResizeSessionController {
   if(this.frameDurations.length>360)this.frameDurations.shift()
  }
  flush(x:number,y:number){if(this.stopped)return;this.clientX=x;this.clientY=y;cancelAnimationFrame(this.frame);this.frame=0;this.apply(0)}
+ /** 取消、松开和卸载共用幂等清理，恢复手势前的滚动样式并释放捕获。 */
  stop(){
   if(this.stopped)return
   this.stopped=true;cancelAnimationFrame(this.frame);this.frame=0;this.autoScrolling=false

@@ -2,6 +2,14 @@
 const fs=require('node:fs'),path=require('node:path'),{spawn}=require('node:child_process')
 const {normalizeRecord,windowsPath,available}=require('./application-record.cjs')
 const priority={registry_uninstall:5,start_menu:4,desktop_shortcut:4,apps_folder:3,app_paths:2,running:1,url_protocol:0}
+/**
+ * 按可执行文件/系统身份合并发现结果，保留成功别名、候选入口和历史计数。
+ * 部分来源失败或定向扫描不能把未扫描到的其他应用判为卸载。
+ * @param {{applications: Array<Record<string, unknown>>, scanned_at: string, catalog_metadata?: Array<Record<string, unknown>>, source_status?: Record<string, unknown>}} scanned
+ * @param {Array<Record<string, unknown>>} previous
+ * @param {{partial?: boolean}} options
+ * @returns {Record<string, unknown>} 可保存的版本化应用索引。
+ */
 function mergeApplications(scanned,previous=[],{partial=false}={}){
  if(!Array.isArray(scanned.applications)||!scanned.scanned_at)throw Error('Invalid scan result')
  const groups=new Map(),counts={},oldRecords=previous.map(normalizeRecord).filter(Boolean)
@@ -48,6 +56,7 @@ function mergeApplications(scanned,previous=[],{partial=false}={}){
  }
  return {version:5,scanner_version:5,registry_version:5,applications:rows,counts,scanned_at:scanned.scanned_at,last_scan_time:scanned.scanned_at,catalog_metadata:catalog,source_status:scanned.source_status||{}}
 }
+/** 当前应用数据目录内的 Windows 索引；全量扫描合并，定向查询不破坏无关条目。 */
 class ApplicationDiscoveryService{
  constructor(paths,audit=()=>{}){
   this.paths=paths;this.audit=audit;this.file=path.join(paths.userData,'application-registry.json');this.pending=null
@@ -66,6 +75,7 @@ class ApplicationDiscoveryService{
    this.audit('app-launch.log',JSON.stringify({event:'registered_launcher_delegate',app_id:row.app_id,delegate_app_id:delegate.app_id,executable:delegate.path}))
   }
  }
+ /** 原子替换索引，并在旧版本首次迁移时保留一份恢复副本。 */
  save(next){
   fs.mkdirSync(this.paths.userData,{recursive:true})
   if(this.originalVersion&&this.originalVersion<5&&fs.existsSync(this.file)&&!fs.existsSync(this.file+'.v85-backup'))fs.copyFileSync(this.file,this.file+'.v85-backup',fs.constants.COPYFILE_EXCL)
@@ -79,6 +89,7 @@ class ApplicationDiscoveryService{
   const applications=[...this.cache.applications.filter(item=>item.app_id!==id),row]
   this.save({...this.cache,applications,counts:{...this.cache.counts,custom:applications.filter(item=>item.source==='custom').length}});return row
  }
+ /** 仅记录启动验证的证据；PID 不作为跨启动复用的应用身份。 */
  recordLaunch(id,candidateId,success,targetText,processes=[]){
   const row=this.cache.applications.find(row=>row.app_id===id||row.legacy_ids?.includes(id));if(!row)return
   const entry=row.launch_candidates.find(item=>item.id===candidateId),field=success?'launch_success_count':'launch_failure_count'
@@ -95,6 +106,7 @@ class ApplicationDiscoveryService{
   return this.save(mergeApplications({...result,catalog_metadata:[...(this.cache.catalog_metadata||[]),...(result.catalog_metadata||[])],source_status:{...(result.source_status||{}),targeted:{complete:false}}},this.cache.applications,{partial:true}))
  }
  query(target,source='registered'){return this.run(target,source)}
+ /** 启动只读 PowerShell 扫描；超时/解析错误保留原缓存，不扫描整个安装盘。 */
  run(target,source='all'){return new Promise((resolve,reject)=>{
   const file=path.join(__dirname.replace('app.asar','app.asar.unpacked'),'automation','discover-applications.ps1'),started=Date.now()
   const args=['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',file];if(target)args.push('-Query',target,'-SourceGroup',source)
