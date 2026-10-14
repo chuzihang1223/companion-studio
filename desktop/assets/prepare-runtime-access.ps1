@@ -32,7 +32,8 @@ foreach ($folder in @('locales','resources')) {
 $locales = Join-Path $program 'locales'
 if (Test-Path -LiteralPath $locales) {
   $targets += @(Get-ChildItem -LiteralPath $locales -File | Where-Object {
-    $_.Name -cmatch '^[a-z]{2,3}(?:-[A-Z][A-Za-z0-9]*)?\.pak$'
+    # 区域既可能是 US/CN，也可能是 es-419 的三位数字；只选 locale PAK。
+    $_.Name -cmatch '^[a-z]{2,3}(?:-(?:[A-Z][A-Za-z0-9]*|[0-9]{3}))?\.pak$'
   } | ForEach-Object { $_.FullName })
 }
 foreach ($target in $targets) {

@@ -124,6 +124,38 @@ def test_check_only_keeps_every_acl_unchanged(tmp_path):
     assert {path: sddl(path) for path in targets} == before
 
 
+def test_runtime_locales_include_numeric_regions_but_exclude_unrelated_resources(tmp_path):
+    program = fixture_program(tmp_path)
+    locales = program / "locales"
+    locales.mkdir()
+    runtime_locales = [locales / "en-US.pak", locales / "es-419.pak"]
+    unrelated = [locales / "private.pak", locales / "es-419.pak.tmp", locales / "en-US.json"]
+    for path in [*runtime_locales, *unrelated]:
+        path.write_bytes(b"synthetic locale or unrelated resource")
+    unrelated_directory = locales / "en-GB.pak"
+    unrelated_directory.mkdir()
+    unrelated.append(unrelated_directory)
+    before = {path: access_descriptor(path) for path in unrelated}
+
+    result = prepare(program)
+    assert result.returncode == 0, result.stderr
+    # Program、EXE、locales 目录及两项真实语言文件；不递归到其他素材。
+    assert json.loads(result.stdout)["public_runtime_targets"] == 5
+    assert {path: access_descriptor(path) for path in unrelated} == before
+    for path in runtime_locales:
+        rules = [
+            rule
+            for rule in access_descriptor(path)["rules"]
+            if rule["identity"] == "S-1-15-2-2" and not rule["inherited"]
+        ]
+        assert len(rules) == 1
+        assert rules[0]["type"] == 0  # Allow
+        assert rules[0]["inheritance"] == 0
+        assert rules[0]["propagation"] == 0
+        # .NET 对 Allow 规则自动附加 Synchronize；仍没有任何写入授权。
+        assert rules[0]["rights"] == 0x1200A9  # ReadAndExecute | Synchronize
+
+
 def test_missing_product_is_rejected_before_permission_changes(tmp_path):
     program = tmp_path / "UserData"
     program.mkdir()
