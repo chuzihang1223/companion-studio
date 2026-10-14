@@ -1,0 +1,79 @@
+name: Windows Release Draft
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.3'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.20.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - name: Validate immutable version
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop/package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne ('v' + $version)) { throw 'Tag/package version mismatch' }
+      - name: Install locked build environment
+        shell: pwsh
+        run: |
+          $env:electron_config_cache = Join-Path $env:RUNNER_TEMP 'electron'
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
+          npm.cmd ci --prefix desktop --no-fund --no-audit
+          if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
+          node desktop/node_modules/esbuild/install.js
+          node desktop/node_modules/electron/install.js
+      - name: Validate source, tests and history
+        shell: pwsh
+        run: ./scripts/check.ps1
+      - name: Build and audit Windows installer
+        shell: pwsh
+        run: npm.cmd run build:public --prefix desktop
+      - name: Create draft with audited assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $latest = Get-Content build/latest.json -Raw | ConvertFrom-Json
+          $delivery = $latest.delivery
+          $version = (Get-Content desktop/package.json -Raw | ConvertFrom-Json).version
+          $tag = 'v' + $version
+          $setup = Join-Path $delivery ('Companion-Studio-' + $version + '-Setup.exe')
+          $notes = 'docs/RELEASE_NOTES_' + $version + '.md'
+          if (-not (Test-Path $notes)) { throw 'Reviewed release notes missing' }
+          $existing = gh release view $tag --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if (-not ($existing | ConvertFrom-Json).isDraft) { throw 'Existing published release is immutable' }
+            throw 'Draft already exists; inspect it before explicitly retrying asset upload'
+          }
+          gh release create $tag $setup (Join-Path $delivery 'SHA256SUMS.txt') (Join-Path $delivery 'build-manifest.json') (Join-Path $delivery 'security-audit.json') --verify-tag --draft --title ('Companion Studio ' + $version + ' — Windows Desktop') --notes-file $notes
+          if ($LASTEXITCODE -ne 0) { throw 'Draft upload failed' }
+      - name: Preserve audited delivery for maintainer review
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-release-review
+          path: |
+            build/*/delivery/*Setup.exe
+            build/*/delivery/SHA256SUMS.txt
+            build/*/delivery/build-manifest.json
+            build/*/delivery/security-audit.json
+          if-no-files-found: warn

@@ -29,7 +29,7 @@ foreach ($process in @(Get-Process -Name CompanionStudio -ErrorAction SilentlyCo
 }
 $before = [ordered]@{}
 if (Test-Path -LiteralPath $data) {
-  foreach ($file in (Get-ChildItem -LiteralPath $data -Recurse -File | Where-Object { $_.Name -eq '.env' -or $_.Extension -in @('.json','.db') })) {
+  foreach ($file in (Get-ChildItem -LiteralPath $data -Recurse -File)) {
     $before[$file.FullName.Substring($data.Length+1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
   }
 }
