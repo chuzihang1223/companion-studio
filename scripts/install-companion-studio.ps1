@@ -2,7 +2,8 @@
   [Parameter(Mandatory=$true)][string]$Delivery,
   [Parameter(Mandatory=$true)][string]$ProductHome,
   [string]$DesktopDirectory = [Environment]::GetFolderPath('Desktop'),
-  [int]$BackendPort = 8770
+  [int]$BackendPort = 8770,
+  [switch]$CurrentUserOnly
 )
 $ErrorActionPreference = 'Stop'
 $deliveryRoot = (Resolve-Path -LiteralPath $Delivery).Path
@@ -39,7 +40,12 @@ $utf8 = New-Object Text.UTF8Encoding($false)
 if (-not (Test-Path -LiteralPath (Join-Path $data '.env'))) {
   [IO.File]::WriteAllText((Join-Path $data '.env'),("BACKEND_PORT=$BackendPort`r`nCOMPANION_CLEAN_DISTRIBUTION=1`r`nCOMPANION_DEFAULT_CHARACTER=assistant`r`nVOICE_PREFETCH_ENABLED=false`r`n"),$utf8)
 }
-$process = Start-Process -FilePath $setup -ArgumentList @('/S',('/D='+$destination)) -WindowStyle Hidden -PassThru
+# 安装验收可显式限定当前用户，防止 NSIS 从 HKLM 旧安装推断 all-users。
+# 默认调用保持原有模式；/D 必须仍是最后一个未加引号的参数。
+$installerArguments = @('/S')
+if ($CurrentUserOnly) { $installerArguments += '/currentuser' }
+$installerArguments += ('/D='+$destination)
+$process = Start-Process -FilePath $setup -ArgumentList $installerArguments -WindowStyle Hidden -PassThru
 $process.WaitForExit()
 if ($process.ExitCode -ne 0) { throw ('Installer failed: '+$process.ExitCode) }
 foreach ($relative in @('CompanionStudio.exe','resources\app.asar','resources\companion-backend\companion-backend.exe')) {
