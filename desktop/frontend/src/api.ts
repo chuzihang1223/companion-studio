@@ -539,9 +539,7 @@ export type VoiceJob = {
   queue_length: number;
 };
 
-export async function voiceInfo(
-  id: string,
-): Promise<{
+export async function voiceInfo(id: string): Promise<{
   status: string;
   audio_url: string | null;
   job_id?: string | null;

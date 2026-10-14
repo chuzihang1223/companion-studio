@@ -172,15 +172,13 @@ class DesktopAppAgent {
   }
   async systemStatus() {
     const sampleCpu = () =>
-      os
-        .cpus()
-        .reduce(
-          (r, c) => ({
-            idle: r.idle + c.times.idle,
-            total: r.total + Object.values(c.times).reduce((a, b) => a + b, 0),
-          }),
-          { idle: 0, total: 0 },
-        );
+      os.cpus().reduce(
+        (r, c) => ({
+          idle: r.idle + c.times.idle,
+          total: r.total + Object.values(c.times).reduce((a, b) => a + b, 0),
+        }),
+        { idle: 0, total: 0 },
+      );
     const cpus = os.cpus(),
       old = this.cpuSample || sampleCpu();
     if (!this.cpuSample) await new Promise((resolve) => setTimeout(resolve, 150));

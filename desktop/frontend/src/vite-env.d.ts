@@ -173,9 +173,7 @@ interface Window {
       complete: boolean;
       error?: string;
     }>;
-    testFishScenario: (
-      index: number,
-    ) => Promise<{
+    testFishScenario: (index: number) => Promise<{
       ok: boolean;
       index: number;
       name: string;
