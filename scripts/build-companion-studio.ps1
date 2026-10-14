@@ -135,6 +135,7 @@ try {
 $healthReport = @{pass=$healthy;startup_seconds=[math]::Round($timer.Elapsed.TotalSeconds,3);only_generic_assistant=$true;no_model_key_required=$true;external_requests=0}
 $package = Get-Content -LiteralPath (Join-Path $desktop 'package.json') -Raw | ConvertFrom-Json
 $config = $package.build
+$config | Add-Member -NotePropertyName electronVersion -NotePropertyValue $package.devDependencies.electron -Force
 $config.directories.output = Join-Path $build 'delivery'
 $config.directories.buildResources = Join-Path $desktop 'assets'
 $config.extraResources[0].from = Join-Path $backend 'companion-backend'
