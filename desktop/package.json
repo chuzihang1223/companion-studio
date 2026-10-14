@@ -83,6 +83,10 @@
       {
         "to": "LICENSE",
         "from": "../LICENSE"
+      },
+      {
+        "from": "assets/prepare-runtime-access.ps1",
+        "to": "prepare-runtime-access.ps1"
       }
     ],
     "win": {
@@ -97,7 +101,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "Companion-Studio-${version}-Setup.${ext}"
+      "artifactName": "Companion-Studio-${version}-Setup.${ext}",
+      "include": "assets/installer.nsh"
     }
   },
   "description": "Configurable characters, local conversations, and a desktop workbench.",

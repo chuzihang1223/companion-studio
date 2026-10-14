@@ -65,7 +65,7 @@ foreach ($folder in @('backend\app','desktop\frontend\src','desktop\electron','c
     $sourceHashes[$file.FullName.Substring($project.Length+1).Replace('\','/')] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
   }
 }
-foreach ($relative in @('desktop/package.json','desktop/package-lock.json','backend/requirements.lock','backend/requirements-dev.txt','scripts/build-companion-studio.ps1')) {
+foreach ($relative in @('desktop/package.json','desktop/package-lock.json','backend/requirements.lock','backend/requirements-dev.txt','scripts/build-companion-studio.ps1','desktop/assets/prepare-runtime-access.ps1','desktop/assets/installer.nsh')) {
   $sourceHashes[$relative] = (Get-FileHash -LiteralPath (Join-Path $project $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 $sourceHashes['desktop/assets/companion-studio.ico'] = (Get-FileHash -LiteralPath (Join-Path $desktop 'assets\companion-studio.ico') -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -144,6 +144,7 @@ $config.extraResources[1].filter = @('**/*.py','**/*.json','!**/__pycache__/**')
 $config.extraResources[2].from = Join-Path $licenseStage 'licenses'
 $config.extraResources[3].from = Join-Path $licenseStage 'THIRD_PARTY_NOTICES.md'
 $config.extraResources[4].from = Join-Path $project 'LICENSE'
+$config.nsis.include = Join-Path $desktop 'assets\installer.nsh'
 $config.nsis | Add-Member -NotePropertyName runAfterFinish -NotePropertyValue $false -Force
 $config.nsis | Add-Member -NotePropertyName deleteAppDataOnUninstall -NotePropertyValue $false -Force
 $config.nsis | Add-Member -NotePropertyName perMachine -NotePropertyValue $false -Force

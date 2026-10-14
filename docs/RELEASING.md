@@ -32,6 +32,17 @@ npm.cmd run build:public --prefix desktop
 
 ## 3. 安装与运行门
 
+新安装器为明确的公开 Electron 运行文件准备 Windows LPAC 读取权限，以兼容含特殊包 SID 的程序目录。文件和必要目录只添加自身 Read/Execute，不移除原 ACL、不添加写权限、不向未来档案继承；用户数据、缓存和父目录不在处理范围。沙箱仍保持开启。安装逻辑见 `desktop/assets/prepare-runtime-access.ps1` 和 `installer.nsh`。
+
+受控安装测试入口如下，必须先关闭其他 Studio 实例。它保护当前产品的两项注册信息和两条快捷方式，在新档案安装、验收、卸载后恢复原状态；测试报告和备份保留。发现其他实例、机器级同 GUID 安装或无法确认归属时停止。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer.ps1 -Delivery '<delivery目录>' -DryRun
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer.ps1 -Delivery '<delivery目录>' -RunUI
+```
+
+`-DryRun` 不安装或修改注册信息。真实测试若报告 `recovery_deferred=true`，应先核对仍运行的安装/卸载进程，再安全恢复保留备份；不可盲目覆盖同名注册项。NSIS 卸载本次测试程序，不删除其独立档案。
+
 在独立可写目录真实运行 Setup，保护已有安装注册信息及快捷方式，禁止安装测试覆盖正式档案。验证以下内容并记录实际结果：
 
 1. EXE、ASAR、冻结后端与清单摘要一致，桌面快捷方式可用。
