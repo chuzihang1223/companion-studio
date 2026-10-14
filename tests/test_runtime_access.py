@@ -36,6 +36,26 @@ def sddl(path: Path) -> str:
     return ps(f"(Get-Acl -LiteralPath {ps_quote(path)}).Sddl")
 
 
+def access_descriptor(path: Path) -> dict:
+    """比较实际权限；Windows 可仅刷新 SDDL 的自动继承完成标志 AI。"""
+    result = ps(
+        f"$acl=Get-Acl -LiteralPath {ps_quote(path)}; "
+        "$sid=[System.Security.Principal.SecurityIdentifier]; "
+        "$rules=@($acl.GetAccessRules($true,$true,$sid) | ForEach-Object {"
+        "@{identity=$_.IdentityReference.Value;type=[int]$_.AccessControlType;"
+        "rights=[int]$_.FileSystemRights;inheritance=[int]$_.InheritanceFlags;"
+        "propagation=[int]$_.PropagationFlags;inherited=$_.IsInherited}}); "
+        "@{owner=$acl.GetOwner($sid).Value;group=$acl.GetGroup($sid).Value;"
+        "protected=$acl.AreAccessRulesProtected;rules=$rules} | ConvertTo-Json -Depth 4"
+    )
+    descriptor = json.loads(result)
+    # 保留每条 ACE 的全部授权字段和数量，但不依赖 Windows 的枚举顺序。
+    descriptor["rules"] = sorted(
+        descriptor["rules"], key=lambda rule: json.dumps(rule, sort_keys=True)
+    )
+    return descriptor
+
+
 def prepare(path: Path, *, check_only: bool = False):
     command = [
         "powershell.exe",
@@ -66,7 +86,7 @@ def fixture_program(tmp_path):
 def test_explicit_runtime_read_does_not_change_private_files_or_inherit_to_future_files(tmp_path):
     program = fixture_program(tmp_path)
     private = [program / "UserData", program / "UserData/api-keys.json", program / "unrelated.txt"]
-    before = {path: sddl(path) for path in private}
+    before = {path: access_descriptor(path) for path in private}
     (program / "baseline.txt").write_text("baseline")
 
     def inherited(path):
@@ -80,7 +100,7 @@ def test_explicit_runtime_read_does_not_change_private_files_or_inherit_to_futur
     result = prepare(program)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["inherited_permission_added"] is False
-    assert {path: sddl(path) for path in private} == before
+    assert {path: access_descriptor(path) for path in private} == before
     permissions = ps(
         f"(Get-Acl -LiteralPath {ps_quote(program / 'CompanionStudio.exe')}).GetAccessRules("
         "$true,$false,[System.Security.Principal.SecurityIdentifier]) | Where-Object {"
