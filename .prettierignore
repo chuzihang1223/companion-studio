@@ -1,0 +1,11 @@
+licenses/**
+node_modules/**
+**/node_modules/**
+.venv/**
+build/**
+Cache/**
+.runtime/**
+desktop/frontend/dist/**
+**/*.ps1
+**/*.cs
+docs/screenshots/**

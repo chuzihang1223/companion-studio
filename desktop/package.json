@@ -1,6 +1,6 @@
 {
   "name": "companion-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
@@ -13,13 +13,19 @@
     "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1",
     "start": "electron .",
     "start:compat": "electron . --compat",
-    "build:public": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1"
+    "build:public": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/build-companion-studio.ps1",
+    "typecheck": "tsc --noEmit -p frontend/tsconfig.json",
+    "lint": "eslint electron frontend/src frontend/vite.config.ts",
+    "format:check": "prettier --check \"electron/**/*.cjs\" \"frontend/src/**/*.{ts,tsx}\" ../scripts/test-electron.cjs",
+    "format": "prettier --write \"electron/**/*.cjs\" \"frontend/src/**/*.{ts,tsx}\" ../scripts/test-electron.cjs",
+    "test:electron": "node ../scripts/test-electron.cjs"
   },
   "dependencies": {
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/node": "22.20.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -27,7 +33,12 @@
     "concurrently": "9.2.5",
     "electron": "44.4.5",
     "electron-builder": "26.15.3",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "16.5.0",
+    "prettier": "3.9.10",
     "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2",
     "vite": "6.4.3",
     "wait-on": "8.0.5"
   },
@@ -86,7 +97,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "Companion-Studio-0.1.0-Setup.${ext}"
+      "artifactName": "Companion-Studio-${version}-Setup.${ext}"
     }
   },
   "description": "Configurable characters, local conversations, and a desktop workbench.",
