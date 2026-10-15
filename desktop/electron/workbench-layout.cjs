@@ -16,6 +16,7 @@ const ids = [
   'preview',
   'artifacts',
   'permissions',
+  'trace',
 ];
 const file = path.join(paths.userData, 'workbench-layout.json');
 /** 按已有版本验证布局；只保存模块几何/可见性，不保存对话、凭据或任务权限。 */
@@ -34,7 +35,12 @@ function clean(value) {
       dockSide: ['left', 'right'].includes(v.dockSide) ? v.dockSide : null,
       collapsed: !!v.collapsed,
       minimized: !!v.minimized,
-      closed: id === 'conversation' ? false : !!v.closed,
+      closed:
+        id === 'conversation'
+          ? false
+          : id === 'trace' && v.closed === undefined
+            ? true
+            : !!v.closed,
       order: Math.max(0, Math.min(100, Number(v.order) || 0)),
     };
   }
@@ -81,7 +87,12 @@ function cleanGrid(value) {
       dockSide: ['left', 'right'].includes(v.dockSide) ? v.dockSide : null,
       collapsed: !!v.collapsed,
       minimized: !!v.minimized,
-      closed: id === 'conversation' ? false : !!v.closed,
+      closed:
+        id === 'conversation'
+          ? false
+          : id === 'trace' && v.closed === undefined
+            ? true
+            : !!v.closed,
       order: Math.floor(number(v.order, order, 0, 100)),
     };
   }

@@ -7,6 +7,15 @@ const { renderToStaticMarkup } = require('../../desktop/node_modules/react-dom/s
 for (const extension of ['.ts', '.tsx']) require.extensions[extension] = (m, f) => m._compile(ts.transpileModule(fs.readFileSync(f, 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX}}).outputText, f);
 require.extensions['.css'] = () => {};
 const R = require('../../desktop/frontend/src/trace/replay.ts');
+const Layout = require('../../desktop/frontend/src/WorkspaceLayoutEngine.ts');
+const {cleanFree} = require('../../desktop/electron/free-layout-storage.cjs');
+const opened = Layout.openModule(Layout.defaultLayout(), 'trace', false);
+const restored = cleanFree(opened);
+assert.equal(restored.active, 'trace');
+assert.equal(restored.modules.trace.closed, false);
+const legacy = Layout.defaultLayout();
+delete legacy.modules.trace;
+assert.equal(cleanFree(legacy).modules.trace.closed, true, 'Old saved layouts must not gain an overlapping visible trace pane');
 const before = process.memoryUsage().heapUsed, started = performance.now();
 const rows = Array.from({length: 1000}, (_, i) => ({sequence: 1000 - i, created_at: new Date(Date.UTC(2026, 0, 1) + (1000-i)*100).toISOString()}));
 const ordered = R.orderedEvents([...rows, rows[0]]);

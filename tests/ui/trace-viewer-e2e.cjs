@@ -34,7 +34,8 @@ async function run() {
   const options = {...scope, trace_id: trace.trace_id};
   const before = await read('events', options);
   driver.check(before.items.some(row => row.event_type === 'TASK_COMPLETED') && before.items.some(row => row.event_type === 'TOOL_COMPLETED'), 'Real task events persist and share the plan task ID', {task_id: trace.task_id, events: before.items.length});
-  await driver.c.evaluate("document.querySelector('[data-dock-module=trace]').click();true");
+  await driver.click('模块');
+  await driver.click('Agent Trace · 执行追踪', "document.querySelector('.workspace-module-picker')");
   await driver.c.until("document.querySelectorAll('.trace-row').length>0");
   driver.check(await driver.c.evaluate(`document.querySelector('.trace-details')?.innerText.includes(${q(trace.task_id)})`), 'Workbench TraceViewer displays the real task and details');
   await driver.screenshot('trace-real-task');

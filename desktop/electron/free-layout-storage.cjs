@@ -14,6 +14,7 @@ const ids = [
   'preview',
   'artifacts',
   'permissions',
+  'trace',
 ];
 const finite = (v, f) => (Number.isFinite(Number(v)) ? Number(v) : f);
 /**
@@ -46,7 +47,12 @@ function cleanFree(value, history = true) {
       dockSide: ['left', 'right'].includes(p.dockSide) ? p.dockSide : null,
       collapsed: !!p.collapsed,
       minimized: !!p.minimized,
-      closed: id === 'conversation' ? false : !!p.closed,
+      closed:
+        id === 'conversation'
+          ? false
+          : id === 'trace' && p.closed === undefined
+            ? true
+            : !!p.closed,
       order: finite(p.order, order),
       column: 0,
       row: 0,
