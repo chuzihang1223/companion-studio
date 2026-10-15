@@ -39,9 +39,14 @@ npm.cmd run build:public --prefix desktop
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer.ps1 -Delivery '<delivery目录>' -DryRun
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer.ps1 -Delivery '<delivery目录>' -RunUI
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer.ps1 -Delivery '<delivery目录>' -RunUI -PreserveInstalledSnapshot
 ```
 
 `-DryRun` 不安装或修改注册信息。真实测试若报告 `recovery_deferred=true`，应先核对仍运行的安装/卸载进程，再安全恢复保留备份；不可盲目覆盖同名注册项。NSIS 卸载本次测试程序，不删除其独立档案。
+
+`-PreserveInstalledSnapshot` 必须同时使用 `-RunUI`。安装和界面验收通过后，脚本在本次新测试目录的 `InstalledSnapshot/win-unpacked` 保留安装器实际释放的公开程序，核对 EXE、ASAR、冻结后端与构建清单的摘要，并记录全部复制文件的摘要。它不复制产品根目录的 `UserData`、`Cache` 或测试档案；发现程序目录内的运行档案、私密配置或重解析链接会停止，根目录的 NSIS 卸载器不进入快照，未知临时内容不会被静默略过。
+
+只有最终 `installer-test-report.json` 的 `success=true` 才表示快照可进入下一步审核：保留快照不能替代卸载和原注册信息、快捷方式恢复。随后仍须对快照执行 `audit-release.py` 完整产物审计；复制摘要不等同安全审计。快照和测试报告保留在本地，不自动发布、覆盖正式程序或导入用户档案。复制到新的正式程序位置后，应在该位置运行随程序提供的 `resources/prepare-runtime-access.ps1`，不要复制其他目录的权限或用户资料。
 
 在独立可写目录真实运行 Setup，保护已有安装注册信息及快捷方式，禁止安装测试覆盖正式档案。验证以下内容并记录实际结果：
 

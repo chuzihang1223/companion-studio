@@ -3,9 +3,13 @@
   [string]$TestRoot,
   [ValidateRange(0,65535)][int]$BackendPort = 0,
   [switch]$RunUI,
+  [switch]$PreserveInstalledSnapshot,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
+if ($PreserveInstalledSnapshot -and -not $RunUI) {
+  throw 'PreserveInstalledSnapshot requires RunUI; incomplete installation checks cannot produce a retained program'
+}
 Set-StrictMode -Version 2.0
 # 通过官方自带模块的绝对运行时位置加载，避免从 PS7/其他父进程继承的
 # PSModulePath 使 Windows PowerShell 5.1 找不到 Get-FileHash 等命令。
@@ -131,6 +135,8 @@ $uninstaller = Join-Path $testFolder 'Uninstall CompanionStudio.exe'
 $smokeHome = Join-Path $testRootPath 'UIProfile'
 $backupRoot = Join-Path $testRootPath 'Backup'
 $reportPath = Join-Path $testRootPath 'installer-test-report.json'
+$snapshotRoot = Join-Path $testRootPath 'InstalledSnapshot'
+$snapshotFolder = Join-Path $snapshotRoot 'win-unpacked'
 $regExe = (Get-Command reg.exe -ErrorAction Stop).Source
 if ($RunUI) { $nodeExe = (Get-Command node -ErrorAction Stop).Source }
 foreach ($path in $registryPaths) {
@@ -147,7 +153,8 @@ if ($DryRun) {
   # 只验证输入和保护范围；不创建目录、不导出/修改注册表、不启动程序。
   @{dry_run=$true;validated=$true;registry_paths=$registryPaths;shortcut_paths=$shortcutPaths;
     registry_count=$registryPaths.Count;test_root=$testRootPath;test_product_home=$testProductHome;
-    installer=$setup;run_ui=[bool]$RunUI} | ConvertTo-Json -Depth 4
+    installer=$setup;run_ui=[bool]$RunUI;preserve_installed_snapshot=[bool]$PreserveInstalledSnapshot;
+    snapshot_folder=$snapshotFolder} | ConvertTo-Json -Depth 4
   exit 0
 }
 
@@ -157,6 +164,9 @@ $report = [ordered]@{success=$false;test_id=$testId;product='Companion Studio';v
   ui_requested=[bool]$RunUI;installation_verified=$false;shortcuts_verified=$false;ui_verified=$false;
   original_registry_restored=$false;original_shortcuts_restored=$false;uninstall_verified=$false;
   recovery_deferred=$false;
+  installed_snapshot=[ordered]@{requested=[bool]$PreserveInstalledSnapshot;verified=$false;
+    program=$snapshotFolder;files=0;excluded_installer_files=@();core_hashes=@{};manifest_sha256=$null;
+    inventory_sha256=$null};
   external_model_requests=0;external_voice_requests=0;error=$null;cleanup_errors=@();registry=@();shortcuts=@()}
 $registryRows = @()
 $shortcutRows = @()
@@ -173,6 +183,136 @@ function Save-TestReport {
   $report.registry = $registryRows
   $report.shortcuts = $shortcutRows
   [IO.File]::WriteAllText($reportPath, ($report | ConvertTo-Json -Depth 8), $utf8)
+}
+
+function Save-InstalledSnapshot {
+  # 快照只来自本次已通过验收的 Program，不复制 Product 的 UserData、
+  # Cache 或独立 UIProfile；目标固定在新 TestRoot 内，不能由调用方改址。
+  if (-not $RunUI -or -not $report.ui_verified -or -not $report.installation_verified) {
+    throw 'Installed program snapshot requires completed installation and UI verification'
+  }
+  if (Test-Path -LiteralPath $snapshotRoot) { throw 'Installed snapshot destination must be new' }
+  function Assert-SnapshotPath([string]$Path, [string]$Boundary) {
+    $full = [IO.Path]::GetFullPath($Path).TrimEnd('\')
+    if (-not $full.Equals($Boundary,[StringComparison]::OrdinalIgnoreCase) -and
+        -not $full.StartsWith($Boundary+'\',[StringComparison]::OrdinalIgnoreCase)) {
+      throw 'Installed snapshot path escaped its isolated boundary'
+    }
+    # 不只检查最终文件：复制前也重新检查其目录链，防止已枚举的父目录
+    # 被换成 junction 后读到其他档案。边界本身必须仍是普通目录。
+    $current = $full
+    while ($current) {
+      if (Test-Path -LiteralPath $current) {
+        if ((Get-Item -LiteralPath $current -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+          throw 'Installed snapshot must not traverse a filesystem link'
+        }
+      }
+      if ($current.Equals($testRootPath,[StringComparison]::OrdinalIgnoreCase)) { break }
+      $parent = [IO.Path]::GetDirectoryName($current)
+      if (-not $parent -or $parent -eq $current) { throw 'Installed snapshot ancestry is outside its test root' }
+      $current = $parent
+    }
+  }
+  Assert-SnapshotPath $testFolder $testRootPath
+  $privateDirectories = @('userdata','cache','uiprofile','legacyarchive','privatearchive',
+    'voice_profiles','logs','profile','profiles','__pycache__','.pytest_cache','.venv')
+  $privateFiles = @('api-keys.json','fish-key.json','fish-settings.json','api-presets.json',
+    'auth.json','credentials.json','secrets.json','agent-preferences.json','trusted-actions.json',
+    'personalization.json','installation.json')
+  $privateSuffixes = @('.db','.sqlite','.sqlite3','.log','.wal','.shm')
+  $coreFiles = @('CompanionStudio.exe','resources\app.asar',
+    'resources\companion-backend\companion-backend.exe')
+  foreach ($relative in $coreFiles) {
+    $hash = (Get-FileHash -LiteralPath (Join-Path $testFolder $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($hash -ne $manifest.artifacts.('win-unpacked\'+$relative).sha256) {
+      throw ('Installed snapshot source does not match the build manifest: '+$relative)
+    }
+  }
+  # 按层枚举，先拒绝 junction/symlink 再进入目录；不使用递归复制跟随
+  # 突然出现的链接。发现疑似运行档案就停止，不能偷偷漏掉后称完整。
+  $pending = New-Object 'Collections.Generic.Queue[string]'
+  $directories = New-Object 'Collections.Generic.List[string]'
+  $files = New-Object 'Collections.Generic.List[object]'
+  $pending.Enqueue($testFolder)
+  while ($pending.Count) {
+    $current = $pending.Dequeue()
+    if ((Get-Item -LiteralPath $current -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+      throw 'Installed snapshot source contains a filesystem link'
+    }
+    foreach ($item in @(Get-ChildItem -LiteralPath $current -Force)) {
+      if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        throw 'Installed snapshot source contains a filesystem link'
+      }
+      $relative = $item.FullName.Substring($testFolder.Length+1)
+      $name = $item.Name.ToLowerInvariant()
+      # 唯一已确认的安装器附加文件是根目录卸载器；不把未知临时
+      # 目录或深层同名文件通过通配符静默排除，仍由后续审计阻断。
+      if (-not $item.PSIsContainer -and $relative -eq 'Uninstall CompanionStudio.exe') {
+        $report.installed_snapshot.excluded_installer_files += $relative
+        continue
+      }
+      if ($item.PSIsContainer) {
+        if ($privateDirectories -contains $name) { throw 'Installed snapshot source contains a runtime/profile directory' }
+        $directories.Add($relative)
+        $pending.Enqueue($item.FullName)
+      } else {
+        if ($privateFiles -contains $name -or $name -eq '.env' -or
+            ($name.StartsWith('.env.') -and $name -ne '.env.example') -or
+            $privateSuffixes -contains $item.Extension.ToLowerInvariant() -or
+            $name.EndsWith('.db-wal') -or $name.EndsWith('.db-shm') -or
+            $item.Extension -eq '.tmp') {
+          throw 'Installed snapshot source contains a private configuration or runtime file'
+        }
+        $files.Add([pscustomobject]@{source=$item.FullName;relative=$relative;bytes=$item.Length;
+          sha256=(Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLowerInvariant()})
+      }
+    }
+  }
+  New-Item -ItemType Directory -Path $snapshotRoot | Out-Null
+  New-Item -ItemType Directory -Path $snapshotFolder | Out-Null
+  foreach ($relative in $directories) {
+    Assert-SnapshotPath (Join-Path $testFolder $relative) $testFolder
+    Assert-SnapshotPath (Join-Path $snapshotFolder $relative) $snapshotFolder
+    New-Item -ItemType Directory -Path (Join-Path $snapshotFolder $relative) | Out-Null
+  }
+  foreach ($file in $files) {
+    Assert-SnapshotPath $file.source $testFolder
+    $destination = Join-Path $snapshotFolder $file.relative
+    Assert-SnapshotPath $destination $snapshotFolder
+    Copy-Item -LiteralPath $file.source -Destination $destination
+    if ((Get-Item -LiteralPath $destination).Length -ne $file.bytes -or
+        (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant() -ne $file.sha256) {
+      throw ('Installed snapshot file copy mismatch: '+$file.relative)
+    }
+  }
+  foreach ($relative in $coreFiles) {
+    $hash = (Get-FileHash -LiteralPath (Join-Path $snapshotFolder $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($hash -ne $manifest.artifacts.('win-unpacked\'+$relative).sha256) {
+      throw ('Installed snapshot destination does not match the build manifest: '+$relative)
+    }
+    $report.installed_snapshot.core_hashes[$relative] = $hash
+  }
+  $manifestSource = Join-Path $deliveryRoot 'build-manifest.json'
+  $manifestDestination = Join-Path $snapshotRoot 'build-manifest.json'
+  $manifestHash = (Get-FileHash -LiteralPath $manifestSource -Algorithm SHA256).Hash.ToLowerInvariant()
+  Copy-Item -LiteralPath $manifestSource -Destination $manifestDestination
+  if ((Get-FileHash -LiteralPath $manifestDestination -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifestHash) {
+    throw 'Installed snapshot build manifest copy mismatch'
+  }
+  $report.installed_snapshot.manifest_sha256 = $manifestHash
+  # 每个复制文件的摘要仅证明枚举与复制一致；构建清单只覆盖三项核心
+  # 文件。完整快照仍须单独执行公开产物审计，不能把此清单称为安全认证。
+  $inventoryPath = Join-Path $snapshotRoot 'installed-program-manifest.json'
+  $inventory = [ordered]@{product='Companion Studio';version=$manifest.build.version;
+    build_id=$manifest.build.build_id;build_manifest_sha256=$manifestHash;
+    files=@($files | ForEach-Object {
+      [ordered]@{path=$_.relative;bytes=$_.bytes;sha256=$_.sha256}
+    })}
+  [IO.File]::WriteAllText($inventoryPath,($inventory | ConvertTo-Json -Depth 6),$utf8)
+  $report.installed_snapshot.inventory_sha256 = (Get-FileHash -LiteralPath $inventoryPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  $report.installed_snapshot.files = $files.Count
+  $report.installed_snapshot.verified = $true
+  Save-TestReport
 }
 
 function Invoke-RegBackup([string]$Path, [string]$File) {
@@ -301,6 +441,7 @@ try {
     $report.ui_verified = $true
     Save-TestReport
   }
+  if ($PreserveInstalledSnapshot) { Save-InstalledSnapshot }
 } catch {
   $failure = $_
   $report.error = $_.Exception.Message
@@ -398,7 +539,7 @@ try {
   $report.original_registry_restored = $registryRows.Count -eq 2 -and @($registryRows | Where-Object { -not $_.restored }).Count -eq 0
   $report.original_shortcuts_restored = $shortcutRows.Count -eq 2 -and @($shortcutRows | Where-Object { -not $_.restored }).Count -eq 0
   foreach ($name in $savedEnv.Keys) { [Environment]::SetEnvironmentVariable($name,$savedEnv[$name],'Process') }
-  $report.success = -not $failure -and $report.cleanup_errors.Count -eq 0 -and $report.installation_verified -and $report.shortcuts_verified -and $report.uninstall_verified -and $report.original_registry_restored -and $report.original_shortcuts_restored -and (-not $RunUI -or $report.ui_verified)
+  $report.success = -not $failure -and $report.cleanup_errors.Count -eq 0 -and $report.installation_verified -and $report.shortcuts_verified -and $report.uninstall_verified -and $report.original_registry_restored -and $report.original_shortcuts_restored -and (-not $RunUI -or $report.ui_verified) -and (-not $PreserveInstalledSnapshot -or $report.installed_snapshot.verified)
   Save-TestReport
 }
 $report | ConvertTo-Json -Depth 8
