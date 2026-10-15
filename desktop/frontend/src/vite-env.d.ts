@@ -2,6 +2,26 @@
 
 interface Window {
   desktopAPI?: {
+    readEvaluation: <K extends keyof import('./evaluation/types').EvaluationReads>(
+      operation: K,
+      options?: import('./evaluation/types').EvaluationQuery,
+    ) => Promise<import('./evaluation/types').EvaluationReads[K]>;
+    startEvaluation: (
+      options: import('./evaluation/types').EvaluationOptions,
+    ) => Promise<import('./evaluation/types').EvaluationRun>;
+    controlEvaluation: (
+      runId: string,
+      action: 'pause' | 'resume' | 'cancel',
+    ) => Promise<import('./evaluation/types').EvaluationRun>;
+    deleteEvaluation: (runId: string) => Promise<{ deleted: boolean }>;
+    exportEvaluation: (
+      runId: string,
+      format: 'json' | 'csv' | 'markdown',
+    ) => Promise<{ filename: string; partial: boolean }>;
+    watchEvaluation: (runId: string | null) => Promise<boolean>;
+    onEvaluationProgress: (
+      callback: (event: import('./evaluation/types').EvaluationProgress) => void,
+    ) => () => void;
     readAgentTraces: {
       (
         operation: 'list',

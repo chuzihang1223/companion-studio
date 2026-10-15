@@ -15,6 +15,7 @@ const ids = [
   'artifacts',
   'permissions',
   'trace',
+  'evaluation',
 ];
 const finite = (v, f) => (Number.isFinite(Number(v)) ? Number(v) : f);
 /**
@@ -50,7 +51,7 @@ function cleanFree(value, history = true) {
       closed:
         id === 'conversation'
           ? false
-          : id === 'trace' && p.closed === undefined
+          : ['trace', 'evaluation'].includes(id) && p.closed === undefined
             ? true
             : !!p.closed,
       order: finite(p.order, order),

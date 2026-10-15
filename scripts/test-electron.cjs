@@ -17,6 +17,7 @@ const tests = [
   'url-policy-unit.cjs',
   'app-launcher-unit.cjs',
   'trace-unit.cjs',
+  'evaluation-unit.cjs',
 ];
 
 for (const test of tests) {

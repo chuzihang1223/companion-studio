@@ -24,6 +24,12 @@ ROOT_FILES = {
 }
 TREES = {"backend", "characters", "desktop", "scripts", "tests", "licenses"}
 PUBLIC_DOCS = {
+    "AGENT_EVALUATION.md",
+    "BENCHMARK_DATASET.md",
+    "EVALUATION_METRICS.md",
+    "EVALUATION_TESTING.md",
+    "EVALUATION_BASELINE.md",
+    "EVALUATION_MOCK_SAMPLE.md",
     "TRACE_ARCHITECTURE.md",
     "TRACE_REPLAY.md",
     "INSTALLED_SMOKE.md",

@@ -44,3 +44,16 @@ jobs:
             .cache/checks/pytest.xml
             .cache/checks/*audit.json
           if-no-files-found: warn
+      - name: Evaluation Mock integration (no paid services)
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -B -m pytest backend/tests/test_benchmark_case.py backend/tests/test_evaluation_system.py -q --basetemp .cache/evaluation-ci-temp --junitxml .cache/checks/evaluation.xml
+          node tests/ui/evaluation-unit.cjs
+      - name: Keep synthetic evaluation test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: evaluation-mock-results
+          path: |
+            .cache/checks/evaluation.xml
+          if-no-files-found: warn

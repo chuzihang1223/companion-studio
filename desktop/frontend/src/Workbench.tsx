@@ -16,6 +16,7 @@ import DiffModule from './DiffModule';
 import TerminalModule from './TerminalModule';
 import MediaModule from './MediaModule';
 import TraceViewer from './trace/TraceViewer';
+import EvaluationDashboard from './evaluation/EvaluationDashboard';
 import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
@@ -209,6 +210,7 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'evaluation') return <EvaluationDashboard visible={visible && moduleVisible} />;
     if (id === 'trace')
       return (
         <TraceViewer

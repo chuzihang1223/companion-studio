@@ -73,6 +73,7 @@ $sha = [Security.Cryptography.SHA256]::Create()
 try { $fingerprint = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($sourceHashes | ConvertTo-Json -Compress))))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
 $revision = if (Test-Path -LiteralPath (Join-Path $project '.git')) { (& git -C $project rev-parse HEAD).Trim() } else { 'source-export' }
 $info = [ordered]@{source_revision=$revision;version=$version;product_name='Companion Studio';build_label='Companion Studio Public Release';build_id=$BuildId;built_at=(Get-Date).ToUniversalTime().ToString('o');channel='release';app_id='com.companionstudio.desktop';clean_distribution=$true;source_fingerprint=$fingerprint}
+$info['prompt_version'] = $sourceHashes['backend/app/services/character/prompt_builder.py'] + ':' + $sourceHashes['backend/app/services/agent_service.py']
 # 只覆盖暂存包中的构建信息；开发源码 build-info.json 保持稳定。
 $appStage = Join-Path $build 'desktop-app'
 New-Item -ItemType Directory -Force -Path $appStage,(Join-Path $appStage 'node_modules') | Out-Null
@@ -102,8 +103,10 @@ $backend = Join-Path $build 'backend'
 $arguments = @('-m','PyInstaller','--noconfirm','--clean','--onedir','--noconsole','--hidden-import','_cffi_backend','--name','companion-backend',
   '--paths',(Join-Path $project 'backend'),'--add-data',($characters+';characters'),
   '--add-data',($frontend+';desktop/frontend/dist'),
+  '--add-data',((Join-Path $appStage 'electron\build-info.json')+';.'),
   '--add-data',((Join-Path $project 'backend\app\services\character\app_identity.json')+';app/services/character'),
   '--add-data',((Join-Path $project 'backend\app\services\voice\voice_presets.json')+';app/services/voice'),
+  '--add-data',((Join-Path $project 'backend\app\services\evaluation\datasets')+';app/services/evaluation/datasets'),
   '--exclude-module','_pytest','--exclude-module','PIL._imagingtk','--exclude-module','tkinter','--exclude-module','_tkinter','--exclude-module','pytest','--exclude-module','pip','--exclude-module','docx','--exclude-module','lxml','--exclude-module','soundfile','--exclude-module','_soundfile_data',
   '--distpath',$backend,'--workpath',(Join-Path $build 'pyinstaller'),'--specpath',$build,(Join-Path $project 'backend\run.py'))
 # Restrict the native-library search to the official Python installation and Windows.

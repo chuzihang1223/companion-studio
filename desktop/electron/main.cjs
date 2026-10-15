@@ -341,6 +341,15 @@ require('./agent-traces.cjs')({
   request: privateBackend,
   exportDirectory: path.join(paths.home, 'Exports'),
 });
+const stopEvaluationSubscriptions = require('./evaluation.cjs')({
+  ipcMain,
+  requireMainWindow,
+  request: privateBackend,
+  exportDirectory: path.join(paths.home, 'Exports'),
+  backendURL: backend.url,
+  controlToken: backendManager.controlToken,
+});
+app.on('before-quit', stopEvaluationSubscriptions);
 // 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher = null,
   projectWatchTimer = null,

@@ -7,6 +7,17 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 contextBridge.exposeInMainWorld('desktopAPI', {
   appInfo: () => ipcRenderer.invoke('app-info'),
+  readEvaluation: (operation, options) => ipcRenderer.invoke('evaluation-read', operation, options),
+  startEvaluation: (options) => ipcRenderer.invoke('evaluation-start', options),
+  controlEvaluation: (runId, action) => ipcRenderer.invoke('evaluation-control', runId, action),
+  deleteEvaluation: (runId) => ipcRenderer.invoke('evaluation-delete', runId),
+  exportEvaluation: (runId, format) => ipcRenderer.invoke('evaluation-export', runId, format),
+  watchEvaluation: (runId) => ipcRenderer.invoke('evaluation-watch', runId),
+  onEvaluationProgress: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('evaluation-progress', handler);
+    return () => ipcRenderer.removeListener('evaluation-progress', handler);
+  },
   readAgentTraces: (operation, options) =>
     ipcRenderer.invoke('agent-traces-read', operation, options),
   deleteAgentTrace: (options) => ipcRenderer.invoke('agent-trace-delete', options),

@@ -19,6 +19,11 @@ type Props = {
   sessionId: string | null;
   revision: number;
   visible: boolean;
+  source?: Pick<
+    NonNullable<Window['desktopAPI']>,
+    'readAgentTraces' | 'exportAgentTrace' | 'deleteAgentTrace'
+  >;
+  readOnly?: boolean;
 };
 
 export default function TraceViewer(props: Props) {
@@ -27,7 +32,7 @@ export default function TraceViewer(props: Props) {
   return <TraceSession key={`${props.conversationId}:${props.sessionId}`} {...props} />;
 }
 
-function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
+function TraceSession({ conversationId, sessionId, revision, visible, source, readOnly }: Props) {
   const [traces, setTraces] = useState<AgentTrace[]>([]);
   const [selected, setSelected] = useState('');
   const [eventRows, setEvents] = useState<TraceEvent[]>([]);
@@ -62,7 +67,7 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
       live.current = false;
     };
   }, []);
-  const api = window.desktopAPI;
+  const api = source || window.desktopAPI;
   const scope = useCallback(
     (): TraceQuery => ({
       conversation_id: conversationId || '',
@@ -353,7 +358,10 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
             <small>
               {events.length ? index + 1 : 0}/{events.length} · 空闲间隔最长 2 秒
             </small>
-            <button onClick={() => void exportTrace()} disabled={!events.length || exporting}>
+            <button
+              onClick={() => void exportTrace()}
+              disabled={readOnly || !events.length || exporting}
+            >
               导出脱敏 JSON
             </button>
           </div>
@@ -400,7 +408,7 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
             {renderMs.toFixed(1)}{' '}
             ms（含帧调度，非纯渲染耗时）。各类耗时可能嵌套，不能相加作为总耗时。
           </small>
-          {isFinished(trace.status) && (
+          {!readOnly && isFinished(trace.status) && (
             <button
               className="trace-delete"
               onClick={() => {
