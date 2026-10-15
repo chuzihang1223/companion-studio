@@ -68,8 +68,17 @@ async def lifespan(app: FastAPI):
     app.state.agent_service = AgentService()
     app.state.work_state = WorkState()
     app.state.runtime_registry = RuntimeTaskRegistry()
-    app.state.evaluation = AgentEvaluationEngine()
-    await app.state.evaluation.initialize()
+    app.state.evaluation = None
+    try:
+        evaluation = AgentEvaluationEngine()
+        await evaluation.initialize()
+        app.state.evaluation = evaluation
+    except Exception:
+        # Evaluation storage is optional; its failure must not prevent ordinary
+        # chat/Work startup. Fixed API routes report a controlled 503 instead.
+        import logging
+
+        logging.getLogger(__name__).warning("evaluation_initialization_unavailable")
     runtime_watchdog = asyncio.create_task(app.state.runtime_registry.watchdog())
     app.state.work_state.registry = app.state.runtime_registry
     app.state.desktop_bridge = DesktopBridge()
@@ -101,7 +110,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        await app.state.evaluation.close()
+        if app.state.evaluation:
+            await app.state.evaluation.close()
         runtime_watchdog.cancel()
         await asyncio.gather(runtime_watchdog, return_exceptions=True)
         await app.state.runtime_registry.close()

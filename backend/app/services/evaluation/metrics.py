@@ -94,6 +94,9 @@ def compare_conditions(left, right):
         "environment",
         "timeout_seconds",
         "concurrency",
+        "max_duration_seconds",
+        "max_requests",
+        "token_budget",
     )
     differences = [
         {"field": key, "left": left.get(key), "right": right.get(key)}

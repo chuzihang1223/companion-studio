@@ -10,6 +10,10 @@ from contextvars import ContextVar
 _budget = ContextVar("llm_usage_budget", default=None)
 
 
+class EvaluationBudgetExceeded(ValueError):
+    """本次测试预算耗尽；区别于模型或程序故障。"""
+
+
 class UsageBudget:
     def __init__(self, max_requests, token_budget, request_tokens=2048):
         self.max_requests, self.token_budget = max_requests, token_budget
@@ -20,10 +24,10 @@ class UsageBudget:
 
     def before(self, body):
         if self.requests >= self.max_requests or self.requests > len(self.usages):
-            raise ValueError("EVALUATION_REQUEST_BUDGET")
+            raise EvaluationBudgetExceeded("EVALUATION_REQUEST_BUDGET")
         remaining = self.token_budget - self.reserved
         if remaining <= 0:
-            raise ValueError("EVALUATION_TOKEN_BUDGET")
+            raise EvaluationBudgetExceeded("EVALUATION_TOKEN_BUDGET")
         body["max_tokens"] = min(
             body.get("max_tokens") or self.request_tokens, self.request_tokens, remaining
         )

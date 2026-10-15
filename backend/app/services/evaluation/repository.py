@@ -218,6 +218,15 @@ class EvaluationRepository:
             self.refresh_metrics(run_id)
             self.status(run_id, "INTERRUPTED")
 
+    def attach_recovered_trace(self, run_id, attempt_id, links):
+        with self.factory() as db:
+            row = db.get(EvaluationAttempt, attempt_id)
+            if not row or row.run_id != run_id or row.trace_id:
+                return
+            for key in ("trace_id", "task_id", "conversation_id", "work_session_id"):
+                setattr(row, key, links.get(key))
+            db.commit()
+
     def remove(self, run_id):
         with self.factory() as db:
             row = self.owned(db, run_id)

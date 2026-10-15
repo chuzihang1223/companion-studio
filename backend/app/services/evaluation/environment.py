@@ -3,10 +3,13 @@
 import asyncio
 from contextlib import closing, contextmanager
 import ctypes
+import hmac
 import json
 import os
 from pathlib import Path
+import re
 import shutil
+import secrets
 import sys
 from uuid import UUID, uuid4
 
@@ -85,6 +88,17 @@ class EnvironmentManager:
         self.root.mkdir(parents=True, exist_ok=True)
         self.active = {}
 
+    def check_capacity(self):
+        total = 0
+        for path in self.root.glob("*/*/data/chat.db"):
+            try:
+                if not path.is_symlink():
+                    total += path.stat().st_size
+            except FileNotFoundError:
+                continue  # A completed run can be removed during this scan.
+        if total >= 256 * 1024 * 1024:
+            raise ValueError("评测证据已达 256 MiB，请删除旧评测历史")
+
     def path(self, run_id, attempt_id=None):
         target = self.root / str(UUID(run_id))
         if attempt_id:
@@ -98,6 +112,7 @@ class EnvironmentManager:
         return target
 
     async def run(self, run_id, attempt_id, payload, timeout):
+        self.check_capacity()
         archive = self.path(run_id, attempt_id)
         if archive.exists():
             raise ValueError("评测档案已存在，拒绝重用")
@@ -106,7 +121,12 @@ class EnvironmentManager:
         # Windows MAX_PATH. Use a shorter, exclusive disposable execution name,
         # then archive only SQLite evidence at the stable Run/Attempt address.
         home = self.root / "_w" / uuid4().hex[:16]
+        if not home.resolve().is_relative_to(self.root):
+            raise ValueError("临时评测目录超出范围")
         home.mkdir(parents=True, exist_ok=False)
+        (home / "owner.json").write_text(
+            json.dumps({"run_id": run_id, "attempt_id": attempt_id}), encoding="utf-8"
+        )
         data = home / "data"
         config = home / "config"
         data.mkdir()
@@ -140,6 +160,10 @@ class EnvironmentManager:
             COMPANION_CLEAN_DISTRIBUTION="1",
             PYINSTALLER_RESET_ENVIRONMENT="1",
         )
+        if os.environ.get("AGENT_PYTHON"):
+            # The main application already selects its coding interpreter. Only
+            # that executable identity is retained, no virtualenv/profile config.
+            env["AGENT_PYTHON"] = os.environ["AGENT_PYTHON"]
         command = (
             [sys.executable, "--evaluation-worker"]
             if getattr(sys, "frozen", False)
@@ -150,14 +174,48 @@ class EnvironmentManager:
                 "--evaluation-worker",
             ]
         )
+        secret = secrets.token_urlsafe(32)
+        outcome = asyncio.get_running_loop().create_future()
+        ready = asyncio.Event()
+        writers = set()
+
+        async def receive(reader, writer):
+            writers.add(writer)
+            try:
+                hello = (await asyncio.wait_for(reader.readline(), 3)).decode().strip()
+                if not hmac.compare_digest(hello, secret):
+                    return
+                await ready.wait()
+                # Framed local IPC also works in PyInstaller --noconsole, whose
+                # sys.stdin/stdout are None. Credentials stay in this private pipe
+                # equivalent, never command-line arguments or config files.
+                writer.write(json.dumps(payload, ensure_ascii=True).encode() + b"\n")
+                await writer.drain()
+                raw = await reader.readline()
+                if len(raw) > 32000:
+                    raise ValueError("worker output exceeds limit")
+                value = json.loads(raw)
+                if not outcome.done():
+                    outcome.set_result(value)
+            except Exception:
+                if not outcome.done():
+                    outcome.set_exception(RuntimeError("worker IPC unavailable"))
+            finally:
+                writer.close()
+                await writer.wait_closed()
+                writers.discard(writer)
+
+        server = await asyncio.start_server(receive, "127.0.0.1", 0, limit=32768)
+        env["COMPANION_EVAL_PORT"] = str(server.sockets[0].getsockname()[1])
+        env["COMPANION_EVAL_NONCE"] = secret
         process, job = None, None
         try:
             process = await asyncio.create_subprocess_exec(
                 *command,
                 cwd=home,
                 env=env,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.DEVNULL,
+                stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
                 creationflags=0x08000000 if sys.platform == "win32" else 0,
                 start_new_session=sys.platform != "win32",
@@ -165,16 +223,17 @@ class EnvironmentManager:
             )
             self.active[attempt_id] = process
             job = OwnedJob(process.pid)
-            stdout, _ = await asyncio.wait_for(
-                process.communicate(json.dumps(payload, ensure_ascii=True).encode()), timeout
-            )
-            if len(stdout) > 32000 or process.returncode != 0:
-                raise RuntimeError("worker output unavailable")
-            result = json.loads(stdout)
+            ready.set()
+            result = await asyncio.wait_for(outcome, timeout)
+            await asyncio.wait_for(process.wait(), 3)
             if "error" in result:
-                raise RuntimeError("worker execution error")
+                raise WorkerFailure(result.get("error_type"))
             return result
         finally:
+            server.close()
+            await server.wait_closed()
+            for writer in list(writers):
+                writer.close()
             if job:
                 job.close()
             if process and process.returncode is None:
@@ -208,6 +267,64 @@ class EnvironmentManager:
         ):
             src.backup(dest)
 
+    def recover_links(self, run_id, attempt_id):
+        """仅在 worker 结束后恢复自己的 Trace，强制终止只能标记中断。"""
+        from sqlalchemy import create_engine, select
+        from sqlalchemy.orm import sessionmaker
+        from app.models.agent_trace import AgentTrace
+        from app.services.trace.store import TraceStore
+
+        path = self.path(run_id, attempt_id) / "data" / "chat.db"
+        if not path.is_file():
+            return {}
+        engine = create_engine(f"sqlite:///{path.as_posix()}")
+        try:
+            factory = sessionmaker(engine, expire_on_commit=False)
+            TraceStore(factory).recover()
+            with factory() as db:
+                row = db.scalar(select(AgentTrace))
+                if row:
+                    return {
+                        "trace_id": row.id,
+                        "task_id": row.task_id,
+                        "conversation_id": row.conversation_id,
+                        "work_session_id": row.work_session_id,
+                    }
+                return {}
+        finally:
+            engine.dispose()
+
+    def cleanup_abandoned(self, repository):
+        folder = self.root / "_w"
+        if not folder.exists() or not folder.resolve().is_relative_to(self.root):
+            return
+        for child in folder.iterdir():
+            if (
+                re.fullmatch(r"[0-9a-f]{16}", child.name)
+                and child.is_dir()
+                and not child.is_symlink()
+                and child.resolve().is_relative_to(self.root)
+            ):
+                try:
+                    owner = json.loads((child / "owner.json").read_text(encoding="utf-8"))
+                    run_id, attempt_id = str(UUID(owner["run_id"])), str(UUID(owner["attempt_id"]))
+                    repository.attempt(run_id, attempt_id)
+                    archive = self.path(run_id, attempt_id)
+                    source = child / "data" / "chat.db"
+                    if (
+                        source.is_file()
+                        and source.resolve().is_relative_to(child.resolve())
+                        and not (archive / "data" / "chat.db").exists()
+                    ):
+                        archive.mkdir(parents=True, exist_ok=True)
+                        self.archive_database(source, archive)
+                    links = self.recover_links(run_id, attempt_id)
+                    repository.attach_recovered_trace(run_id, attempt_id, links)
+                except (OSError, ValueError, KeyError, LookupError):
+                    pass  # Unknown/corrupt staging is not evidence of task success.
+                finally:
+                    shutil.rmtree(child)
+
     @contextmanager
     def trace_repository(self, run_id, attempt_id):
         from sqlalchemy import create_engine
@@ -233,3 +350,29 @@ class EnvironmentManager:
         target = self.path(run_id)
         if target.is_dir():
             shutil.rmtree(target)
+
+
+class WorkerFailure(RuntimeError):
+    def __init__(self, error_type):
+        # Only Python class categories, never provider messages, URLs or paths.
+        known = {
+            "ValueError",
+            "KeyError",
+            "FileNotFoundError",
+            "PermissionError",
+            "OperationalError",
+            "RuntimeError",
+            "OSError",
+        }
+        self.code = "WORKER_" + error_type.upper() if error_type in known else "WORKER_ERROR"
+        if error_type in {
+            "LLMConfigurationError",
+            "LLMResponseError",
+            "LLMHTTPError",
+            "LLMTimeoutError",
+            "LLMAuthenticationError",
+        }:
+            self.code = "MODEL_ERROR"
+        if error_type == "EvaluationBudgetExceeded":
+            self.code = "MODEL_BUDGET_EXHAUSTED"
+        super().__init__(self.code)

@@ -92,6 +92,26 @@ def test_twenty_case_api_runtime_trace_database_and_exports(evaluation):
             assert trace["items"] and all(e["task_id"] == row["task_id"] for e in trace["items"])
             assert not (value.environment.path(run_id, row["attempt_id"]) / "workspace").exists()
         first = rows[0]
+        dual = rows[-1]
+        assert (
+            len(
+                client.get(
+                    url + "/attempts/" + dual["attempt_id"] + "/trace/list", headers=HEADERS
+                ).json()["items"]
+            )
+            == 2
+        )
+        assert (
+            client.get(
+                url
+                + "/attempts/"
+                + dual["attempt_id"]
+                + "/trace/detail?trace_id="
+                + first["trace_id"],
+                headers=HEADERS,
+            ).status_code
+            == 404
+        )
         assert (
             client.get(
                 url + "/attempts/" + str(uuid4()) + "/trace/events", headers=HEADERS
@@ -122,6 +142,7 @@ def test_twenty_case_api_runtime_trace_database_and_exports(evaluation):
         restored.recover()
         assert restored.detail(run_id)["metrics"]["valid_count"] == 20
         assert not value.tasks
+        assert not list((value.environment.root / "_w").iterdir())
         assert client.delete(url, headers=HEADERS).json()["deleted"]
         assert client.get(url, headers=HEADERS).status_code == 404
 
@@ -264,3 +285,93 @@ def test_gui_missing_environment_and_implicit_live_are_not_passed(evaluation):
         ).json()["items"][0]
         assert result["execution_status"] == "BLOCKED"
         assert result["error_code"] == "INTERACTIVE_FIXTURE_BRIDGE_UNAVAILABLE"
+
+
+def test_setup_failure_closes_owned_server_and_directories(evaluation, monkeypatch):
+    value, _, _ = evaluation
+
+    async def fail(*args, **kwargs):
+        raise OSError("controlled startup failure")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fail)
+
+    async def run():
+        with pytest.raises(OSError):
+            await value.environment.run(
+                str(uuid4()), str(uuid4()), {"mode": "mock", "case_id": "EVAL-001"}, 2
+            )
+
+    asyncio.run(run())
+    assert not value.environment.active
+    assert not list((value.environment.root / "_w").iterdir())
+
+
+def test_scoped_sse_and_thousand_synthetic_metric_records(evaluation):
+    value, _, _ = evaluation
+    current = value.repository.create(
+        RunRequest(case_ids=["EVAL-001"]), value.registry.select(["EVAL-001"]), {}
+    )
+
+    async def run():
+        stream = value.stream(current["run_id"])
+        first = await anext(stream)
+        assert current["run_id"] in first and "EVAL_RUN_PROGRESS" in first
+        value.publish(str(uuid4()), "EVAL_CASE_STARTED", "EVAL-020")
+        value.publish(current["run_id"], "EVAL_CASE_STARTED", "EVAL-001")
+        second = await anext(stream)
+        assert "EVAL-001" in second and "EVAL-020" not in second
+        await stream.aclose()
+
+    asyncio.run(run())
+    assert not value.subscribers
+    started = time.perf_counter()
+    metrics = MetricsCollector.aggregate(
+        [dict(empty_result("PASS", None), duration_ms=i) for i in range(1000)], "mock"
+    )
+    assert metrics["valid_count"] == 1000 and metrics["p50_ms"] == 499.5
+    assert time.perf_counter() - started < 2  # CPU aggregation only, not renderer FPS.
+
+
+def test_provider_response_usage_is_request_local():
+    import httpx
+    from app.services.llm.openai_provider import OpenAIProvider
+
+    def response(request):
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "local response"}}],
+                "usage": {"prompt_tokens": 7, "completion_tokens": 4, "total_tokens": 11},
+            },
+        )
+
+    async def run_one():
+        budget = UsageBudget(1, 100)
+        provider = OpenAIProvider(
+            "", "fixture", "http://127.0.0.1:9", transport=httpx.MockTransport(response)
+        )
+        with usage_scope(budget):
+            assert await provider.chat([]) == "local response"
+        return budget.public()
+
+    async def run():
+        return await asyncio.gather(run_one(), run_one())
+
+    left, right = asyncio.run(run())
+    assert left["total_tokens"] == right["total_tokens"] == 11
+    assert left["requests"] == right["requests"] == 1
+
+
+def test_shutdown_before_scheduler_starts_does_not_leave_queued_run(evaluation):
+    value, app, _ = evaluation
+
+    async def run():
+        current = await value.start(RunRequest(case_ids=["EVAL-001"]), app)
+        await value.close()
+        assert value.repository.detail(current["run_id"])["status"] == "CANCELLED"
+        assert (
+            value.repository.results(current["run_id"])["items"][0]["execution_status"] == "NOT_RUN"
+        )
+        assert not value.tasks and not value.environment.active
+
+    asyncio.run(run())

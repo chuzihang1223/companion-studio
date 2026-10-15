@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.agent_traces import authorized
 from app.schemas.evaluation import RunAction, RunRequest
@@ -28,6 +29,8 @@ async def read(function, *args, **kwargs):
         raise HTTPException(404, "评测记录不存在") from exc
     except ValueError as exc:
         raise HTTPException(409, "当前状态不允许该操作") from exc
+    except (SQLAlchemyError, OSError) as exc:
+        raise HTTPException(503, "评测存储暂不可用") from exc
 
 
 @router.get("/datasets")
@@ -143,19 +146,34 @@ async def events(run_id: UUID, request: Request):
     )
 
 
-def read_trace(value, run_id, attempt_id, operation, cursor, limit):
+def read_trace(value, run_id, attempt_id, operation, cursor, limit, trace_id=None):
     row = value.repository.attempt(run_id, attempt_id)
     if not row["trace_id"] or not row["conversation_id"]:
         raise LookupError("该评测无 Trace")
     with value.environment.trace_repository(run_id, attempt_id) as repo:
-        scope = row["conversation_id"]
+        scopes = row["result"].get("trace_scopes") or [row]
         if operation == "list":
-            return repo.listing(scope, task_id=row["task_id"], cursor=cursor, limit=limit)
+            traces = [
+                repo.detail(scope["trace_id"], scope["conversation_id"]) for scope in scopes[:2]
+            ]
+            return {
+                "items": traces[cursor : cursor + limit],
+                "next_cursor": None,
+                "has_more": False,
+                "limit": limit,
+                "schema_version": 1,
+            }
+        selected = next(
+            (scope for scope in scopes if scope["trace_id"] == (trace_id or row["trace_id"])), None
+        )
+        if not selected:
+            raise LookupError("Trace 不属于当前评测尝试")
+        scope = selected["conversation_id"]
         if operation == "detail":
-            return repo.detail(row["trace_id"], scope)
+            return repo.detail(selected["trace_id"], scope)
         if operation == "summary":
-            return repo.summary(row["trace_id"], scope)
-        return repo.events(row["trace_id"], scope, after=cursor, limit=limit)
+            return repo.summary(selected["trace_id"], scope)
+        return repo.events(selected["trace_id"], scope, after=cursor, limit=limit)
 
 
 @router.get("/runs/{run_id}/attempts/{attempt_id}/trace/{operation}")
@@ -166,6 +184,7 @@ async def trace(
     request: Request,
     cursor: int = Query(0, ge=0, le=100000),
     limit: int = Query(250, ge=1, le=250),
+    trace_id: UUID | None = None,
 ):
     return await read(
         read_trace,
@@ -175,4 +194,5 @@ async def trace(
         operation,
         cursor,
         min(limit, 100) if operation == "list" else limit,
+        str(trace_id) if trace_id else None,
     )
