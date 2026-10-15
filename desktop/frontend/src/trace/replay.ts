@@ -1,0 +1,65 @@
+import type { TraceEvent } from './types';
+
+export const MAX_EVENTS = 5000;
+export const ROW_HEIGHT = 58;
+export const isFinished = (status: string) =>
+  ['completed', 'failed', 'cancelled', 'interrupted'].includes(status);
+export function orderedEvents(rows: TraceEvent[]): TraceEvent[] {
+  return [...new Map(rows.map((row) => [row.sequence, row])).values()]
+    .sort((a, b) => a.sequence - b.sequence)
+    .slice(0, MAX_EVENTS);
+}
+export function replayDelay(current: TraceEvent, next: TraceEvent, speed: number): number {
+  const elapsed = Date.parse(next.created_at) - Date.parse(current.created_at);
+  // Idle gaps are shortened, visibly documented in the player. No side effects.
+  return Math.min(
+    2000,
+    Math.max(80, (Number.isFinite(elapsed) ? elapsed : 200) / Math.max(0.25, speed)),
+  );
+}
+export function virtualWindow(length: number, top: number, height: number) {
+  const start = Math.max(0, Math.floor(top / ROW_HEIGHT) - 4);
+  return { start, end: Math.min(length, start + Math.ceil(height / ROW_HEIGHT) + 8) };
+}
+export const traceStatuses: Record<string, string> = {
+  planning: '规划中',
+  ready: '待执行',
+  queued: '等待执行',
+  running: '执行中',
+  paused: '已暂停',
+  waiting_permission: '等待授权',
+  completed: '已完成',
+  failed: '失败',
+  cancelled: '已取消',
+  interrupted: '已中断',
+  denied: '已拒绝',
+};
+export const eventNames: Record<string, string> = {
+  TASK_CREATED: '创建任务',
+  TASK_PLANNING: '开始规划',
+  PLANNING_COMPLETED: '规划完成',
+  MODEL_REQUEST_STARTED: '请求模型',
+  MODEL_REQUEST_COMPLETED: '模型返回',
+  MODEL_REQUEST_FAILED: '模型失败',
+  TOOL_STARTED: '开始工具',
+  TOOL_COMPLETED: '工具完成',
+  TOOL_FAILED: '工具失败',
+  OPERATION_STARTED: '执行操作',
+  OPERATION_COMPLETED: '操作完成',
+  OPERATION_FAILED: '操作失败',
+  OBSERVATION_CREATED: '观察记录',
+  VERIFICATION_STARTED: '开始验证',
+  VERIFICATION_PASSED: '验证通过',
+  VERIFICATION_FAILED: '验证失败',
+  RETRY_STARTED: '重试',
+  PERMISSION_REQUESTED: '请求授权',
+  PERMISSION_RESOLVED: '授权已处理',
+  TASK_PAUSED: '任务暂停',
+  TASK_RESUMED: '任务继续',
+  TASK_QUEUED: '任务排队',
+  TASK_RUNNING: '开始执行',
+  TASK_INTERRUPTED: '任务中断',
+  TASK_COMPLETED: '任务完成',
+  TASK_FAILED: '任务失败',
+  TASK_CANCELLED: '任务取消',
+};

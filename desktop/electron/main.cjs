@@ -335,6 +335,7 @@ require('./virtual-documents.cjs')({
   request: privateBackend,
   getWindow: () => mainWindow,
 });
+require('./agent-traces.cjs')({ ipcMain, requireMainWindow, request: privateBackend });
 // 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher = null,
   projectWatchTimer = null,

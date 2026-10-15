@@ -566,6 +566,7 @@ export default function AppV3() {
         'task_failed',
         'user_interruption',
         'workspace_changed',
+        'trace_updated',
       ]) {
         stream.addEventListener(type, () => {
           void loadWorkSession(workSession.id)

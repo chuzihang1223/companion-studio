@@ -15,6 +15,7 @@ import CodeModule from './CodeModule';
 import DiffModule from './DiffModule';
 import TerminalModule from './TerminalModule';
 import MediaModule from './MediaModule';
+import TraceViewer from './trace/TraceViewer';
 import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
@@ -208,6 +209,16 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'trace')
+      return (
+        <TraceViewer
+          key={conversationId || 'none'}
+          conversationId={conversationId}
+          sessionId={session?.id || null}
+          revision={session?.trace_revision || 0}
+          visible={visible && moduleVisible}
+        />
+      );
     const outputs = routed.outputs.filter((row) => row.module === id);
     if (id === 'conversation')
       return (

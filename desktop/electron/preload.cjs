@@ -7,6 +7,9 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 contextBridge.exposeInMainWorld('desktopAPI', {
   appInfo: () => ipcRenderer.invoke('app-info'),
+  readAgentTraces: (operation, options) =>
+    ipcRenderer.invoke('agent-traces-read', operation, options),
+  deleteAgentTrace: (options) => ipcRenderer.invoke('agent-trace-delete', options),
   importCharacter: () => ipcRenderer.invoke('character-import'),
   characterLibrary: () => ipcRenderer.invoke('character-library'),
   characterDetail: (id) => ipcRenderer.invoke('character-detail', id),

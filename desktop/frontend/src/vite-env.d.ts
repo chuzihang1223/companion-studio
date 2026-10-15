@@ -2,6 +2,27 @@
 
 interface Window {
   desktopAPI?: {
+    readAgentTraces: {
+      (
+        operation: 'list',
+        options: import('./trace/types').TraceQuery,
+      ): Promise<import('./trace/types').TracePage<import('./trace/types').AgentTrace>>;
+      (
+        operation: 'detail',
+        options: import('./trace/types').TraceQuery,
+      ): Promise<import('./trace/types').AgentTrace>;
+      (
+        operation: 'events',
+        options: import('./trace/types').TraceQuery,
+      ): Promise<import('./trace/types').TracePage<import('./trace/types').TraceEvent>>;
+      (
+        operation: 'summary',
+        options: import('./trace/types').TraceQuery,
+      ): Promise<import('./trace/types').TraceSummary>;
+    };
+    deleteAgentTrace: (
+      options: import('./trace/types').TraceQuery,
+    ) => Promise<{ deleted: boolean }>;
     appInfo: () => Promise<{
       version: string;
       build_label: string;
