@@ -15,6 +15,7 @@ const tests = [
   'v84-audio-queue-unit.cjs',
   'v89-layout-unit.cjs',
   'url-policy-unit.cjs',
+  'app-launcher-unit.cjs',
 ];
 
 for (const test of tests) {

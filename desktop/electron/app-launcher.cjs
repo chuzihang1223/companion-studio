@@ -336,7 +336,10 @@ class AppLauncher {
     return new Promise((resolve, reject) => {
       const child = this.spawn(target, args, {
         cwd,
-        windowsHide: true,
+        // 这里启动的是用户请求打开的 GUI 应用。libuv 的 windowsHide 也会
+        // 设置 SW_HIDE，使记事本等程序进程存在却没有可操作窗口。
+        // 后端/自动化 worker 的隐藏启动由各自进程管理器单独负责。
+        windowsHide: false,
         detached: true,
         stdio: 'ignore',
         shell: false,
