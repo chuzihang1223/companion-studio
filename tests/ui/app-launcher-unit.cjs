@@ -196,7 +196,14 @@ function knownAppsFixture(rows, direct = {}) {
   fixtureFs.existsSync = () => true;
   const discovery = {
     find: (id) => direct[id],
-    list: () => rows,
+    list: () => {
+      assert.equal(
+        Object.keys(direct).length,
+        0,
+        'Direct ID lookup must not enumerate the catalog',
+      );
+      return rows;
+    },
   };
   loaded.require = (id) => {
     if (id === 'node:fs') return fixtureFs;

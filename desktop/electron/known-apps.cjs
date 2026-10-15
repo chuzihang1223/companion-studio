@@ -56,9 +56,10 @@ function detect(id) {
     const row = discovery.find(id);
     return { ...row, id, path: row.executable || null, last_used: registry.last_used[id] || null };
   }
-  const installed = discovery.list().filter((row) => row.installed);
+  const direct = discovery.find(id);
+  const installed = direct ? [] : discovery.list().filter((row) => row.installed);
   const discovered =
-    discovery.find(id) ||
+    direct ||
     // 现代记事本可能只有系统登记的 AppsFolder 身份，没有 EXE 路径。
     // 保留确切 AUMID 供启动及后续进程归属验证；不按显示名称猜测身份。
     installed.find((row) =>
