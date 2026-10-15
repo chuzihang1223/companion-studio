@@ -37,6 +37,10 @@ def migrate(engine: Engine) -> None:
 
     # V8.3: add virtual_code_documents only; existing data and tables stay intact.
     Base.metadata.create_all(bind=engine)
+    from app.database.recovery_migration import migrate_recovery
+
+    with engine.begin() as conn:
+        migrate_recovery(conn)
     # Evaluation was introduced on an unpublished candidate branch. Preserve its
     # earlier local histories; an absent start time remains unknown, never guessed.
     with engine.begin() as conn:
