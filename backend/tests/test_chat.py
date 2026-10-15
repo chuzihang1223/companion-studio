@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -11,8 +12,10 @@ from app.services.character.prompt_builder import CharacterPromptBuilder
 def test_packaged_frontend_allows_streamed_audio_blobs():
     with TestClient(app) as client:
         response = client.get("/app/")
-    if response.status_code == 200:
-        assert "media-src 'self' blob:" in response.headers["content-security-policy"]
+    if response.status_code == 404:
+        pytest.skip("Frontend production assets are absent; build the frontend for this check")
+    assert response.status_code == 200
+    assert "media-src 'self' blob:" in response.headers["content-security-policy"]
 
 
 class FakeLLMService:
@@ -37,11 +40,15 @@ def test_character_prompt_uses_profile_and_context():
 
 
 def test_chat_saves_and_loads_history_across_restart(tmp_path):
-    engine = create_engine(f"sqlite:///{(tmp_path / 'test.db').as_posix()}", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        f"sqlite:///{(tmp_path / 'test.db').as_posix()}", connect_args={"check_same_thread": False}
+    )
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine)
     with session_factory() as session:
-        session.add(Message(character_id="other_character", role="assistant", content="旧角色的聊天仍在。"))
+        session.add(
+            Message(character_id="other_character", role="assistant", content="旧角色的聊天仍在。")
+        )
         session.commit()
 
     def test_db():
@@ -56,11 +63,18 @@ def test_chat_saves_and_loads_history_across_restart(tmp_path):
             assert client.get("/health").json() == {"status": "ok"}
             assert client.get("/api/character").json()["name"] == "通用助手"
             assert client.get("/api/chat/history").json() == []
-            response = client.post("/api/chat", json={"character_id": "assistant", "message": "你好，今天有点累。"})
+            response = client.post(
+                "/api/chat", json={"character_id": "assistant", "message": "你好，今天有点累。"}
+            )
             assert response.status_code == 200, response.text
             assert response.json()["content"].startswith("累了")
             assert fake.last_messages[-1]["content"] == "你好，今天有点累。"
-            assert client.post("/api/chat", json={"character_id": "assistant", "message": "x" * 4001}).status_code == 422
+            assert (
+                client.post(
+                    "/api/chat", json={"character_id": "assistant", "message": "x" * 4001}
+                ).status_code
+                == 422
+            )
         with TestClient(app) as client:
             history = client.get("/api/chat/history").json()
             assert [item["role"] for item in history] == ["user", "assistant"]

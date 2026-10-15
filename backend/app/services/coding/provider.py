@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 
 class CodingAgentProvider(ABC):
     def __init__(self):
-        self.status = 'idle'
+        self.status = "idle"
         self.events = []
-        self.patch = ''
+        self.patch = ""
         self.tests = []
 
     @abstractmethod
@@ -17,7 +17,14 @@ class CodingAgentProvider(ABC):
     @abstractmethod
     async def cancel_task(self): ...
 
-    def get_status(self): return self.status
-    def get_events(self): return list(self.events)
-    def get_patch(self): return self.patch
-    def get_test_results(self): return list(self.tests)
+    def get_status(self):
+        return self.status
+
+    def get_events(self):
+        return list(self.events)
+
+    def get_patch(self):
+        return self.patch
+
+    def get_test_results(self):
+        return list(self.tests)

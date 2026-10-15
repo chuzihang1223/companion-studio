@@ -1,10 +1,121 @@
-import {useEffect,useRef,useState} from 'react'
-export default function FilesModule({sessionId,root}:{sessionId:string;root:string}){
- const [folder,setFolder]=useState('.'),[data,setData]=useState<WorkspaceFiles>({}),[preview,setPreview]=useState<WorkspaceFiles|null>(null),[query,setQuery]=useState(''),[ignored,setIgnored]=useState(false),[error,setError]=useState('')
- const sequence=useRef(0)
- async function refresh(){const version=++sequence.current;try{const row=await window.desktopAPI!.workFiles(sessionId,query?{query}:{path:folder,show_ignored:ignored});if(version===sequence.current){setData(row);setError('')}}catch(e){if(version===sequence.current)setError(String(e))}}
- useEffect(()=>{setFolder('.');setQuery('');setPreview(null)},[sessionId,root])
- useEffect(()=>{const timer=setTimeout(()=>void refresh(),query?250:0);const remove=window.desktopAPI?.onWorkFilesChanged(({sessionId:id})=>{if(id===sessionId){void refresh();if(preview?.path){const relative=preview.path;void window.desktopAPI!.workFiles(sessionId,{path:relative,read:true}).then(row=>setPreview({...row,path:relative})).catch(e=>setError(String(e)))}}});return()=>{sequence.current++;clearTimeout(timer);remove?.()}},[sessionId,folder,query,ignored,preview?.path])
- async function open(relative:string,directory:boolean){if(directory){setFolder(relative);setQuery('');setPreview(null)}else try{const row=await window.desktopAPI!.workFiles(sessionId,{path:relative,read:true});setPreview({...row,path:relative});setError('')}catch(e){setError(String(e))}}
- return <section className="files-module"><p className="work-file-path">{root}</p><div className="files-toolbar"><button onClick={()=>{setFolder('.');setQuery('')}}>项目根目录</button><button onClick={()=>void refresh()}>刷新</button><label><input type="checkbox" checked={ignored} onChange={e=>setIgnored(e.target.checked)}/>显示忽略目录</label></div><input aria-label="搜索项目文件" placeholder="搜索文件名或文本内容" value={query} onChange={e=>setQuery(e.target.value)}/><small>{query?'搜索结果':folder}</small><div className="files-list">{data.items?.map(row=><button key={row.path} onClick={()=>void open(row.path,row.directory)}><span>{row.directory?'▸':'·'} {row.name}</span><small>{row.ignored?'默认忽略':row.directory?'文件夹':`${row.size} B`}</small></button>)}{data.matches?.map((row,i)=><button key={row.path+i} onClick={()=>void open(row.path,false)}><span>{row.path}{row.line?`:${row.line}`:''}</span><small>{row.text||row.match}</small></button>)}</div>{preview&&<article><strong>{preview.path}</strong><pre>{preview.content}</pre></article>}{error&&<p className="error" role="alert">{error}</p>}</section>
+import { useEffect, useRef, useState } from 'react';
+export default function FilesModule({ sessionId, root }: { sessionId: string; root: string }) {
+  const [folder, setFolder] = useState('.'),
+    [data, setData] = useState<WorkspaceFiles>({}),
+    [preview, setPreview] = useState<WorkspaceFiles | null>(null),
+    [query, setQuery] = useState(''),
+    [ignored, setIgnored] = useState(false),
+    [error, setError] = useState('');
+  const sequence = useRef(0);
+  async function refresh() {
+    const version = ++sequence.current;
+    try {
+      const row = await window.desktopAPI!.workFiles(
+        sessionId,
+        query ? { query } : { path: folder, show_ignored: ignored },
+      );
+      if (version === sequence.current) {
+        setData(row);
+        setError('');
+      }
+    } catch (e) {
+      if (version === sequence.current) setError(String(e));
+    }
+  }
+  useEffect(() => {
+    setFolder('.');
+    setQuery('');
+    setPreview(null);
+  }, [sessionId, root]);
+  useEffect(() => {
+    const timer = setTimeout(() => void refresh(), query ? 250 : 0);
+    const remove = window.desktopAPI?.onWorkFilesChanged(({ sessionId: id }) => {
+      if (id === sessionId) {
+        void refresh();
+        if (preview?.path) {
+          const relative = preview.path;
+          void window
+            .desktopAPI!.workFiles(sessionId, { path: relative, read: true })
+            .then((row) => setPreview({ ...row, path: relative }))
+            .catch((e) => setError(String(e)));
+        }
+      }
+    });
+    return () => {
+      sequence.current++;
+      clearTimeout(timer);
+      remove?.();
+    };
+  }, [sessionId, folder, query, ignored, preview?.path]);
+  async function open(relative: string, directory: boolean) {
+    if (directory) {
+      setFolder(relative);
+      setQuery('');
+      setPreview(null);
+    } else
+      try {
+        const row = await window.desktopAPI!.workFiles(sessionId, { path: relative, read: true });
+        setPreview({ ...row, path: relative });
+        setError('');
+      } catch (e) {
+        setError(String(e));
+      }
+  }
+  return (
+    <section className="files-module">
+      <p className="work-file-path">{root}</p>
+      <div className="files-toolbar">
+        <button
+          onClick={() => {
+            setFolder('.');
+            setQuery('');
+          }}
+        >
+          项目根目录
+        </button>
+        <button onClick={() => void refresh()}>刷新</button>
+        <label>
+          <input type="checkbox" checked={ignored} onChange={(e) => setIgnored(e.target.checked)} />
+          显示忽略目录
+        </label>
+      </div>
+      <input
+        aria-label="搜索项目文件"
+        placeholder="搜索文件名或文本内容"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <small>{query ? '搜索结果' : folder}</small>
+      <div className="files-list">
+        {data.items?.map((row) => (
+          <button key={row.path} onClick={() => void open(row.path, row.directory)}>
+            <span>
+              {row.directory ? '▸' : '·'} {row.name}
+            </span>
+            <small>{row.ignored ? '默认忽略' : row.directory ? '文件夹' : `${row.size} B`}</small>
+          </button>
+        ))}
+        {data.matches?.map((row, i) => (
+          <button key={row.path + i} onClick={() => void open(row.path, false)}>
+            <span>
+              {row.path}
+              {row.line ? `:${row.line}` : ''}
+            </span>
+            <small>{row.text || row.match}</small>
+          </button>
+        ))}
+      </div>
+      {preview && (
+        <article>
+          <strong>{preview.path}</strong>
+          <pre>{preview.content}</pre>
+        </article>
+      )}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
+  );
 }

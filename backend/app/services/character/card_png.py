@@ -1,4 +1,5 @@
 """Read character-card text chunks without executing code or fetching resources."""
+
 import base64
 import json
 import struct
@@ -29,13 +30,13 @@ def read_png_card(raw: bytes) -> dict:
     ended = False
     while position + 12 <= len(raw):
         length = struct.unpack_from(">I", raw, position)[0]
-        kind = raw[position + 4:position + 8]
+        kind = raw[position + 4 : position + 8]
         end = position + 12 + length
         if end > len(raw):
             raise ValueError("PNG 文件不完整")
-        data = raw[position + 8:position + 8 + length]
+        data = raw[position + 8 : position + 8 + length]
         crc = struct.unpack_from(">I", raw, position + 8 + length)[0]
-        if zlib.crc32(kind + data) & 0xffffffff != crc:
+        if zlib.crc32(kind + data) & 0xFFFFFFFF != crc:
             raise ValueError("PNG 校验失败")
         if first:
             if kind != b"IHDR" or length != 13:

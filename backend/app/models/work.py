@@ -19,7 +19,7 @@ class WorkSession(Base):
     conversation_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     goal: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(32), default="planning")
-    plan_json: Mapped[str] = mapped_column(Text, default='{}')
+    plan_json: Mapped[str] = mapped_column(Text, default="{}")
     workspace_root: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

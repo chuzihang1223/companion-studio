@@ -44,9 +44,12 @@ from app.services.runtime_registry import RuntimeTaskRegistry
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
+
     migrate(engine)
     trusted_actions.archive_legacy()
-    characters = CharacterLoader(settings.project_root / "characters", settings.data_root / "characters")
+    characters = CharacterLoader(
+        settings.project_root / "characters", settings.data_root / "characters"
+    )
     characters.load()
     if characters.get(DEFAULT_CHARACTER_ID) is None:
         raise ValueError(f"Default character {DEFAULT_CHARACTER_ID} not found")
@@ -59,7 +62,7 @@ async def lifespan(app: FastAPI):
     app.state.agent_service = AgentService()
     app.state.work_state = WorkState()
     app.state.runtime_registry = RuntimeTaskRegistry()
-    runtime_watchdog=asyncio.create_task(app.state.runtime_registry.watchdog())
+    runtime_watchdog = asyncio.create_task(app.state.runtime_registry.watchdog())
     app.state.work_state.registry = app.state.runtime_registry
     app.state.desktop_bridge = DesktopBridge()
     app.state.task_runtime = AgentTaskRuntime(app)
@@ -74,13 +77,15 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         runtime_watchdog.cancel()
-        await asyncio.gather(runtime_watchdog,return_exceptions=True)
+        await asyncio.gather(runtime_watchdog, return_exceptions=True)
         await app.state.runtime_registry.close()
-        tasks=list(getattr(app.state,'live_voice_tasks',set()))
-        for task in tasks:task.cancel()
+        tasks = list(getattr(app.state, "live_voice_tasks", set()))
+        for task in tasks:
+            task.cancel()
         if tasks:
             import asyncio
-            await asyncio.gather(*tasks,return_exceptions=True)
+
+            await asyncio.gather(*tasks, return_exceptions=True)
         app.state.desktop_bridge.close()
         await app.state.voice_jobs.stop()
         app.state.native_player.stop()
@@ -129,7 +134,12 @@ async def frontend_security_headers(request: Request, call_next):
         )
     return response
 
-frontend_dist = Path(os.environ['COMPANION_FRONTEND_DIST']) if os.environ.get('COMPANION_FRONTEND_DIST') else settings.project_root / 'desktop' / 'frontend' / 'dist'
+
+frontend_dist = (
+    Path(os.environ["COMPANION_FRONTEND_DIST"])
+    if os.environ.get("COMPANION_FRONTEND_DIST")
+    else settings.project_root / "desktop" / "frontend" / "dist"
+)
 if frontend_dist.is_dir():
     app.mount("/app", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 

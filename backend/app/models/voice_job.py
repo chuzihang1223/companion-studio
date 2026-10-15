@@ -27,6 +27,8 @@ class VoiceJob(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     expression: Mapped[str] = mapped_column(String(20), default="natural")
     speed_factor: Mapped[float] = mapped_column(Float, default=1.0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

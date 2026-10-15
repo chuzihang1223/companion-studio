@@ -9,7 +9,9 @@ def test_netease_request_queues_desktop_client(tmp_path):
     assert [tool["function"]["name"] for tool in tools] == ["app_launch"]
 
     executor = ToolExecutor(tmp_path)
-    result = executor.execute({"name": "music.search", "arguments": {"provider": "netease", "query": "测试歌曲"}})
+    result = executor.execute(
+        {"name": "music.search", "arguments": {"provider": "netease", "query": "测试歌曲"}}
+    )
     assert result["action"] == "launch_app"
     assert result["app"] == "netease"
     assert "url" not in result

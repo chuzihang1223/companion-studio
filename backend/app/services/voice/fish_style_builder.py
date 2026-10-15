@@ -10,7 +10,9 @@ from types import SimpleNamespace
 class FishStyleBuilder:
     @classmethod
     def build(cls, text: str, intent: str, *, intensity: float = 0.5) -> str:
-        return FishDirectionSession().directed_text(text, SimpleNamespace(intent=intent, intensity=intensity))
+        return FishDirectionSession().directed_text(
+            text, SimpleNamespace(intent=intent, intensity=intensity)
+        )
 
 
 class FishDirectionSession:
@@ -51,7 +53,7 @@ class FishDirectionSession:
 
     def directed_text(self, text, control):
         spans = getattr(control, "style_spans", ()) or (
-            (text, getattr(control, "intent", ""), getattr(control, "intensity", .5)),
+            (text, getattr(control, "intent", ""), getattr(control, "intensity", 0.5)),
         )
         output, cursor = [], 0
         for part, intent, intensity in spans:
@@ -60,7 +62,7 @@ class FishDirectionSession:
                 continue
             output.append(text[cursor:at])
             direction = self.DIRECTIONS.get(intent)
-            if intent == "celebrating" and intensity < .58:
+            if intent == "celebrating" and intensity < 0.58:
                 direction = ("happy", "warm, quietly pleased")
             # Natural delivery lets the actual wording carry ordinary emotion.
             # Repeated happy/surprised/empathetic prompts caused an acted voice.

@@ -29,8 +29,14 @@ logger = logging.getLogger(__name__)
 def cache_info() -> dict:
     folder = settings.data_root / "audio"
     fish_folder = settings.data_root / "voice_cache" / "fish"
-    files = (list(folder.glob("*.wav")) if folder.is_dir() else []) + (list(fish_folder.glob("*.wav")) if fish_folder.is_dir() else [])
-    return {"path": str(settings.data_root), "files": len(files), "bytes": sum(file.stat().st_size for file in files)}
+    files = (list(folder.glob("*.wav")) if folder.is_dir() else []) + (
+        list(fish_folder.glob("*.wav")) if fish_folder.is_dir() else []
+    )
+    return {
+        "path": str(settings.data_root),
+        "files": len(files),
+        "bytes": sum(file.stat().st_size for file in files),
+    }
 
 
 @router.delete("/cache")
@@ -71,8 +77,11 @@ def status(request: Request) -> dict[str, str]:
         state = "error"
     else:
         state = "preparing"
-    return {"status": state, "engine": worker.name,
-            "selected_engine": getattr(worker, "selected_engine", "auto")}
+    return {
+        "status": state,
+        "engine": worker.name,
+        "selected_engine": getattr(worker, "selected_engine", "auto"),
+    }
 
 
 @router.get("/health")
@@ -80,16 +89,25 @@ def health(request: Request) -> dict:
     worker = request.app.state.voice_client
     info = worker.ready_info
     state = "error" if worker.error else worker.status if worker.available else "unavailable"
-    return {"status": state, "engine": worker.name, "primary": worker.selected_engine,
-            "fish": request.app.state.fish_voice.health() | {"authorized": request.app.state.fish_voice.authorized,
-                "reference_ready": request.app.state.fish_voice.authorized},
-            "indextts": {"ready": worker.index.ready},
-            "model_loaded": worker.ready and bool(info.get("model_loaded")),
-            "speaker_loaded": worker.ready and bool(info.get("speaker_loaded")), "device": info.get("device"),
-            "warmup_ms": info.get("warmup_ms"), "queue_length": request.app.state.voice_jobs.queue.qsize(),
-            "last_error": worker.error or None,
-            "cache_path": str(settings.data_root / "audio"),
-            "fish_cache_path": str(settings.data_root / "voice_cache" / "fish")}
+    return {
+        "status": state,
+        "engine": worker.name,
+        "primary": worker.selected_engine,
+        "fish": request.app.state.fish_voice.health()
+        | {
+            "authorized": request.app.state.fish_voice.authorized,
+            "reference_ready": request.app.state.fish_voice.authorized,
+        },
+        "indextts": {"ready": worker.index.ready},
+        "model_loaded": worker.ready and bool(info.get("model_loaded")),
+        "speaker_loaded": worker.ready and bool(info.get("speaker_loaded")),
+        "device": info.get("device"),
+        "warmup_ms": info.get("warmup_ms"),
+        "queue_length": request.app.state.voice_jobs.queue.qsize(),
+        "last_error": worker.error or None,
+        "cache_path": str(settings.data_root / "audio"),
+        "fish_cache_path": str(settings.data_root / "voice_cache" / "fish"),
+    }
 
 
 @router.post("/worker/restart")
@@ -102,7 +120,9 @@ def restart_worker(request: Request) -> dict:
 async def test_voice(request: Request) -> dict:
     worker = request.app.state.voice_client
     try:
-        plan = SpeechDirector().plan(user_message="试听", current_reply="嗯……这样应该能听见我了吧？")
+        plan = SpeechDirector().plan(
+            user_message="试听", current_reply="嗯……这样应该能听见我了吧？"
+        )
         segment = plan.segments[0]
         control = ProsodyPlanner().for_expressive(segment)
         result = await asyncio.to_thread(worker.synthesize, segment.tts_text, control)
@@ -123,7 +143,11 @@ def test_voice_audio() -> FileResponse:
     target = settings.data_root / "audio" / "test-sample.wav"
     if not target.is_file():
         raise HTTPException(status_code=404, detail="请先生成测试语音")
-    return FileResponse(target, media_type="audio/wav", headers={"Cache-Control": "no-store", "Accept-Ranges": "bytes"})
+    return FileResponse(
+        target,
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store", "Accept-Ranges": "bytes"},
+    )
 
 
 class NativePlayRequest(BaseModel):
@@ -148,7 +172,9 @@ def native_audio_path(audio_url: str, request: Request) -> Path:
         if not candidate.is_file():
             raise HTTPException(status_code=404, detail="Fish 角色试听不存在")
         return candidate
-    fish_compare = re.fullmatch(r"/api/voice/fish/compare/(warm|default|expressive|quality)/audio", audio_url)
+    fish_compare = re.fullmatch(
+        r"/api/voice/fish/compare/(warm|default|expressive|quality)/audio", audio_url
+    )
     if fish_compare:
         candidate = settings.data_root / "voice_test" / f"fish_compare_{fish_compare.group(1)}.mp3"
         if not candidate.is_file():
@@ -164,7 +190,9 @@ def native_audio_path(audio_url: str, request: Request) -> Path:
     if music_match:
         path = request.app.state.music_library.path(music_match.group(1))
         if path is None or path.suffix.lower() != ".wav":
-            raise HTTPException(status_code=404, detail="Windows 原生通道仅支持所选曲库中的 PCM WAV")
+            raise HTTPException(
+                status_code=404, detail="Windows 原生通道仅支持所选曲库中的 PCM WAV"
+            )
         return path
     match = re.fullmatch(r"/api/voice/audio/([0-9a-f-]{36})", audio_url)
     if match:
@@ -176,7 +204,11 @@ def native_audio_path(audio_url: str, request: Request) -> Path:
         if match:
             with SessionLocal() as db:
                 job = db.get(VoiceJob, match.group(1))
-                path = request.app.state.voice_jobs.segment_file(job, int(match.group(2))) if job else None
+                path = (
+                    request.app.state.voice_jobs.segment_file(job, int(match.group(2)))
+                    if job
+                    else None
+                )
         elif audio_url == "/api/voice/test/audio":
             candidate = settings.data_root / "audio" / "test-sample.wav"
             path = candidate if candidate.is_file() else None
@@ -188,35 +220,48 @@ def native_audio_path(audio_url: str, request: Request) -> Path:
 
 
 @router.post("/native/play")
-def native_play(payload: NativePlayRequest, request: Request,
-                x_companion_control_token: str | None = Header(default=None)) -> dict:
+def native_play(
+    payload: NativePlayRequest,
+    request: Request,
+    x_companion_control_token: str | None = Header(default=None),
+) -> dict:
     require_control(x_companion_control_token)
     try:
-        return request.app.state.native_player.play(native_audio_path(payload.audio_url, request), payload.volume)
+        return request.app.state.native_player.play(
+            native_audio_path(payload.audio_url, request), payload.volume
+        )
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail=f"Windows 音频播放失败：{exc}") from exc
 
 
 @router.post("/native/pause")
-def native_pause(request: Request, x_companion_control_token: str | None = Header(default=None)) -> dict:
+def native_pause(
+    request: Request, x_companion_control_token: str | None = Header(default=None)
+) -> dict:
     require_control(x_companion_control_token)
     return request.app.state.native_player.pause()
 
 
 @router.post("/native/resume")
-def native_resume(request: Request, x_companion_control_token: str | None = Header(default=None)) -> dict:
+def native_resume(
+    request: Request, x_companion_control_token: str | None = Header(default=None)
+) -> dict:
     require_control(x_companion_control_token)
     return request.app.state.native_player.resume()
 
 
 @router.post("/native/stop")
-def native_stop(request: Request, x_companion_control_token: str | None = Header(default=None)) -> dict:
+def native_stop(
+    request: Request, x_companion_control_token: str | None = Header(default=None)
+) -> dict:
     require_control(x_companion_control_token)
     return request.app.state.native_player.stop()
 
 
 @router.get("/native/status")
-def native_status(request: Request, x_companion_control_token: str | None = Header(default=None)) -> dict:
+def native_status(
+    request: Request, x_companion_control_token: str | None = Header(default=None)
+) -> dict:
     require_control(x_companion_control_token)
     return request.app.state.native_player.status()
 
@@ -238,14 +283,21 @@ def message_voice_status(message_id: str) -> dict:
             raise HTTPException(status_code=404, detail="Assistant message not found")
         row = db.get(MessageVoice, message_id)
         cached = index_audio_file(row) if row else None
-        state = "ready" if cached else ("missing" if row and row.status == "ready" else row.status if row else "none")
-        return {"message_id": message_id, "status": state,
-                "engine": row.engine if row else None,
-                "job_id": row.job_id if row else None,
-                "error_code": row.error_code if row else None,
-                "error_message": row.error_message if row else None,
-                "duration_seconds": row.duration_seconds if state == "ready" else None,
-                "audio_url": f"/api/voice/audio/{message_id}" if state == "ready" else None}
+        state = (
+            "ready"
+            if cached
+            else ("missing" if row and row.status == "ready" else row.status if row else "none")
+        )
+        return {
+            "message_id": message_id,
+            "status": state,
+            "engine": row.engine if row else None,
+            "job_id": row.job_id if row else None,
+            "error_code": row.error_code if row else None,
+            "error_message": row.error_message if row else None,
+            "duration_seconds": row.duration_seconds if state == "ready" else None,
+            "audio_url": f"/api/voice/audio/{message_id}" if state == "ready" else None,
+        }
 
 
 @router.get("/audio/{message_id}")
@@ -259,7 +311,11 @@ def play_message_audio(message_id: str) -> FileResponse:
         path = index_audio_file(row)
         if path is None:
             raise HTTPException(status_code=404, detail="Voice cache was cleared")
-    return FileResponse(path, media_type="audio/wav", headers={"Cache-Control": "no-store", "Accept-Ranges": "bytes"})
+    return FileResponse(
+        path,
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store", "Accept-Ranges": "bytes"},
+    )
 
 
 @router.get("/audio/{message_id}/diagnostic")
@@ -272,27 +328,42 @@ def audio_diagnostic(message_id: str) -> dict:
         if message is None or message.role != "assistant" or row is None:
             raise HTTPException(status_code=404, detail="Voice not found")
         path = index_audio_file(row)
-        diagnostic = {"message_id": message_id, "audio_path": str(path or row.audio_path or ""),
-                      "file_exists": path is not None, "file_size": path.stat().st_size if path else 0,
-                      "mime_type": "audio/wav", "audio_url": f"/api/voice/audio/{message_id}"}
+        diagnostic = {
+            "message_id": message_id,
+            "audio_path": str(path or row.audio_path or ""),
+            "file_exists": path is not None,
+            "file_size": path.stat().st_size if path else 0,
+            "mime_type": "audio/wav",
+            "audio_url": f"/api/voice/audio/{message_id}",
+        }
         if path:
             try:
                 with wave.open(str(path), "rb") as wav:
-                    diagnostic.update(sample_rate=wav.getframerate(), channels=wav.getnchannels(),
-                                      bit_depth=wav.getsampwidth() * 8,
-                                      duration=wav.getnframes() / wav.getframerate(), codec="PCM")
+                    diagnostic.update(
+                        sample_rate=wav.getframerate(),
+                        channels=wav.getnchannels(),
+                        bit_depth=wav.getsampwidth() * 8,
+                        duration=wav.getnframes() / wav.getframerate(),
+                        codec="PCM",
+                    )
             except (wave.Error, EOFError, ZeroDivisionError) as exc:
                 diagnostic["error"] = f"Invalid WAV: {exc}"
         return diagnostic
 
 
 @router.post("/messages/{message_id}/generate", status_code=202)
-async def generate_message_audio(message_id: str, payload: VoiceGenerateRequest, request: Request) -> dict:
+async def generate_message_audio(
+    message_id: str, payload: VoiceGenerateRequest, request: Request
+) -> dict:
     if payload.expression not in {"restrained", "natural", "rich"}:
         raise HTTPException(status_code=422, detail="Invalid expression level")
     try:
-        return request.app.state.voice_jobs.enqueue(message_id, regenerate=payload.regenerate,
-            expression=payload.expression, speed_factor=payload.speed_factor)
+        return request.app.state.voice_jobs.enqueue(
+            message_id,
+            regenerate=payload.regenerate,
+            expression=payload.expression,
+            speed_factor=payload.speed_factor,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

@@ -32,7 +32,11 @@ def test_resolver_corrects_contradictions_and_preserves_context():
 def test_text_processor_omits_stage_cues_without_changing_visible_text():
     source = "（开心）真的？你成功了？！不过……下次别冒险，好吗？"
     segments = ExpressiveTextProcessor().segments(source)
-    assert [item.text for item in segments] == ["真的？", "你成功了？！", "不过……下次别冒险，好吗？"]
+    assert [item.text for item in segments] == [
+        "真的？",
+        "你成功了？！",
+        "不过……下次别冒险，好吗？",
+    ]
     assert source.startswith("（开心）")
 
 
@@ -49,8 +53,14 @@ def test_reference_catalog_falls_back_to_one_existing_voice(tmp_path):
 
     engine = Engine()
     for name in (
-        "reference_16k", "reference_32k", "reference_text", "reference_seq",
-        "reference_bert", "ssl_content", "speaker_embedding", "_prompt_cache",
+        "reference_16k",
+        "reference_32k",
+        "reference_text",
+        "reference_seq",
+        "reference_bert",
+        "ssl_content",
+        "speaker_embedding",
+        "_prompt_cache",
     ):
         setattr(engine, name, "neutral")
     manager = ReferenceManager(engine, tmp_path, tmp_path, VoiceExpressionPolicy(), lambda *_: None)

@@ -3,6 +3,7 @@
 The standard distribution generates WAV and does not bundle libsndfile.
 Users of a separate Python environment may install soundfile themselves.
 """
+
 from pathlib import Path
 
 
@@ -18,8 +19,14 @@ def decode_mp3_to_wav(source: Path, target: Path) -> None:
                 raise ValueError("MP3 音频格式不支持")
             if not reader.samplerate // 20 <= reader.frames <= reader.samplerate * 1800:
                 raise ValueError("MP3 音频长度无效")
-            with soundfile.SoundFile(target, "w", samplerate=reader.samplerate,
-                                     channels=reader.channels, subtype="PCM_16", format="WAV") as writer:
+            with soundfile.SoundFile(
+                target,
+                "w",
+                samplerate=reader.samplerate,
+                channels=reader.channels,
+                subtype="PCM_16",
+                format="WAV",
+            ) as writer:
                 for block in reader.blocks(blocksize=8192, dtype="int16"):
                     writer.write(block)
     except Exception:

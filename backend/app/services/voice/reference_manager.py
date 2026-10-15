@@ -44,8 +44,14 @@ class ReferenceManager:
 
     def _snapshot(self) -> dict:
         names = (
-            "reference_16k", "reference_32k", "reference_text", "reference_seq",
-            "reference_bert", "ssl_content", "speaker_embedding", "_prompt_cache",
+            "reference_16k",
+            "reference_32k",
+            "reference_text",
+            "reference_seq",
+            "reference_bert",
+            "ssl_content",
+            "speaker_embedding",
+            "_prompt_cache",
         )
         return {name: getattr(self.engine, name) for name in names}
 
@@ -68,12 +74,18 @@ class ReferenceManager:
             raise ValueError(f"Reference profile {name} must be 3 to 12 seconds")
         seq, bert = self.engine._phones(text, "zh")
         silence = np.zeros((1, round(32000 * 0.3)), dtype=np.float32)
-        ssl = self.engine.hubert.run(None, {"input_values": np.concatenate((audio16, silence), axis=1)})[0]
+        ssl = self.engine.hubert.run(
+            None, {"input_values": np.concatenate((audio16, silence), axis=1)}
+        )[0]
         speaker = self.engine.speaker.run(None, {"waveform": audio16})[0]
         state = {
-            "reference_16k": audio16, "reference_32k": audio32,
-            "reference_text": text, "reference_seq": seq, "reference_bert": bert,
-            "ssl_content": ssl, "speaker_embedding": speaker,
+            "reference_16k": audio16,
+            "reference_32k": audio32,
+            "reference_text": text,
+            "reference_seq": seq,
+            "reference_bert": bert,
+            "ssl_content": ssl,
+            "speaker_embedding": speaker,
             "_prompt_cache": {(text, "zh"): (seq, bert)},
         }
         self._cache[name] = state

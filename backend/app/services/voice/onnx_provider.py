@@ -25,7 +25,9 @@ class ONNXVoiceProvider(VoiceProvider):
         with self._lock:
             if self.engine is not None:
                 return
-            spec = importlib.util.spec_from_file_location("local_onnx_voice_provider", self.model_dir / "infer.py")
+            spec = importlib.util.spec_from_file_location(
+                "local_onnx_voice_provider", self.model_dir / "infer.py"
+            )
             if spec is None or spec.loader is None:
                 raise RuntimeError("Could not load ONNX package infer.py")
             module = importlib.util.module_from_spec(spec)
@@ -37,11 +39,21 @@ class ONNXVoiceProvider(VoiceProvider):
             if callable(factory):
                 engine = factory(self.model_dir, providers)
             else:
-                engine_class = getattr(module, os.getenv("VOICE_ONNX_ENGINE_CLASS", "OnnxEngine"), None)
+                engine_class = getattr(
+                    module, os.getenv("VOICE_ONNX_ENGINE_CLASS", "OnnxEngine"), None
+                )
                 if not callable(engine_class):
-                    raise RuntimeError("本地 ONNX 包需提供 create_engine 或配置 VOICE_ONNX_ENGINE_CLASS")
+                    raise RuntimeError(
+                        "本地 ONNX 包需提供 create_engine 或配置 VOICE_ONNX_ENGINE_CLASS"
+                    )
                 engine = engine_class(self.model_dir, providers)
-            self.references = ReferenceManager(engine, self.model_dir, self.references_dir, VoiceExpressionPolicy(), module.load_audio)
+            self.references = ReferenceManager(
+                engine,
+                self.model_dir,
+                self.references_dir,
+                VoiceExpressionPolicy(),
+                module.load_audio,
+            )
             for emotion in sorted(self.references.available() - {"neutral"}):
                 with self.references.use(emotion):
                     pass
@@ -49,6 +61,7 @@ class ONNXVoiceProvider(VoiceProvider):
 
     def synthesize(self, text: str, control: EngineControl) -> VoiceAudio:
         import numpy as np  # Installed only in the user's local model environment.
+
         self.warm()
         with self._lock:
             # Some short phrases produce silence with a strongly styled reference.
@@ -56,11 +69,19 @@ class ONNXVoiceProvider(VoiceProvider):
             attempts = ((control.reference, 42), ("neutral", 43), ("neutral", 44))
             for reference, seed in attempts:
                 with self.references.use(reference):
-                    audio = np.asarray(self.engine.synthesize(
-                        text, language="zh", text_split_method="cut0",
-                        speed_factor=control.speed_factor, fragment_interval=0.0,
-                        temperature=1.0, top_k=15, seed=seed,
-                    ), dtype=np.float32)
+                    audio = np.asarray(
+                        self.engine.synthesize(
+                            text,
+                            language="zh",
+                            text_split_method="cut0",
+                            speed_factor=control.speed_factor,
+                            fragment_interval=0.0,
+                            temperature=1.0,
+                            top_k=15,
+                            seed=seed,
+                        ),
+                        dtype=np.float32,
+                    )
                 if audio.size >= 8000 and float(np.max(np.abs(audio))) >= 0.01:
                     return VoiceAudio(audio, 32000)
             raise RuntimeError("Voice engine returned empty or near-silent audio after retries")

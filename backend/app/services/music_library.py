@@ -7,8 +7,14 @@ from pathlib import Path
 from app.core.config import settings
 
 
-MIME = {".mp3": "audio/mpeg", ".flac": "audio/flac", ".wav": "audio/wav",
-        ".aac": "audio/aac", ".m4a": "audio/mp4", ".ogg": "audio/ogg"}
+MIME = {
+    ".mp3": "audio/mpeg",
+    ".flac": "audio/flac",
+    ".wav": "audio/wav",
+    ".aac": "audio/aac",
+    ".m4a": "audio/mp4",
+    ".ogg": "audio/ogg",
+}
 
 
 class LocalMusicLibrary:
@@ -18,7 +24,9 @@ class LocalMusicLibrary:
         self.files: dict[str, Path] = {}
         if self.settings_file.is_file():
             try:
-                candidate = Path(json.loads(self.settings_file.read_text(encoding="utf-8"))["folder"])
+                candidate = Path(
+                    json.loads(self.settings_file.read_text(encoding="utf-8"))["folder"]
+                )
                 if candidate.is_dir():
                     self.folder = candidate.resolve()
             except (OSError, KeyError, ValueError):
@@ -31,7 +39,9 @@ class LocalMusicLibrary:
             raise ValueError("音乐文件夹不存在")
         self.folder = target
         self.settings_file.parent.mkdir(parents=True, exist_ok=True)
-        self.settings_file.write_text(json.dumps({"folder": str(target)}, ensure_ascii=False), encoding="utf-8")
+        self.settings_file.write_text(
+            json.dumps({"folder": str(target)}, ensure_ascii=False), encoding="utf-8"
+        )
         return self.scan()
 
     def scan(self) -> list[dict]:
@@ -49,10 +59,24 @@ class LocalMusicLibrary:
                 continue
             identifier = hashlib.sha256(str(resolved).encode("utf-8")).hexdigest()[:24]
             self.files[identifier] = resolved
-            rows.append({"id": identifier, "title": path.stem, "name": path.name,
-                         "format": path.suffix.lower()[1:], "audio_url": f"/api/music/audio/{identifier}"})
+            rows.append(
+                {
+                    "id": identifier,
+                    "title": path.stem,
+                    "name": path.name,
+                    "format": path.suffix.lower()[1:],
+                    "audio_url": f"/api/music/audio/{identifier}",
+                }
+            )
         return sorted(rows, key=lambda item: item["title"].casefold())
 
     def path(self, identifier: str) -> Path | None:
         target = self.files.get(identifier)
-        return target if target and target.is_file() and self.folder and target.resolve().is_relative_to(self.folder) else None
+        return (
+            target
+            if target
+            and target.is_file()
+            and self.folder
+            and target.resolve().is_relative_to(self.folder)
+            else None
+        )

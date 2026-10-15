@@ -1,0 +1,28 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["licenses", "build", "Cache", ".runtime"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+# Existing optional imports and retained locals must not be deleted by autofix.
+# Strict type/ownership contracts are added to the audited core separately.
+ignore = ["F401", "F841"]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/app/main.py" = ["E402"]
+"backend/app/core/config.py" = ["E402"]
+"tests/*.py" = ["E402"]
+"backend/tests/test_v81_workspace_permissions.py" = ["E731"]
+"scripts/make-companion-icon.py" = ["E731"]
+"backend/app/services/voice/worker_process.py" = ["E402"] # 启动诊断记录 import 阶段。
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "tests"]
+pythonpath = ["backend"]
+addopts = "-ra"

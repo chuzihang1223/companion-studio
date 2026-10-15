@@ -28,7 +28,12 @@ class LLMConfig(BaseModel):
     def valid_url(cls, value: str) -> str:
         url = value.rstrip("/")
         parts = urlsplit(url)
-        if parts.scheme not in {"http", "https"} or not parts.hostname or parts.username or parts.password:
+        if (
+            parts.scheme not in {"http", "https"}
+            or not parts.hostname
+            or parts.username
+            or parts.password
+        ):
             raise ValueError("Base URL must be an HTTP(S) address without credentials")
         if parts.query or parts.fragment:
             raise ValueError("Base URL must not include a query or fragment")
@@ -37,7 +42,11 @@ class LLMConfig(BaseModel):
     @model_validator(mode="after")
     def protect_remote_key(self) -> "LLMConfig":
         parts = urlsplit(self.base_url)
-        if self.api_key and parts.scheme != "https" and parts.hostname not in {"localhost", "127.0.0.1", "::1"}:
+        if (
+            self.api_key
+            and parts.scheme != "https"
+            and parts.hostname not in {"localhost", "127.0.0.1", "::1"}
+        ):
             raise ValueError("Remote API Key requires HTTPS")
         return self
 
@@ -46,10 +55,12 @@ class LLMConfig(BaseModel):
         # Blank .env values describe an unconfigured installation, not a fatal
         # application error. The provider keeps the actual blank model and fails
         # locally before attempting any request until the user configures one.
-        return cls(provider=settings.llm_provider,
-                   base_url=settings.openai_base_url.strip() or "https://api.openai.com/v1",
-                   api_key=settings.openai_api_key,
-                   model=settings.openai_model.strip() or "unconfigured")
+        return cls(
+            provider=settings.llm_provider,
+            base_url=settings.openai_base_url.strip() or "https://api.openai.com/v1",
+            api_key=settings.openai_api_key,
+            model=settings.openai_model.strip() or "unconfigured",
+        )
 
     def public(self) -> dict:
         return self.model_dump(exclude={"api_key"}) | {"has_key": bool(self.api_key)}

@@ -21,6 +21,7 @@ $cache = Join-Path $root 'cache'
 $env:TEMP = Join-Path $cache 'temp'; $env:TMP = $env:TEMP
 $env:npm_config_cache = Join-Path $cache 'npm'
 $env:ELECTRON_CACHE = Join-Path $cache 'electron'
+$env:electron_config_cache = $env:ELECTRON_CACHE
 $env:ELECTRON_BUILDER_CACHE = Join-Path $cache 'electron-builder'
 $env:PYINSTALLER_CONFIG_DIR = Join-Path $cache 'pyinstaller'
 $env:PYTHONPYCACHEPREFIX = Join-Path $cache 'pycache'
@@ -37,28 +38,55 @@ $env:VOICE_REFERENCES_DIR = Join-Path $build 'no-references'
 Push-Location $project
 try {
   if (-not $SkipTests) {
+    & $python -m ruff check backend scripts tests
+    if ($LASTEXITCODE -ne 0) { throw 'Python lint failed' }
+    & $python -m ruff format --check backend scripts tests
+    if ($LASTEXITCODE -ne 0) { throw 'Python format verification failed' }
+    foreach ($check in @('typecheck','lint','format:check','build','test:electron')) {
+      & npm.cmd run $check --prefix desktop
+      if ($LASTEXITCODE -ne 0) { throw ('Desktop verification failed: ' + $check) }
+    }
     & $python -B -m pytest backend/tests tests -q --basetemp (Join-Path $build 'pytest-temp')
     if ($LASTEXITCODE -ne 0) { throw 'Backend regression failed' }
-    foreach ($test in @('v86-windows-encoding.cjs','v86-partial-discovery.cjs','v86-music-rows.cjs','v87-music-resolver.cjs','v87-layout-unit.cjs','v85-submission-unit.cjs','clean-character-ownership.cjs','v84-audio-queue-unit.cjs','v89-layout-unit.cjs')) {
-      & node (Join-Path $project ('tests\ui\' + $test))
-      if ($LASTEXITCODE -ne 0) { throw ('Local regression failed: ' + $test) }
-    }
   }
-  & $python -B (Join-Path $PSScriptRoot 'collect-third-party.py')
+  # 许可证清单在本次构建目录生成，避免构建修改受版本控制的源码。
+  $licenseStage = Join-Path $build 'license-stage'
+  New-Item -ItemType Directory -Force -Path $licenseStage,(Join-Path $licenseStage 'backend'),(Join-Path $licenseStage 'desktop') | Out-Null
+  Copy-Item -LiteralPath (Join-Path $project 'licenses') -Destination $licenseStage -Recurse
+  Copy-Item -LiteralPath (Join-Path $project 'backend\requirements.txt') -Destination (Join-Path $licenseStage 'backend')
+  Copy-Item -LiteralPath (Join-Path $desktop 'package.json') -Destination (Join-Path $licenseStage 'desktop')
+  & $python -B (Join-Path $PSScriptRoot 'collect-third-party.py') --root $licenseStage --node-modules (Join-Path $desktop 'node_modules')
   if ($LASTEXITCODE -ne 0) { throw 'License collection failed' }
 } finally { Pop-Location }
 $utf8 = New-Object Text.UTF8Encoding($false)
 $sourceHashes = [ordered]@{}
 foreach ($folder in @('backend\app','desktop\frontend\src','desktop\electron','characters')) {
-  foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $project $folder) -Recurse -File | Where-Object { $_.Name -ne 'build-info.json' -and $_.Extension -in @('.py','.json','.cjs','.ps1','.cs','.ts','.tsx','.css','.svg') })) {
+  foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $project $folder) -Recurse -File | Sort-Object FullName | Where-Object { $_.Name -ne 'build-info.json' -and $_.Extension -in @('.py','.json','.cjs','.ps1','.cs','.ts','.tsx','.css','.svg') })) {
     $sourceHashes[$file.FullName.Substring($project.Length+1).Replace('\','/')] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
   }
+}
+foreach ($relative in @('desktop/package.json','desktop/package-lock.json','backend/requirements.lock','backend/requirements-dev.txt','scripts/build-companion-studio.ps1','desktop/assets/prepare-runtime-access.ps1','desktop/assets/installer.nsh')) {
+  $sourceHashes[$relative] = (Get-FileHash -LiteralPath (Join-Path $project $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 $sourceHashes['desktop/assets/companion-studio.ico'] = (Get-FileHash -LiteralPath (Join-Path $desktop 'assets\companion-studio.ico') -Algorithm SHA256).Hash.ToLowerInvariant()
 $sha = [Security.Cryptography.SHA256]::Create()
 try { $fingerprint = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($sourceHashes | ConvertTo-Json -Compress))))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
-$info = [ordered]@{version=$version;product_name='Companion Studio';build_label='Companion Studio Public Release';build_id=$BuildId;built_at=(Get-Date).ToUniversalTime().ToString('o');channel='release';app_id='com.companionstudio.desktop';clean_distribution=$true;source_fingerprint=$fingerprint}
-[IO.File]::WriteAllText((Join-Path $desktop 'electron\build-info.json'),($info|ConvertTo-Json),$utf8)
+$revision = if (Test-Path -LiteralPath (Join-Path $project '.git')) { (& git -C $project rev-parse HEAD).Trim() } else { 'source-export' }
+$info = [ordered]@{source_revision=$revision;version=$version;product_name='Companion Studio';build_label='Companion Studio Public Release';build_id=$BuildId;built_at=(Get-Date).ToUniversalTime().ToString('o');channel='release';app_id='com.companionstudio.desktop';clean_distribution=$true;source_fingerprint=$fingerprint}
+# 只覆盖暂存包中的构建信息；开发源码 build-info.json 保持稳定。
+$appStage = Join-Path $build 'desktop-app'
+New-Item -ItemType Directory -Force -Path $appStage,(Join-Path $appStage 'node_modules') | Out-Null
+foreach ($folder in @('electron','assets')) {
+  Copy-Item -LiteralPath (Join-Path $desktop $folder) -Destination $appStage -Recurse
+}
+foreach ($dependency in @('react','react-dom','scheduler')) {
+  Copy-Item -LiteralPath (Join-Path $desktop ('node_modules\'+$dependency)) -Destination (Join-Path $appStage 'node_modules') -Recurse
+}
+$appPackage = Get-Content -LiteralPath (Join-Path $desktop 'package.json') -Raw | ConvertFrom-Json
+$appPackage.PSObject.Properties.Remove('devDependencies')
+$appPackage.PSObject.Properties.Remove('scripts')
+[IO.File]::WriteAllText((Join-Path $appStage 'package.json'),($appPackage|ConvertTo-Json -Depth 20),$utf8)
+[IO.File]::WriteAllText((Join-Path $appStage 'electron\build-info.json'),($info|ConvertTo-Json),$utf8)
 $frontend = Join-Path $build 'frontend'
 Push-Location $desktop
 try {
@@ -107,11 +135,16 @@ try {
 $healthReport = @{pass=$healthy;startup_seconds=[math]::Round($timer.Elapsed.TotalSeconds,3);only_generic_assistant=$true;no_model_key_required=$true;external_requests=0}
 $package = Get-Content -LiteralPath (Join-Path $desktop 'package.json') -Raw | ConvertFrom-Json
 $config = $package.build
+$config | Add-Member -NotePropertyName electronVersion -NotePropertyValue $package.devDependencies.electron -Force
 $config.directories.output = Join-Path $build 'delivery'
 $config.directories.buildResources = Join-Path $desktop 'assets'
 $config.extraResources[0].from = Join-Path $backend 'companion-backend'
 $config.extraResources[1].from = Join-Path $project 'backend\app'
 $config.extraResources[1].filter = @('**/*.py','**/*.json','!**/__pycache__/**')
+$config.extraResources[2].from = Join-Path $licenseStage 'licenses'
+$config.extraResources[3].from = Join-Path $licenseStage 'THIRD_PARTY_NOTICES.md'
+$config.extraResources[4].from = Join-Path $project 'LICENSE'
+$config.nsis.include = Join-Path $desktop 'assets\installer.nsh'
 $config.nsis | Add-Member -NotePropertyName runAfterFinish -NotePropertyValue $false -Force
 $config.nsis | Add-Member -NotePropertyName deleteAppDataOnUninstall -NotePropertyValue $false -Force
 $config.nsis | Add-Member -NotePropertyName perMachine -NotePropertyValue $false -Force
@@ -121,7 +154,7 @@ $configFile = Join-Path $build 'electron-builder.json'
 [IO.File]::WriteAllText($configFile,($config|ConvertTo-Json -Depth 20),$utf8)
 Push-Location $desktop
 try {
-  & $builder --win dir nsis ('--config='+$configFile) ('--config.electronDist='+(Join-Path $desktop 'node_modules\electron\dist'))
+  & $builder --projectDir $appStage --win dir nsis ('--config='+$configFile) ('--config.electronDist='+(Join-Path $desktop 'node_modules\electron\dist'))
   if ($LASTEXITCODE -ne 0) { throw 'Desktop packaging failed' }
 } finally { Pop-Location }
 $delivery = Join-Path $build 'delivery'; $artifacts = [ordered]@{}
@@ -131,8 +164,10 @@ foreach ($relative in @($setupName,'win-unpacked\CompanionStudio.exe','win-unpac
   if (-not (Test-Path -LiteralPath $file)) { throw ('Artifact missing: '+$relative) }
   $artifacts[$relative] = @{bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()}
 }
-$manifest = @{build=$info;source_hashes=$sourceHashes;artifacts=$artifacts;backend_health=$healthReport;profile_imported=$false;external_model_requests=0}
+$manifest = @{checks_skipped=[bool]$SkipTests;build=$info;source_hashes=$sourceHashes;artifacts=$artifacts;backend_health=$healthReport;profile_imported=$false;external_model_requests=0}
 [IO.File]::WriteAllText((Join-Path $delivery 'build-manifest.json'),($manifest|ConvertTo-Json -Depth 8),$utf8)
 [IO.File]::WriteAllText((Join-Path $root 'latest.json'),(@{build_root=$build;delivery=$delivery;build_id=$BuildId}|ConvertTo-Json),$utf8)
 [IO.File]::WriteAllText((Join-Path $delivery 'SHA256SUMS.txt'),($artifacts[$setupName].sha256+'  '+$setupName+[Environment]::NewLine),$utf8)
+& $python -B (Join-Path $PSScriptRoot 'audit-release.py') --source $project --delivery $delivery --report (Join-Path $delivery 'security-audit.json')
+if ($LASTEXITCODE -ne 0) { throw 'Release security audit failed' }
 'Companion Studio public production build completed.'

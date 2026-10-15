@@ -18,10 +18,10 @@ class SpeechStreamChunker:
         while True:
             match = re.search(r"[。！？!?]", self.pending)
             if self.first:
-                clause = re.search(r'[，,；;。！？!?]', self.pending[9:30])
+                clause = re.search(r"[，,；;。！？!?]", self.pending[9:30])
                 if clause:
                     match = None
-                    end = clause.end()+9
+                    end = clause.end() + 9
                 elif len(self.pending) >= 30 and not match:
                     # Prefer a natural comma; a long clause may continue until a boundary.
                     end = 0
@@ -32,7 +32,9 @@ class SpeechStreamChunker:
             elif match:
                 end = match.end()
             elif len(self.pending) > 90:
-                commas = [candidate.end() for candidate in re.finditer(r"[，,；;]", self.pending[:75])]
+                commas = [
+                    candidate.end() for candidate in re.finditer(r"[，,；;]", self.pending[:75])
+                ]
                 end = commas[-1] if commas else 0
             else:
                 end = 0
@@ -48,14 +50,20 @@ class SpeechStreamChunker:
     def _semantic(self) -> list[str]:
         ready = []
         while len(self.pending) >= self.min_chars:
-            window = self.pending[:self.max_chars]
-            ends = [m.end() for m in re.finditer(r'[。！？!?](?:[”」])?|…{2,}', window)
-                    if m.end() >= self.min_chars]
+            window = self.pending[: self.max_chars]
+            ends = [
+                m.end()
+                for m in re.finditer(r"[。！？!?](?:[”」])?|…{2,}", window)
+                if m.end() >= self.min_chars
+            ]
             if ends:
                 end = ends[-1]
             elif len(self.pending) > self.max_chars:
-                weak = [m.end() for m in re.finditer(r'[，,；;：:\s]', window)
-                        if m.end() >= self.min_chars]
+                weak = [
+                    m.end()
+                    for m in re.finditer(r"[，,；;：:\s]", window)
+                    if m.end() >= self.min_chars
+                ]
                 end = weak[-1] if weak else self.max_chars
             else:
                 break

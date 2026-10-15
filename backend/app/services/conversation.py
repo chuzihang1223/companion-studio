@@ -13,9 +13,15 @@ def title_from_message(content: str) -> str:
 
 
 def latest_or_create(db: Session, character_id: str) -> Conversation:
-    row = db.scalars(select(Conversation).where(
-        Conversation.character_id == character_id, Conversation.is_deleted.is_(False),
-    ).order_by(Conversation.updated_at.desc(), Conversation.id.desc()).limit(1)).first()
+    row = db.scalars(
+        select(Conversation)
+        .where(
+            Conversation.character_id == character_id,
+            Conversation.is_deleted.is_(False),
+        )
+        .order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+        .limit(1)
+    ).first()
     if row is None:
         row = Conversation(character_id=character_id)
         db.add(row)
@@ -34,27 +40,39 @@ def visible_messages(db: Session, conversation: Conversation) -> list[Message]:
             raise ValueError("Invalid conversation branch ancestry")
         seen.add(current.id)
         lineage.append(current)
-        current = db.get(Conversation, current.parent_conversation_id) if current.parent_conversation_id else None
+        current = (
+            db.get(Conversation, current.parent_conversation_id)
+            if current.parent_conversation_id
+            else None
+        )
     lineage.reverse()
     result: list[Message] = []
     for index, branch in enumerate(lineage):
-        rows = db.scalars(select(Message).where(
-            Message.conversation_id == branch.id,
-        ).order_by(Message.created_at, literal_column("rowid"))).all()
+        rows = db.scalars(
+            select(Message)
+            .where(
+                Message.conversation_id == branch.id,
+            )
+            .order_by(Message.created_at, literal_column("rowid"))
+        ).all()
         if index + 1 < len(lineage):
             fork_id = lineage[index + 1].fork_message_id
             if fork_id is None:
                 rows = []
             else:
-                cutoff = next((position for position, row in enumerate(rows) if row.id == fork_id), None)
+                cutoff = next(
+                    (position for position, row in enumerate(rows) if row.id == fork_id), None
+                )
                 if cutoff is None:
                     raise ValueError("Conversation fork point was not found")
-                rows = rows[:cutoff + 1]
+                rows = rows[: cutoff + 1]
         result.extend(rows)
     return result
 
 
-def touch_after_user_message(conversation: Conversation, content: str, has_previous_user: bool) -> None:
+def touch_after_user_message(
+    conversation: Conversation, content: str, has_previous_user: bool
+) -> None:
     if conversation.title == "新聊天" and not has_previous_user:
         conversation.title = title_from_message(content)
     conversation.updated_at = datetime.now(timezone.utc)

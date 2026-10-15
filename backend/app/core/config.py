@@ -5,7 +5,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(sys._MEIPASS) if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[3]
+PROJECT_ROOT = (
+    Path(sys._MEIPASS) if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[3]
+)
 DATA_ROOT = Path(os.environ.get("COMPANION_DATA_DIR", str(PROJECT_ROOT / "data")))
 CLEAN_DISTRIBUTION = True
 os.environ.setdefault("COMPANION_CLEAN_DISTRIBUTION", "1")

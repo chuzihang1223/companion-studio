@@ -27,22 +27,32 @@ def _wav() -> bytes:
 
 def test_recent_fish_failure_degrades_presence_and_success_recovers():
     from app.api.presence import presence
+
     failing = True
+
     def reply(_request):
         return httpx.Response(503) if failing else httpx.Response(200, content=_wav())
-    fish = FishAudioProvider(FishConfig(api_key='isolated-test-key', reference_id='test-voice',
-                                      transport_mode='standard'), httpx.MockTransport(reply))
-    state = SimpleNamespace(llm_service=SimpleNamespace(config=SimpleNamespace(api_key='mock', model='mock')),
-                            voice_client=fish, task_runtime=object())
+
+    fish = FishAudioProvider(
+        FishConfig(
+            api_key="isolated-test-key", reference_id="test-voice", transport_mode="standard"
+        ),
+        httpx.MockTransport(reply),
+    )
+    state = SimpleNamespace(
+        llm_service=SimpleNamespace(config=SimpleNamespace(api_key="mock", model="mock")),
+        voice_client=fish,
+        task_runtime=object(),
+    )
     request = SimpleNamespace(app=SimpleNamespace(state=state))
     with pytest.raises(FishAudioError):
-        fish.synthesize('你好。', None)
+        fish.synthesize("你好。", None)
     status = presence(request)
-    assert status['backend'] and status['llm']['available'] and status['agent']
-    assert not status['voice']['available']
+    assert status["backend"] and status["llm"]["available"] and status["agent"]
+    assert not status["voice"]["available"]
     failing = False
-    fish.synthesize('你好。', None)
-    assert presence(request)['voice']['available']
+    fish.synthesize("你好。", None)
+    assert presence(request)["voice"]["available"]
 
 
 def test_free_model_and_reference_are_sent_in_the_right_places():
@@ -52,8 +62,10 @@ def test_free_model_and_reference_are_sent_in_the_right_places():
         captured.append(request)
         return httpx.Response(200, content=_wav())
 
-    provider = FishAudioProvider(FishConfig(api_key="  test-key\n", reference_id="voice_123", transport_mode="standard"),
-                                 httpx.MockTransport(respond))
+    provider = FishAudioProvider(
+        FishConfig(api_key="  test-key\n", reference_id="voice_123", transport_mode="standard"),
+        httpx.MockTransport(respond),
+    )
     audio = provider.synthesize("你好呀。", None)
     assert provider.authorized is True
     request = captured[0]
@@ -87,21 +99,30 @@ def test_streamed_wav_placeholder_length_is_replaced_with_actual_audio_length():
 
 def test_websocket_transport_and_technical_fallback():
     seen = []
+
     def websocket(text, speed):
         seen.append((text, speed))
         yield _wav()
-    provider = FishAudioProvider(FishConfig(api_key="key", reference_id="voice_123"),
-                                 websocket_stream=websocket)
+
+    provider = FishAudioProvider(
+        FishConfig(api_key="key", reference_id="voice_123"), websocket_stream=websocket
+    )
     assert base64.b64decode(provider.synthesize("你好。", None)["audio_base64"]) == _wav()
     assert seen == [("你好。", 1.0)]
 
     calls = []
+
     def broken_websocket(text, speed):
         raise FishAudioError(0, "transport failed")
         yield b""
-    provider = FishAudioProvider(FishConfig(api_key="key", reference_id="voice_123"),
-                                 httpx.MockTransport(lambda req: (calls.append(req), httpx.Response(200, content=_wav()))[1]),
-                                 websocket_stream=broken_websocket)
+
+    provider = FishAudioProvider(
+        FishConfig(api_key="key", reference_id="voice_123"),
+        httpx.MockTransport(
+            lambda req: (calls.append(req), httpx.Response(200, content=_wav()))[1]
+        ),
+        websocket_stream=broken_websocket,
+    )
     assert base64.b64decode(provider.synthesize("你好。", None)["audio_base64"]) == _wav()
     assert len(calls) == 1
     assert calls[0].headers["model"] == "s2.1-pro-free"
@@ -109,6 +130,7 @@ def test_websocket_transport_and_technical_fallback():
 
 def test_official_sdk_websocket_receives_explicit_free_model_and_voice(monkeypatch):
     import fishaudio
+
     captured = {}
 
     class FakeTTS:
@@ -129,7 +151,9 @@ def test_official_sdk_websocket_receives_explicit_free_model_and_voice(monkeypat
             return False
 
     monkeypatch.setattr(fishaudio, "FishAudio", FakeClient)
-    provider = FishAudioProvider(FishConfig(api_key="key", reference_id="voice_123", latency="normal"))
+    provider = FishAudioProvider(
+        FishConfig(api_key="key", reference_id="voice_123", latency="normal")
+    )
     result = provider.synthesize("你好。", None)
     assert result["transport"] == "stream"
     assert captured["model"] == "s2.1-pro-free"
@@ -143,9 +167,12 @@ def test_websocket_auth_failure_does_not_retry_http():
     def unauthorized(text, speed):
         raise FishAudioError(401, "unauthorized")
         yield b""
-    provider = FishAudioProvider(FishConfig(api_key="wrong", reference_id="voice_123"),
-                                 httpx.MockTransport(lambda _: pytest.fail("HTTP retry must not happen")),
-                                 websocket_stream=unauthorized)
+
+    provider = FishAudioProvider(
+        FishConfig(api_key="wrong", reference_id="voice_123"),
+        httpx.MockTransport(lambda _: pytest.fail("HTTP retry must not happen")),
+        websocket_stream=unauthorized,
+    )
     with pytest.raises(FishAudioError) as failure:
         provider.synthesize("你好。", None)
     assert failure.value.status_code == 401
@@ -155,7 +182,9 @@ def test_invalid_websocket_audio_uses_http():
     calls = []
     provider = FishAudioProvider(
         FishConfig(api_key="key", reference_id="voice_123"),
-        httpx.MockTransport(lambda request: (calls.append(request), httpx.Response(200, content=_wav()))[1]),
+        httpx.MockTransport(
+            lambda request: (calls.append(request), httpx.Response(200, content=_wav()))[1]
+        ),
         websocket_stream=lambda _text, _speed: iter((b"not-a-wav",)),
     )
     assert base64.b64decode(provider.synthesize("你好。", None)["audio_base64"]) == _wav()
@@ -163,8 +192,10 @@ def test_invalid_websocket_audio_uses_http():
 
 
 def test_authorization_failures_never_use_local_fallback():
-    provider = FishAudioProvider(FishConfig(api_key="wrong", reference_id="voice_123"),
-                                 httpx.MockTransport(lambda _: httpx.Response(401)))
+    provider = FishAudioProvider(
+        FishConfig(api_key="wrong", reference_id="voice_123"),
+        httpx.MockTransport(lambda _: httpx.Response(401)),
+    )
     router = VoiceRouter(object(), provider)
     router.selected_engine = "fish"
     with pytest.raises(FishAudioError) as failure:
@@ -189,8 +220,9 @@ def test_minimal_authorization_wav_uses_free_header():
         seen.append(request)
         return httpx.Response(200, content=_wav())
 
-    provider = FishAudioProvider(FishConfig(api_key="key", reference_id="voice_123"),
-                                 httpx.MockTransport(respond))
+    provider = FishAudioProvider(
+        FishConfig(api_key="key", reference_id="voice_123"), httpx.MockTransport(respond)
+    )
     content, _, _ = provider.test_wav()
     assert content == _wav()
     assert seen[0].headers["model"] == "s2.1-pro-free"
@@ -200,8 +232,12 @@ def test_minimal_authorization_wav_uses_free_header():
 
 
 def test_account_reason_does_not_echo_the_key():
-    response = httpx.MockTransport(lambda _: httpx.Response(402, json={"reason": "Plan denied for secret-key"}))
-    provider = FishAudioProvider(FishConfig(api_key="secret-key", reference_id="voice_123"), response)
+    response = httpx.MockTransport(
+        lambda _: httpx.Response(402, json={"reason": "Plan denied for secret-key"})
+    )
+    provider = FishAudioProvider(
+        FishConfig(api_key="secret-key", reference_id="voice_123"), response
+    )
     with pytest.raises(FishAudioError) as failure:
         provider.test_wav()
     assert failure.value.status_code == 402
@@ -276,8 +312,11 @@ def test_stream_diagnostic_reports_actual_transport_and_writes_wav(tmp_path, mon
 
         def synthesize(self, text, control):
             assert text and control is None
-            return {"audio_base64": base64.b64encode(_wav()).decode(),
-                    "transport": "standard", "generation_ms": 123}
+            return {
+                "audio_base64": base64.b64encode(_wav()).decode(),
+                "transport": "standard",
+                "generation_ms": 123,
+            }
 
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(fish_voice=FakeFish())))
     result = asyncio.run(fish_settings.stream_test(request, "test-token"))

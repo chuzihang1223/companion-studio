@@ -1,16 +1,228 @@
-import {useState,type ReactNode,type PointerEvent} from 'react'
-import Icon from './Icon'
-import type {ModulePlacement} from './WorkbenchLayout'
-import {WorkspaceModuleRegistry,type ModuleId} from './WorkspaceModuleRegistry'
-export default function DockableWorkspaceModule({id,placement,onChange,onSize,children,className='',resizeHandles}:{id:ModuleId;placement:ModulePlacement;onChange:(patch:Partial<ModulePlacement>)=>void;onSize?:(preset:string,width?:number,height?:number)=>void;children:ReactNode;className?:string;resizeHandles?:ReactNode}){
- const [menu,setMenu]=useState(false),[custom,setCustom]=useState(false),[width,setWidth]=useState(360),[height,setHeight]=useState(240),definition=WorkspaceModuleRegistry[id]
- const action=(patch:Partial<ModulePlacement>)=>{onChange(patch);setMenu(false)}
- return <section data-module={id} data-instance-id={placement.module_instance_id} className={`work-module app-panel ${className} ${placement.collapsed?'module-folded':''} ${placement.size==='maximized'?'module-maximized':''}`}><header><h3><Icon name={definition.icon}/>{definition.title}</h3><div className="module-actions">
-  <button type="button" aria-label={(placement.collapsed?'展开':'折叠')+definition.title} title={placement.collapsed?'展开':'折叠'} onClick={()=>action({collapsed:!placement.collapsed})}><Icon name={placement.collapsed?'plus':'collapse'} size={15}/></button>
-  <button type="button" aria-label={'最小化'+definition.title} title="最小化到左侧" onClick={()=>action({minimized:true,dockSide:'left',size:'normal'})}><Icon name="left" size={15}/></button>
-  <button type="button" aria-label={'最大化'+definition.title} title="最大化/恢复" onClick={()=>action({size:placement.size==='maximized'?'normal':'maximized',collapsed:false})}><Icon name="maximize" size={15}/></button>
-  <button type="button" aria-label={definition.title+'模块菜单'} aria-expanded={menu} onClick={()=>setMenu(!menu)}><Icon name="more"/></button>
-  {menu&&<div className="module-menu" role="menu"><button type="button" onClick={()=>action({pinned_position:!placement.pinned_position})}>{placement.pinned_position?'取消固定位置':'固定位置'}</button><button type="button" onClick={()=>action({collapsed:!placement.collapsed})}>{placement.collapsed?'展开':'折叠'}</button><button type="button" onClick={()=>action({minimized:true,dockSide:'left',size:'normal'})}>缩小到左侧</button><button type="button" onClick={()=>action({minimized:true,dockSide:'right',size:'normal'})}>缩小到右侧</button><button type="button" onClick={()=>action({size:placement.size==='maximized'?'normal':'maximized',collapsed:false})}>{placement.size==='maximized'?'恢复大小':'最大化'}</button><small>布局 / 大小</small>{[['compact','紧凑'],['default','默认大小'],['wide','宽'],['large','大']].map(([value,title])=><button key={value} type="button" onClick={()=>{onSize?.(value);setMenu(false)}}>{title}</button>)}<button type="button" onClick={()=>setCustom(!custom)}>自定义尺寸</button>{custom&&<form className="module-custom-size" onSubmit={e=>{e.preventDefault();onSize?.('custom',width,height);setMenu(false)}}><label>宽度 px<input type="number" min={definition.minWidth} value={width} onChange={e=>setWidth(Number(e.target.value))}/></label><label>高度 px<input type="number" min={definition.minHeight} value={height} onChange={e=>setHeight(Number(e.target.value))}/></label><button type="submit">应用尺寸</button></form>}{definition.canClose&&<button type="button" onClick={()=>action({closed:true,size:'normal'})}>关闭模块</button>}</div>}
- </div></header><div className="module-body" hidden={placement.collapsed}>{!placement.collapsed||id==='browser'?children:null}</div>{!placement.collapsed&&resizeHandles}</section>
+import { useState, type ReactNode, type PointerEvent } from 'react';
+import Icon from './Icon';
+import type { ModulePlacement } from './WorkbenchLayout';
+import { WorkspaceModuleRegistry, type ModuleId } from './WorkspaceModuleRegistry';
+export default function DockableWorkspaceModule({
+  id,
+  placement,
+  onChange,
+  onSize,
+  children,
+  className = '',
+  resizeHandles,
+}: {
+  id: ModuleId;
+  placement: ModulePlacement;
+  onChange: (patch: Partial<ModulePlacement>) => void;
+  onSize?: (preset: string, width?: number, height?: number) => void;
+  children: ReactNode;
+  className?: string;
+  resizeHandles?: ReactNode;
+}) {
+  const [menu, setMenu] = useState(false),
+    [custom, setCustom] = useState(false),
+    [width, setWidth] = useState(360),
+    [height, setHeight] = useState(240),
+    definition = WorkspaceModuleRegistry[id];
+  const action = (patch: Partial<ModulePlacement>) => {
+    onChange(patch);
+    setMenu(false);
+  };
+  return (
+    <section
+      data-module={id}
+      data-instance-id={placement.module_instance_id}
+      className={`work-module app-panel ${className} ${placement.collapsed ? 'module-folded' : ''} ${placement.size === 'maximized' ? 'module-maximized' : ''}`}
+    >
+      <header>
+        <h3>
+          <Icon name={definition.icon} />
+          {definition.title}
+        </h3>
+        <div className="module-actions">
+          <button
+            type="button"
+            aria-label={(placement.collapsed ? '展开' : '折叠') + definition.title}
+            title={placement.collapsed ? '展开' : '折叠'}
+            onClick={() => action({ collapsed: !placement.collapsed })}
+          >
+            <Icon name={placement.collapsed ? 'plus' : 'collapse'} size={15} />
+          </button>
+          <button
+            type="button"
+            aria-label={'最小化' + definition.title}
+            title="最小化到左侧"
+            onClick={() => action({ minimized: true, dockSide: 'left', size: 'normal' })}
+          >
+            <Icon name="left" size={15} />
+          </button>
+          <button
+            type="button"
+            aria-label={'最大化' + definition.title}
+            title="最大化/恢复"
+            onClick={() =>
+              action({
+                size: placement.size === 'maximized' ? 'normal' : 'maximized',
+                collapsed: false,
+              })
+            }
+          >
+            <Icon name="maximize" size={15} />
+          </button>
+          <button
+            type="button"
+            aria-label={definition.title + '模块菜单'}
+            aria-expanded={menu}
+            onClick={() => setMenu(!menu)}
+          >
+            <Icon name="more" />
+          </button>
+          {menu && (
+            <div className="module-menu" role="menu">
+              <button
+                type="button"
+                onClick={() => action({ pinned_position: !placement.pinned_position })}
+              >
+                {placement.pinned_position ? '取消固定位置' : '固定位置'}
+              </button>
+              <button type="button" onClick={() => action({ collapsed: !placement.collapsed })}>
+                {placement.collapsed ? '展开' : '折叠'}
+              </button>
+              <button
+                type="button"
+                onClick={() => action({ minimized: true, dockSide: 'left', size: 'normal' })}
+              >
+                缩小到左侧
+              </button>
+              <button
+                type="button"
+                onClick={() => action({ minimized: true, dockSide: 'right', size: 'normal' })}
+              >
+                缩小到右侧
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  action({
+                    size: placement.size === 'maximized' ? 'normal' : 'maximized',
+                    collapsed: false,
+                  })
+                }
+              >
+                {placement.size === 'maximized' ? '恢复大小' : '最大化'}
+              </button>
+              <small>布局 / 大小</small>
+              {[
+                ['compact', '紧凑'],
+                ['default', '默认大小'],
+                ['wide', '宽'],
+                ['large', '大'],
+              ].map(([value, title]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    onSize?.(value);
+                    setMenu(false);
+                  }}
+                >
+                  {title}
+                </button>
+              ))}
+              <button type="button" onClick={() => setCustom(!custom)}>
+                自定义尺寸
+              </button>
+              {custom && (
+                <form
+                  className="module-custom-size"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    onSize?.('custom', width, height);
+                    setMenu(false);
+                  }}
+                >
+                  <label>
+                    宽度 px
+                    <input
+                      type="number"
+                      min={definition.minWidth}
+                      value={width}
+                      onChange={(e) => setWidth(Number(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    高度 px
+                    <input
+                      type="number"
+                      min={definition.minHeight}
+                      value={height}
+                      onChange={(e) => setHeight(Number(e.target.value))}
+                    />
+                  </label>
+                  <button type="submit">应用尺寸</button>
+                </form>
+              )}
+              {definition.canClose && (
+                <button type="button" onClick={() => action({ closed: true, size: 'normal' })}>
+                  关闭模块
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </header>
+      <div className="module-body" hidden={placement.collapsed}>
+        {!placement.collapsed || id === 'browser' ? children : null}
+      </div>
+      {!placement.collapsed && resizeHandles}
+    </section>
+  );
 }
-export function DockTile({id,side,onRestore,onMove,dragging=false,updated=false,onPointerDown,onPointerMove,onPointerUp,onPointerCancel}:{id:ModuleId;side:'left'|'right';onRestore:()=>void;onMove:()=>void;dragging?:boolean;updated?:boolean;onPointerDown?:(e:PointerEvent)=>void;onPointerMove?:(e:PointerEvent)=>void;onPointerUp?:(e:PointerEvent)=>void;onPointerCancel?:(e:PointerEvent)=>void}){const module=WorkspaceModuleRegistry[id];return <button type="button" className={'dock-tile '+(dragging?'tile-dragging':'')} data-dock-module={id} data-module-drag={id} aria-label={'恢复'+module.title} title={module.title+' · 点击聚焦/恢复，长按拖入工作区；右键换侧'} onClick={onRestore} onContextMenu={e=>{e.preventDefault();onMove()}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel} data-side={side}><Icon name={module.icon} size={20}/>{updated&&<span className="module-update-dot"/>}</button>}
+export function DockTile({
+  id,
+  side,
+  onRestore,
+  onMove,
+  dragging = false,
+  updated = false,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+}: {
+  id: ModuleId;
+  side: 'left' | 'right';
+  onRestore: () => void;
+  onMove: () => void;
+  dragging?: boolean;
+  updated?: boolean;
+  onPointerDown?: (e: PointerEvent) => void;
+  onPointerMove?: (e: PointerEvent) => void;
+  onPointerUp?: (e: PointerEvent) => void;
+  onPointerCancel?: (e: PointerEvent) => void;
+}) {
+  const module = WorkspaceModuleRegistry[id];
+  return (
+    <button
+      type="button"
+      className={'dock-tile ' + (dragging ? 'tile-dragging' : '')}
+      data-dock-module={id}
+      data-module-drag={id}
+      aria-label={'恢复' + module.title}
+      title={module.title + ' · 点击聚焦/恢复，长按拖入工作区；右键换侧'}
+      onClick={onRestore}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onMove();
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      data-side={side}
+    >
+      <Icon name={module.icon} size={20} />
+      {updated && <span className="module-update-dot" />}
+    </button>
+  );
+}

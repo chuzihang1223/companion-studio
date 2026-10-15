@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ConversationCreate(BaseModel):
     character_id: str = Field(min_length=1, max_length=100)
-    conversation_type: Literal['chat', 'work', 'project'] = 'chat'
+    conversation_type: Literal["chat", "work", "project"] = "chat"
     project_id: str | None = Field(default=None, max_length=36)
 
 

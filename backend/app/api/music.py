@@ -22,8 +22,11 @@ def library(request: Request):
 
 
 @router.post("/folder")
-def select_folder(request: Request, payload: MusicFolder,
-                  x_companion_control_token: str | None = Header(default=None)):
+def select_folder(
+    request: Request,
+    payload: MusicFolder,
+    x_companion_control_token: str | None = Header(default=None),
+):
     require_control(x_companion_control_token)
     try:
         rows = request.app.state.music_library.choose(payload.folder)
@@ -37,4 +40,6 @@ def audio(request: Request, identifier: str):
     path = request.app.state.music_library.path(identifier)
     if path is None:
         raise HTTPException(status_code=404, detail="歌曲不存在")
-    return FileResponse(path, media_type=MIME[path.suffix.lower()], headers={"Cache-Control": "private, no-store"})
+    return FileResponse(
+        path, media_type=MIME[path.suffix.lower()], headers={"Cache-Control": "private, no-store"}
+    )
