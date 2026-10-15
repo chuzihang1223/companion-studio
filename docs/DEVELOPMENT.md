@@ -90,7 +90,7 @@ npm run build --prefix desktop
 - Python 格式和规则由根目录 `pyproject.toml` 管理。
 - TypeScript 启用严格类型检查。ESLint 的 `rules-of-hooks` 是错误门；现有稳定原生订阅的依赖提示仍需人工审阅。
 - `backend/tests/conftest.py` 在导入应用前设置隔离数据目录、清空外部服务配置，并限制该目录下测试的外部网络；其他测试使用自己的 fixture/mock。
-- `test:electron` 执行九组本地几何、会话、音频队列、Windows 编码和音乐解析回归，**不启动真实 GUI**。
+- `test:electron` 执行 12 组本地几何、会话、音频队列、Windows 编码、音乐解析、应用启动策略和 Trace/Replay/IPC 回归，**不启动真实 GUI**。追踪面板的实际打包界面检查使用 [Trace 本地验证](TRACE_REPLAY.md#本地验证) 中的独立入口。
 - 不应通过删测试、放宽规则或自动修改 Hook 依赖来获得通过。
 
 需要格式化自己修改的文件时可以使用对应工具。根级批量格式命令为 `.\.venv\Scripts\python.exe -B -m ruff format backend tests scripts` 和 `npm run format --prefix desktop`；执行前确认作用范围，避免把不相关改动混入功能提交。
