@@ -32,7 +32,12 @@ const DEFINITIONS = Object.freeze({
     exe: ['Code.exe'],
     official: 'https://code.visualstudio.com/',
   },
-  notepad: { label: '记事本', exe: ['notepad.exe'], official: '' },
+  notepad: {
+    label: '记事本',
+    exe: ['notepad.exe'],
+    app_user_model_ids: ['Microsoft.WindowsNotepad_8wekyb3d8bbwe!App'],
+    official: '',
+  },
   explorer: { label: '文件资源管理器', exe: ['explorer.exe'], dirs: [], official: '' },
   browser: {
     label: '浏览器',
@@ -51,17 +56,22 @@ function detect(id) {
     const row = discovery.find(id);
     return { ...row, id, path: row.executable || null, last_used: registry.last_used[id] || null };
   }
+  const direct = discovery.find(id);
+  const installed = direct ? [] : discovery.list().filter((row) => row.installed);
   const discovered =
-    discovery.find(id) ||
-    discovery
-      .list()
-      .find(
-        (row) =>
-          row.installed &&
-          DEFINITIONS[id]?.exe.some(
-            (exe) => path.basename(row.executable || '').toLowerCase() === exe.toLowerCase(),
-          ),
-      );
+    direct ||
+    // 现代记事本可能只有系统登记的 AppsFolder 身份，没有 EXE 路径。
+    // 保留确切 AUMID 供启动及后续进程归属验证；不按显示名称猜测身份。
+    installed.find((row) =>
+      DEFINITIONS[id]?.app_user_model_ids?.some(
+        (aumid) => aumid.toLowerCase() === String(row.app_user_model_id || '').toLowerCase(),
+      ),
+    ) ||
+    installed.find((row) =>
+      DEFINITIONS[id]?.exe.some(
+        (exe) => path.basename(row.executable || '').toLowerCase() === exe.toLowerCase(),
+      ),
+    );
   if (discovered) {
     // Explorer's registered Shell entry uses an implicit identity, not a package
     // process ID. Windows defines its host; an arbitrary path cannot replace it.

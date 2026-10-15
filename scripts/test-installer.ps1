@@ -3,10 +3,12 @@
   [string]$TestRoot,
   [ValidateRange(0,65535)][int]$BackendPort = 0,
   [switch]$RunUI,
+  [switch]$StartNotepad,
   [switch]$PreserveInstalledSnapshot,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
+if ($StartNotepad -and -not $RunUI) { throw 'StartNotepad requires RunUI' }
 if ($PreserveInstalledSnapshot -and -not $RunUI) {
   throw 'PreserveInstalledSnapshot requires RunUI; incomplete installation checks cannot produce a retained program'
 }
@@ -433,7 +435,7 @@ try {
   if ($RunUI) {
     $env:COMPANION_TEST_EXE = $testExe
     $env:COMPANION_TEST_HOME = $smokeHome
-    $env:COMPANION_TEST_START_NOTEPAD = '0'
+    $env:COMPANION_TEST_START_NOTEPAD = if ($StartNotepad) { '1' } else { '0' }
     & $nodeExe (Join-Path $project 'tests\ui\installed-studio-smoke.cjs')
     if ($LASTEXITCODE -ne 0) { throw 'Installed UI smoke failed; retain its report and isolated profile' }
     $smoke = Get-Content -LiteralPath (Join-Path $smokeHome 'report.json') -Raw -Encoding UTF8 | ConvertFrom-Json

@@ -1,8 +1,8 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "product_name": "Companion Studio",
   "build_label": "Companion Studio Source Release",
-  "build_id": "studio-0.1.1-source",
+  "build_id": "studio-0.1.2-source",
   "built_at": null,
   "channel": "release",
   "app_id": "com.companionstudio.desktop",

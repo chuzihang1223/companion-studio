@@ -34,6 +34,7 @@ PUBLIC_DOCS = {
     "RELEASE_SECURITY.md",
     "RELEASING.md",
     "RELEASE_NOTES_0.1.1.md",
+    "RELEASE_NOTES_0.1.2.md",
 }
 PUBLIC_WORKFLOWS = {"ci.yml", "release.yml"}
 SKIP_DIRS = {

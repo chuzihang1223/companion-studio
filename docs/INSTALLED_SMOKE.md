@@ -45,6 +45,8 @@ $env:COMPANION_TEST_START_NOTEPAD = '1'
 node .\tests\ui\installed-studio-smoke.cjs
 ```
 
+通过受控安装器入口运行同样检查时，使用 `scripts/test-installer.ps1 -Delivery '<delivery目录>' -RunUI -StartNotepad`。默认不启动第三方软件；这个开关必须与 `-RunUI` 一起使用。
+
 脚本在隔离档案中通过软件的可信动作接口许可 `app.launch:notepad`，然后调用正常 `launchKnownApp` 路径；不会绕过窗口验证或使用脚本直接启动记事本。已有窗口可能被聚焦，结果会记录是否原已运行。失败会使验收失败并保存错误，不伪造成功。
 
 脚本不自动关闭用户记事本，以免误关已有窗口或未保存内容。测试完需人工确认并按需退出。不开此开关时报告明确标记实际启动尚未验证。
