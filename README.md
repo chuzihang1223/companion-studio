@@ -1,6 +1,6 @@
 # Companion Studio（伴舟）
 
-**0.1.1 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
+**0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -8,7 +8,7 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 [![CI](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml)
 
-**[Download for Windows](https://github.com/chuzihang1223/companion-studio/releases)** · 0.1.1 安装包准备中，完成草稿审核后公开。当前 0.1.0 Release 提供源码。
+**[Download for Windows](https://github.com/chuzihang1223/companion-studio/releases)** · 0.1.2 安装包准备中，完成草稿审核后公开。当前 0.1.0 Release 提供源码。
 
 ## 系统架构与 Agent 实现
 
@@ -67,15 +67,15 @@ flowchart LR
 
 ### Windows 正式版
 
-Windows 安装包下载入口：[GitHub Releases](https://github.com/chuzihang1223/companion-studio/releases)。`v0.1.1` 正在进行安装包审核，当前公开的 `v0.1.0` 提供源码；审核完成后才会提供可直接下载的 Setup。准备期间可按下方步骤自行构建。
+Windows 安装包下载入口：[GitHub Releases](https://github.com/chuzihang1223/companion-studio/releases)。`v0.1.2` 正在进行安装包审核，当前公开的 `v0.1.0` 提供源码；审核完成后才会提供可直接下载的 Setup。准备期间可按下方步骤自行构建。
 
 使用构建好的安装包无需安装 Python、Node.js 或 npm。
 
-1. 从源码构建后，在构建产物目录获取 `Companion-Studio-0.1.1-Setup.exe` 和 `SHA256SUMS.txt`。
+1. 从源码构建后，在构建产物目录获取 `Companion-Studio-0.1.2-Setup.exe` 和 `SHA256SUMS.txt`。
 2. 用以下命令取得安装包 SHA256，与校验文件中的对应值比较：
 
    ```powershell
-   Get-FileHash -LiteralPath '.\Companion-Studio-0.1.1-Setup.exe' -Algorithm SHA256
+   Get-FileHash -LiteralPath '.\Companion-Studio-0.1.2-Setup.exe' -Algorithm SHA256
    ```
 
 3. 运行安装器，选择具有写入权限的目录。建议采用 **应用根目录\Release\installed** 结构，例如 `D:\Apps\CompanionStudio\Release\installed`，以分开程序与用户数据。
