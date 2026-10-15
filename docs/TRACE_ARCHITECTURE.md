@@ -34,13 +34,13 @@ Trace 是原 WorkEvent 的持久投影与补充跨度，不是第二套任务调
 
 UTC 用于显示和筛选，monotonic 用于本进程跨度。授权点击等待、调度等待、模型请求、工具及恢复分别统计，不能把授权等待算成模型推理。进程重启无法恢复单调时钟，未结束跨度标中断/计时不完整，不用离线墙钟时间伪造运行耗时。
 
-只记录受控标识符、枚举、布尔值、计数、参数类型/长度摘要。默认丢弃用户原话、Prompt、Header、路径、文件内容、窗口标题、URL、命令文本、截图和环境变量；异常记录类型及受控错误码，使用通用原因说明。模型名经过格式/敏感信息检查。读取和导出再次脱敏，原 WorkEvent.detail_json 不对新 API 透传。
+只记录受控标识符、枚举、布尔值、计数和参数类型摘要。默认丢弃用户原话、Prompt、Header、路径、文件内容、窗口标题、URL、命令文本、截图和环境变量；异常记录受控类别和错误码，使用通用原因说明。模型名经过格式/敏感信息检查。读取和导出再次脱敏，原 WorkEvent.detail_json 不对新 API 透传。
 
 工具请求、工具执行完成、目标验证分别呈现。GoalVerifier 是既有确定性结果规则；规则通过而没有外部证据时明确显示缺失证据，不声称看到了截图、网页内容或完整语义目标。统计是服务层逻辑模型调用，不推测供应商内部重试、计费 token 或费用。
 
 ## 5. API 与所有权
 
-`GET /api/agent/traces`、`/{trace_id}`、`/{trace_id}/events`、`/{trace_id}/summary` 提供筛选、稳定 DTO 及有界分页；额外的删除/策略接口只管理 Trace 数据。Trace ID 和请求会话采用 UUID 校验，读取要求 conversation_id，并核对 WorkSession/Conversation 的真实关联及删除状态。
+`GET /api/agent/traces`、`/{trace_id}`、`/{trace_id}/events`、`/{trace_id}/summary` 提供筛选、稳定 DTO 及有界分页；额外的 DELETE 接口只管理终态 Trace 数据。Trace ID 和请求会话采用 UUID 校验，读取要求 conversation_id，并核对 WorkSession/Conversation 的真实关联及删除状态。
 
 所有 Trace 接口使用现有 X-Companion-Control-Token。Electron 的固定 IPC 代理经 requireMainWindow 验证后向后端发送 Token；前端及嵌入网页不会得到 Token，也不能构造任意代理路径。用户选择的历史任务仍必须属于请求会话，其他应用档案使用不同后端/Token。
 
@@ -50,7 +50,7 @@ UTC 用于显示和筛选，monotonic 用于本进程跨度。授权点击等待
 
 Viewer 提供任务/会话/状态/时间/工具筛选、分页时间轴、独立详情、摘要和缺失证据提示。会话切换使旧请求失效，不能显示另一会话的迟到结果。虚拟列表限制 DOM 数量，分页限制内存，较大 JSON 默认折叠并限制长度。
 
-Replay 是独立前端只读状态机：开始、暂停、继续、跳转及速度只改变可见游标和计时器。所用网络能力只有已授权的历史 GET；不会调用 execute、Desktop API、文件写入、模型或语音。历史缺口原样显示，不补跑工具或伪造证据。
+Replay 是独立前端只读状态机：开始、暂停、继续、跳转及速度只改变可见游标和计时器。所用网络能力只有已授权的历史 GET；不会调用 execute、桌面操作接口、文件写入、模型或语音。历史缺口原样显示，不补跑工具或伪造证据。导出或删除只有用户显式点击对应按钮才发生。
 
 ## 7. 验证与交付边界
 
