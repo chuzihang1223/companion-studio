@@ -1,4 +1,7 @@
 'use strict';
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const { randomUUID } = require('node:crypto');
 
 // Fixed history routes only. No token, generic HTTP proxy or execution channel
 // is exposed to the renderer. Backend independently checks conversation ownership.
@@ -12,7 +15,45 @@ const bounded = (value, max, fallback) => {
   if (!Number.isInteger(value) || value < 0 || value > max) throw Error('无效的分页参数');
   return value;
 };
-module.exports = ({ ipcMain, requireMainWindow, request }) => {
+module.exports = ({ ipcMain, requireMainWindow, request, exportDirectory }) => {
+  let exporting = false;
+  ipcMain.handle('agent-trace-export', async (event, options = {}) => {
+    requireMainWindow(event);
+    const id = uuid(options.trace_id);
+    const query = new URLSearchParams({ conversation_id: uuid(options.conversation_id) });
+    if (options.work_session_id) query.set('work_session_id', uuid(options.work_session_id));
+    if (exporting || !exportDirectory) throw Error('导出暂不可用或正在进行');
+    exporting = true;
+    try {
+      const route = '/api/agent/traces/' + id;
+      // Read DTOs are allowlisted again by the backend. Never accept a path or
+      // arbitrary document body from a renderer, nor relax navigation guards.
+      const trace = await request(route + '?' + query);
+      const summary = await request(route + '/summary?' + query);
+      const events = [];
+      let after = 0;
+      for (let page = 0; page < 20; page++) {
+        const result = await request(route + '/events?' + query + '&limit=250&after=' + after);
+        events.push(...result.items);
+        if (!result.has_more || result.next_cursor == null || result.next_cursor <= after) break;
+        after = result.next_cursor;
+      }
+      const partial =
+        !!trace.incomplete ||
+        !['completed', 'failed', 'cancelled', 'interrupted'].includes(trace.status) ||
+        trace.event_count !== events.length;
+      const filename = 'agent-trace-' + id + '-' + randomUUID() + '.json';
+      await fs.mkdir(exportDirectory, { recursive: true });
+      await fs.writeFile(
+        path.join(exportDirectory, filename),
+        JSON.stringify({ schema_version: 1, trace, summary, events, partial }, null, 2),
+        { encoding: 'utf8', flag: 'wx' },
+      );
+      return { filename, event_count: events.length, partial };
+    } finally {
+      exporting = false;
+    }
+  });
   ipcMain.handle('agent-traces-read', (event, operation, options = {}) => {
     requireMainWindow(event);
     if (!options || typeof options !== 'object' || Array.isArray(options)) throw Error('无效查询');

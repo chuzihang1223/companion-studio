@@ -50,3 +50,23 @@ assert.ok(requests[1][0].includes('after=250'));
 handlers['agent-trace-delete']('main', {conversation_id, trace_id});
 assert.equal(requests[2][2], 'DELETE');
 console.log(JSON.stringify({pass: true, checks: ['event_order', 'dedupe', 'replay_delays', 'virtual_1000', 'viewer_empty', 'viewer_desktop_only', 'ipc_sender', 'ipc_fixed_routes', 'ipc_validation', 'scoped_delete'], events: 1000, pure_cpu_ms: performance.now()-started, heap_delta_bytes: process.memoryUsage().heapUsed-before, real_gui_acceptance: false}));
+const path = require('node:path'), osfs = require('node:fs'), crypto = require('node:crypto');
+async function exportRegression(){
+  const target = path.resolve(__dirname, '../../.cache/trace-export-unit', crypto.randomUUID());
+  const exportHandlers = {}, calls = [];
+  require('../../desktop/electron/agent-traces.cjs')({ipcMain:{handle:(name,callback)=>exportHandlers[name]=callback}, requireMainWindow:event=>{if(event!=='main')throw Error('Unauthorized');}, exportDirectory:target, request:async route=>{
+    calls.push(route);
+    if(route.includes('/summary?'))return {trace_id,model_requests:0};
+    if(route.includes('/events?'))return {items:[{sequence:1,trace_id,metadata:{executed:true}}],has_more:false,next_cursor:null};
+    return {trace_id,conversation_id,status:'completed',event_count:1,incomplete:false};
+  }});
+  await assert.rejects(()=>exportHandlers['agent-trace-export']('other',{conversation_id,trace_id}),/Unauthorized/);
+  await assert.rejects(()=>exportHandlers['agent-trace-export']('main',{conversation_id,trace_id:'../outside'}));
+  const result = await exportHandlers['agent-trace-export']('main',{conversation_id,trace_id,path:'../ignored'});
+  assert.equal(path.basename(result.filename),result.filename);
+  const data = JSON.parse(osfs.readFileSync(path.join(target,result.filename),'utf8'));
+  assert.equal(data.events.length,1);assert.equal(data.partial,false);
+  assert.ok(calls.every(route=>route.startsWith('/api/agent/traces/'+trace_id)&&route.includes('conversation_id='+conversation_id)));
+  console.log(JSON.stringify({trace_export_pass:true,read_requests:calls.length,writes:1,external_requests:0}));
+}
+exportRegression().catch(error=>{console.error(error);process.exitCode=1;});

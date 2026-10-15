@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   readAgentTraces: (operation, options) =>
     ipcRenderer.invoke('agent-traces-read', operation, options),
   deleteAgentTrace: (options) => ipcRenderer.invoke('agent-trace-delete', options),
+  exportAgentTrace: (options) => ipcRenderer.invoke('agent-trace-export', options),
   importCharacter: () => ipcRenderer.invoke('character-import'),
   characterLibrary: () => ipcRenderer.invoke('character-library'),
   characterDetail: (id) => ipcRenderer.invoke('character-detail', id),

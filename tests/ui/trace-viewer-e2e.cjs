@@ -69,11 +69,12 @@ async function run() {
   driver.check(await driver.c.evaluate("document.querySelector('[aria-label=回放进度]').value==='999'"), 'Replay jumps directly to a historical event');
   driver.check(driver.report.localModelRequests === modelBefore, 'Replay produces no model requests');
   driver.check((await read('detail', options)).event_count === perf.eventCount, 'Replay creates no task or tool events');
-  const exportsPath = await driver.m.evaluate("require('electron').app.getPath('downloads')");
-  driver.check(path.resolve(exportsPath) === path.join(driver.home, 'Exports'), 'JSON export defaults to this isolated product home');
+  const exportsPath = path.join(driver.home, 'Exports');
   await driver.click('导出脱敏 JSON');
-  const exported = path.join(exportsPath, 'agent-trace-' + trace.trace_id + '.json');
-  for(let attempt=0;attempt<50 && !fs.existsSync(exported);attempt++) await sleep(100);
+  await driver.c.until("!!document.querySelector('[data-trace-export]')");
+  const filename = await driver.c.evaluate("document.querySelector('[data-trace-export]').dataset.traceExport");
+  driver.check(filename === path.basename(filename) && filename.startsWith('agent-trace-' + trace.trace_id), 'Export returns only an owned trace filename, not a renderer-chosen path');
+  const exported = path.join(exportsPath, filename);
   const data = JSON.parse(fs.readFileSync(exported,'utf8'));
   driver.check(data.schema_version === 1 && data.events.length === perf.eventCount && !JSON.stringify(data).includes('mock-local-only'), 'Export writes the scoped allowlisted history without credentials');
   await driver.screenshot('trace-1000-replay');

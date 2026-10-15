@@ -23,6 +23,9 @@ interface Window {
     deleteAgentTrace: (
       options: import('./trace/types').TraceQuery,
     ) => Promise<{ deleted: boolean }>;
+    exportAgentTrace: (
+      options: import('./trace/types').TraceQuery,
+    ) => Promise<{ filename: string; event_count: number; partial: boolean }>;
     appInfo: () => Promise<{
       version: string;
       build_label: string;

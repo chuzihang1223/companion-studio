@@ -44,6 +44,8 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
   const [onlySession, setOnlySession] = useState(false);
   const [historyCursor, setHistoryCursor] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportName, setExportName] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -182,30 +184,17 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
   };
   const selectedEvent = events[Math.min(index, events.length - 1)];
   const range = virtualWindow(events.length, scrollTop, height);
-  const exportTrace = () => {
-    // Only server-allowlisted DTOs; never raw WorkSession/WorkEvent/inputs.
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          {
-            schema_version: 1,
-            trace,
-            summary,
-            events,
-            partial: !!trace?.incomplete || (trace?.event_count || 0) > events.length,
-          },
-          null,
-          2,
-        ),
-      ],
-      { type: 'application/json' },
-    );
-    const url = URL.createObjectURL(blob),
-      link = document.createElement('a');
-    link.href = url;
-    link.download = `agent-trace-${selected}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const exportTrace = async () => {
+    if (!api || exporting || !selected) return;
+    setExporting(true);
+    try {
+      const result = await api.exportAgentTrace({ ...scope(), trace_id: selected });
+      if (live.current) setExportName(result.filename);
+    } catch (error) {
+      if (live.current) setError(String(error));
+    } finally {
+      if (live.current) setExporting(false);
+    }
   };
   const moreHistory = async () => {
     if (!api || historyCursor == null || pendingHistory.current) return;
@@ -285,6 +274,11 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
         <button onClick={() => setRefresh((n) => n + 1)}>刷新</button>
       </div>
       {error && <p role="alert">{error}</p>}
+      {exportName && (
+        <p className="trace-note" data-trace-export={exportName}>
+          已导出到本实例 Exports/{exportName}
+        </p>
+      )}
       <div className="trace-history">
         <select aria-label="历史执行轨迹" value={selected} onChange={(e) => choose(e.target.value)}>
           <option value="">选择任务（旧任务不会补造轨迹）</option>
@@ -359,7 +353,7 @@ function TraceSession({ conversationId, sessionId, revision, visible }: Props) {
             <small>
               {events.length ? index + 1 : 0}/{events.length} · 空闲间隔最长 2 秒
             </small>
-            <button onClick={exportTrace} disabled={!events.length}>
+            <button onClick={() => void exportTrace()} disabled={!events.length || exporting}>
               导出脱敏 JSON
             </button>
           </div>
