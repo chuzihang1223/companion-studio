@@ -110,7 +110,7 @@ async function run() {
   const beforeHeap = await driver.c.evaluate('performance.memory?.usedJSHeapSize || null');
   const beforePage = Date.now();
   await driver.click('下一页',"document.querySelector('.evaluation-dashboard')");
-  await driver.c.until("document.querySelector('.evaluation-dashboard')?.innerText.includes('第 2 页')&&document.querySelectorAll('[aria-label=评测结果] tbody tr').length===20");
+  await driver.c.until("document.querySelector('.evaluation-dashboard')?.innerText.includes('第 2 页')&&document.querySelectorAll('[aria-label=评测结果] tbody tr').length===20&&document.querySelector('[aria-label=评测结果] tbody tr td:nth-child(2)')?.innerText.startsWith('EVAL-005 #1')");
   driver.check(true, 'One hundred attempts render only twenty rows per page', {page_ms:Date.now()-beforePage,heap_before:beforeHeap,heap_after:await driver.c.evaluate('performance.memory?.usedJSHeapSize || null')});
   await driver.screenshot('evaluation-100-results');
   driver.check(driver.report.localModelRequests===0, 'Benchmarks, reports, comparison and Replay do not call the normal chat model');

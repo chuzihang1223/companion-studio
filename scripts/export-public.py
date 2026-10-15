@@ -99,6 +99,7 @@ LICENSE_ARCHIVE = (
 )
 LICENSE_ARCHIVE_SHA = "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc"
 SCREENSHOTS = {
+    "docs/screenshots/evaluation.png",
     "docs/screenshots/chat.png",
     "docs/screenshots/workbench.png",
     "docs/screenshots/characters.png",
