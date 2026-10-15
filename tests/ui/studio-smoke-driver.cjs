@@ -158,6 +158,7 @@ class StudioSmokeDriver {
       this.persist();
     });
     const log = fs.createWriteStream(path.join(this.home, 'launch.log'), { flags: 'a' });
+    this.log = log;
     this.child.stdout.pipe(log, { end: false });
     this.child.stderr.pipe(log, { end: false });
     this.child.once('close', () => log.end());
@@ -250,14 +251,30 @@ class StudioSmokeDriver {
   }
 
   async cleanup() {
-    this.c?.close();
-    this.m?.close();
-    if (this.child?.exitCode === null) this.child.kill(); // Only this test's child; parent watcher stops its backend.
-    if (this.mock) {
-      this.mock.closeAllConnections();
-      await new Promise((resolve) => this.mock.close(resolve));
+    try {
+      // A failed assertion still needs the application's normal shutdown path.
+      // Killing Electron first can leave descendants holding its inherited pipes.
+      if (this.child?.exitCode === null && this.c) await this.close();
+    } catch (error) {
+      this.report.cleanupError = String(error.stack || error);
+      process.exitCode = 1;
+    } finally {
+      this.c?.close();
+      this.m?.close();
+      if (this.child?.exitCode === null) this.child.kill(); // Only this test's child; parent watcher stops its backend.
+      // Release only this driver's pipe handles, even when a descendant keeps a
+      // pipe open after the owned child exits. Never hide failure with process.exit().
+      this.child?.stdout?.unpipe(this.log);
+      this.child?.stderr?.unpipe(this.log);
+      for (const stream of [this.child?.stdin, this.child?.stdout, this.child?.stderr])
+        stream?.destroy();
+      this.log?.end();
+      if (this.mock) {
+        this.mock.closeAllConnections();
+        await new Promise((resolve) => this.mock.close(resolve));
+      }
+      this.persist();
     }
-    this.persist();
   }
 }
 
