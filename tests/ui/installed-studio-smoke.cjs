@@ -105,6 +105,41 @@ async function applicationDiscovery() {
   }
 }
 
+async function windowControls() {
+  const nativeWindow =
+    "require('electron').BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/app/'))";
+  const state = () =>
+    driver.m.evaluate(
+      `(()=>{const w=${nativeWindow};if(!w)throw Error('Main window missing');return {maximized:w.isMaximized(),minimized:w.isMinimized()}})()`,
+    );
+  const waitState = async (key, expected) => {
+    const deadline = Date.now() + 5000;
+    let actual;
+    do {
+      actual = await state();
+      if (actual[key] === expected) return actual;
+      await sleep(100);
+    } while (Date.now() < deadline);
+    assert.fail('Window state did not settle: ' + q(actual));
+  };
+  const initial = await state();
+  assert.ok(!initial.maximized && !initial.minimized, 'Start window controls in normal state');
+  await driver.c.evaluate("document.querySelector('[aria-label=最大化窗口]').click();true");
+  await waitState('maximized', true);
+  driver.check(true, 'Product maximize button changes the actual native window state');
+  await driver.c.until("!!document.querySelector('[aria-label=恢复窗口]')");
+  await driver.c.evaluate("document.querySelector('[aria-label=恢复窗口]').click();true");
+  await waitState('maximized', false);
+  driver.check(true, 'Product restore button returns the maximized native window to normal');
+  await driver.c.evaluate("document.querySelector('[aria-label=最小化窗口]').click();true");
+  await waitState('minimized', true);
+  driver.check(true, 'Product minimize button minimizes the actual native window');
+  // 最小化后的恢复只用于继续测试，不将测试 API 操作当作产品按钮验收。
+  await driver.m.evaluate(`(()=>{const w=${nativeWindow};w.restore();return true})()`);
+  await waitState('minimized', false);
+  driver.report.windowControls = { initial, resumeAfterMinimize: 'test-only native restore' };
+}
+
 async function run() {
   driver = new StudioSmokeDriver();
   await driver.prepare();
@@ -239,6 +274,7 @@ async function run() {
     'Restored Chat history is actually displayed after opening its session',
   );
   await driver.screenshot('chat-restored');
+  await windowControls();
   await driver.close();
   driver.report.manual.push(
     'CDP 指针覆盖真实 Chromium 事件和布局持久化；不等于高 DPI/多显示器、系统抢焦点、长期使用的人工验收或真实 FPS 基准。',
