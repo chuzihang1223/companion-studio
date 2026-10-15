@@ -69,6 +69,14 @@ git push origin v0.1.1
 
 草稿至少包含 Setup、校验文件与正文发布说明；额外保留构建清单和审计报告。工作流不会覆盖已公开 Release，遇到已有草稿会停下，避免静默替换审核过的资产。Action artifact 是维护者审阅副本，不应在 README 中称为公开安装下载。
 
+若 tag 已存在而构建因 runner 环境失败，修正默认分支的发布驱动后，可通过 `workflow_dispatch` 对同一 tag 受控重试，不移动标签。工作流仍精确检出 `refs/tags/<tag>`，核验 HEAD、标签和 package 版本一致，使用标签内的构建入口及发布说明；驱动工作流的修订与产物源码修订应分别记录。
+
+```powershell
+gh workflow run release.yml --ref main -f tag=v0.1.1
+```
+
+Windows runner 的 `pwsh` 调用 npm 后会进入 Windows PowerShell 5.1。发布驱动显式加入系统内置模块目录并预检 `Get-FileHash`，避免继承 PowerShell 7 的模块路径而在打包时缺少校验命令；不安装新的系统模块。
+
 ## 5. 最终公开
 
 自动 CI、构建、安全门、真实安装与必要运行验收全部完成后，针对该版本取得最终公开确认，再发布草稿。发布后才能把 README 的“安装包准备中”改为实际存在的下载链接。若从草稿资产重新构建，必须重新核对摘要与安装结果。
