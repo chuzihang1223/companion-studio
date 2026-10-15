@@ -436,7 +436,7 @@ try {
     $env:COMPANION_TEST_START_NOTEPAD = '0'
     & $nodeExe (Join-Path $project 'tests\ui\installed-studio-smoke.cjs')
     if ($LASTEXITCODE -ne 0) { throw 'Installed UI smoke failed; retain its report and isolated profile' }
-    $smoke = Get-Content -LiteralPath (Join-Path $smokeHome 'report.json') -Raw | ConvertFrom-Json
+    $smoke = Get-Content -LiteralPath (Join-Path $smokeHome 'report.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($smoke.success -ne $true -or $smoke.realModelRequests -ne 0 -or $smoke.realVoiceRequests -ne 0) { throw 'Installed UI smoke did not meet the local-only gate' }
     $report.ui_verified = $true
     Save-TestReport
