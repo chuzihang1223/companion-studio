@@ -13,6 +13,7 @@ export type EvaluationOptions = {
   live_consent?: boolean;
 };
 export type BenchmarkCase = {
+  input: string;
   case_id: string;
   title: string;
   category: string;

@@ -43,7 +43,7 @@ flowchart LR
 
 本分支额外提供 [执行追踪与回放](docs/TRACE_REPLAY.md)：工作模式 →「模块」→「Agent Trace · 执行追踪」。可以查看规划、模型、工具、授权、验证、重试和中断记录，筛选历史任务并只读回放；回放不会重新操作电脑或请求模型。默认只保存脱敏摘要，不保存原始提示词、聊天正文、文件内容或截图。旧任务不补造轨迹。
 
-本分支还提供 [Agent Evaluation & Benchmark](docs/AGENT_EVALUATION.md)：工作模式 →「模块」→「Agent Evaluation · 评测」。内置 20 项合成用例，隔离执行、按证据评分、保留历史、关联 Trace，支持运行条件比较和 JSON/CSV/Markdown 导出。默认 Mock 不调用外部模型；Mock 通过率不能代表真实 AI 的任务成功率。Sandbox 支持隔离文件/代码；专用 Windows GUI 桥尚未接入，对应项明确阻断。真实模型须每次明确授权并设置预算，当前没有真实模型质量成绩。指标与限制见 [说明](docs/EVALUATION_METRICS.md)，验证入口见 [测试](docs/EVALUATION_TESTING.md)。
+本分支还提供 [Agent Evaluation & Benchmark](docs/AGENT_EVALUATION.md)：工作模式 →「模块」→「Agent Evaluation · 评测」。内置 20 项合成用例，隔离执行、按证据评分、保留历史、关联 Trace，支持运行条件比较和 JSON/CSV/Markdown 导出。默认 Mock 不调用外部模型；Mock 通过率不能代表真实 AI 的任务成功率。Sandbox 支持隔离文件/代码；专用 Windows GUI 桥尚未接入，对应项明确阻断。真实模型须每次明确授权并设置预算，当前没有真实模型质量成绩。指标与限制见 [说明](docs/EVALUATION_METRICS.md)，验证入口见 [测试](docs/EVALUATION_TESTING.md)。已实际生成的 [Mock 示例报告](docs/EVALUATION_MOCK_SAMPLE.md)可供核对。
 
 | 功能 | 当前实现与条件 |
 | --- | --- |

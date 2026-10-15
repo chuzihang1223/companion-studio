@@ -313,7 +313,12 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
             onCursor={setCursor}
           />
           {evidence && (
-            <EvaluationEvidence key={evidence.attempt_id} row={evidence} visible={visible} />
+            <EvaluationEvidence
+              key={evidence.attempt_id}
+              row={evidence}
+              visible={visible}
+              caseInfo={dataset?.cases?.find((c) => c.case_id === evidence.case_id)}
+            />
           )}
           <div className="evaluation-actions">
             <label>

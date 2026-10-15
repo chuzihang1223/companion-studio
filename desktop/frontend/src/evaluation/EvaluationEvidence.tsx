@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import TraceViewer from '../trace/TraceViewer';
 import type { TraceQuery } from '../trace/types';
-import type { EvaluationResult } from './types';
+import type { BenchmarkCase, EvaluationResult } from './types';
 
 export default function EvaluationEvidence({
   row,
   visible,
+  caseInfo,
 }: {
   row: EvaluationResult;
   visible: boolean;
+  caseInfo?: BenchmarkCase;
 }) {
   const api = window.desktopAPI;
   const source = useMemo(() => {
@@ -37,6 +39,13 @@ export default function EvaluationEvidence({
       <p>
         {row.error_code || '无错误代码'} · {row.result.explanation || '尚未评分'}
       </p>
+      {caseInfo && (
+        <details>
+          <summary>本次合成任务输入</summary>
+          <p>{caseInfo.description}</p>
+          <blockquote>{caseInfo.input}</blockquote>
+        </details>
+      )}
       <details open>
         <summary>实际验证证据</summary>
         <dl>

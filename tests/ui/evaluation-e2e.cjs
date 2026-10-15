@@ -41,7 +41,10 @@ async function run() {
   driver.check(full.snapshot.app_version===info.version && /^[a-f0-9]{40}$/.test(full.snapshot.git_commit), 'Frozen backend records real build version and commit');
   driver.check(full.metrics.real_task_success_rate===null && full.metrics.api_cost.value===null, 'Mock result is not a real AI score or a zero-cost claim');
   await driver.c.until("document.querySelectorAll('[aria-label=评测结果] tbody tr').length===20&&document.querySelector('.evaluation-progress')?.innerText.includes('COMPLETED')");
+  await driver.c.evaluate("document.querySelector('.evaluation-progress').scrollIntoView({block:'start'});true");
+  await sleep(200);
   await driver.screenshot('evaluation-dashboard');
+  await driver.c.evaluate("document.querySelector('.evaluation-dashboard').scrollTop=0;true");
   const results = (await read('results',{run_id:first.run_id,limit:100})).items;
   const dual = results.find(r=>r.case_id==='EVAL-020');
   const scopes = await read('trace-list',{run_id:first.run_id,attempt_id:dual.attempt_id});
@@ -51,6 +54,7 @@ async function run() {
   await driver.c.until("document.querySelector('.evaluation-evidence')?.innerText.includes('PERMISSION')||document.querySelector('.evaluation-evidence')?.innerText.includes('permission_denied')");
   await driver.c.evaluate("document.querySelector('.evaluation-evidence details:last-child summary').click();true");
   await driver.c.until("document.querySelectorAll('.evaluation-evidence .trace-row').length>0");
+  driver.check(await driver.c.evaluate("!document.querySelector('.evaluation-evidence .trace-filters') && document.querySelector('.evaluation-evidence').innerText.includes('本次合成任务输入')"), 'Evaluation Trace hides unrelated history controls and retains the public benchmark input');
   driver.check(await driver.c.evaluate(`document.querySelector('.trace-details')?.innerText.includes(${q(denied.task_id)})`), 'Result links to the existing TraceViewer with matching task ID');
   await select('回放速度','4');
   await driver.click('从头回放', "document.querySelector('.evaluation-evidence')");

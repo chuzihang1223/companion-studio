@@ -230,54 +230,56 @@ function TraceSession({ conversationId, sessionId, revision, visible, source, re
         只读回放 · 不会重新操作电脑或调用模型。默认保留 30 天、最多 1000 个任务；每任务最多 5000
         条事件。
       </p>
-      <div className="trace-filters">
-        <select
-          aria-label="轨迹状态"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as TraceStatus | '')}
-        >
-          <option value="">全部状态</option>
-          {Object.entries(traceStatuses)
-            .filter(([key]) => key !== 'denied')
-            .map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-        </select>
-        <input
-          aria-label="工具名称"
-          placeholder="工具，如 app.launch"
-          value={tool}
-          onChange={(e) => setTool(e.target.value)}
-          maxLength={80}
-        />
-        <input
-          aria-label="任务编号筛选"
-          placeholder="任务 UUID"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          maxLength={36}
-        />
-        <input
-          aria-label="起始时间"
-          type="datetime-local"
-          value={since}
-          onChange={(e) => setSince(e.target.value)}
-        />
-        <label>
+      {!readOnly && (
+        <div className="trace-filters">
+          <select
+            aria-label="轨迹状态"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as TraceStatus | '')}
+          >
+            <option value="">全部状态</option>
+            {Object.entries(traceStatuses)
+              .filter(([key]) => key !== 'denied')
+              .map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+          </select>
           <input
-            type="checkbox"
-            checked={onlySession}
-            onChange={(e) => {
-              setOnlySession(e.target.checked);
-              choose('');
-            }}
+            aria-label="工具名称"
+            placeholder="工具，如 app.launch"
+            value={tool}
+            onChange={(e) => setTool(e.target.value)}
+            maxLength={80}
           />
-          本次工作任务
-        </label>
-        <button onClick={() => setRefresh((n) => n + 1)}>刷新</button>
-      </div>
+          <input
+            aria-label="任务编号筛选"
+            placeholder="任务 UUID"
+            value={task}
+            onChange={(e) => setTask(e.target.value)}
+            maxLength={36}
+          />
+          <input
+            aria-label="起始时间"
+            type="datetime-local"
+            value={since}
+            onChange={(e) => setSince(e.target.value)}
+          />
+          <label>
+            <input
+              type="checkbox"
+              checked={onlySession}
+              onChange={(e) => {
+                setOnlySession(e.target.checked);
+                choose('');
+              }}
+            />
+            本次工作任务
+          </label>
+          <button onClick={() => setRefresh((n) => n + 1)}>刷新</button>
+        </div>
+      )}
       {error && <p role="alert">{error}</p>}
       {exportName && (
         <p className="trace-note" data-trace-export={exportName}>
@@ -358,12 +360,14 @@ function TraceSession({ conversationId, sessionId, revision, visible, source, re
             <small>
               {events.length ? index + 1 : 0}/{events.length} · 空闲间隔最长 2 秒
             </small>
-            <button
-              onClick={() => void exportTrace()}
-              disabled={readOnly || !events.length || exporting}
-            >
-              导出脱敏 JSON
-            </button>
+            {!readOnly && (
+              <button
+                onClick={() => void exportTrace()}
+                disabled={readOnly || !events.length || exporting}
+              >
+                导出脱敏 JSON
+              </button>
+            )}
           </div>
           <div className="trace-body">
             <div
