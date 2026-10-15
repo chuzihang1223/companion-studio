@@ -9,7 +9,7 @@ require.extensions['.css'] = () => {};
 const R = require('../../desktop/frontend/src/trace/replay.ts');
 const Layout = require('../../desktop/frontend/src/WorkspaceLayoutEngine.ts');
 const {cleanFree} = require('../../desktop/electron/free-layout-storage.cjs');
-const opened = Layout.openModule(Layout.defaultLayout(), 'trace', false);
+const opened = Layout.openModule(Layout.defaultLayout(), 'trace', true);
 const restored = cleanFree(opened);
 assert.equal(restored.active, 'trace');
 assert.equal(restored.modules.trace.closed, false);
