@@ -55,7 +55,8 @@ foreach ($relative in @('CompanionStudio.exe','resources\app.asar','resources\co
 foreach ($relative in $before.Keys) {
   if ((Get-FileHash -LiteralPath (Join-Path $data $relative) -Algorithm SHA256).Hash -ne $before[$relative]) { throw 'Existing user data changed during installation' }
 }
-if ((Get-Item -LiteralPath $exe).VersionInfo.ProductVersion -notlike ($version+'*')) { throw 'Incorrect installed version' }
+. (Join-Path $PSScriptRoot 'installer-version.ps1')
+Assert-InstalledVersion (Get-Item -LiteralPath $exe).VersionInfo $version
 New-Item -ItemType Directory -Force -Path $DesktopDirectory | Out-Null
 $shortcut = Join-Path $DesktopDirectory 'Companion Studio.lnk'
 $shell = New-Object -ComObject WScript.Shell
