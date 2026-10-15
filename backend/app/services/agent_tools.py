@@ -281,6 +281,13 @@ TOOLS = [
         "low",
     ),
     Tool(
+        "browser.observe",
+        "Read the current task-owned page and DOM fingerprint without navigating or submitting.",
+        {},
+        [],
+        "low",
+    ),
+    Tool(
         "coding.task",
         "Generate virtual code drafts or read a project and propose changes. Only explicit user write intent can apply local edits. Emit code/diff/terminal events and verify any requested tests.",
         {"goal": STRING},

@@ -73,6 +73,8 @@ class AgentContext:
     local_resolution: dict[str, Any] | None = None
     renderer_id: str | None = None
     task_id: str | None = None
+    recovery_task_id: str | None = None
+    resume_verified: set[str] | None = None
 
 
 class AgentService:
@@ -576,6 +578,12 @@ class AgentService:
                     on_started,
                 )
             except asyncio.CancelledError:
+                manager = getattr(app.state, "checkpoint_manager", None)
+                if manager:
+                    closing = getattr(getattr(app.state, "recovery", None), "closing", False)
+                    await asyncio.to_thread(
+                        manager.settle, plan_id, "INTERRUPTED" if closing else "CANCELLED"
+                    )
                 if context.work_session_id:
                     app.state.work_state.emit(
                         context.work_session_id,
@@ -585,6 +593,9 @@ class AgentService:
                     )
                 raise
             except TaskCancelled:
+                manager = getattr(app.state, "checkpoint_manager", None)
+                if manager:
+                    await asyncio.to_thread(manager.settle, plan_id, "CANCELLED")
                 handle = getattr(app.state, "task_runtime", None).handles.get(
                     context.work_session_id
                 )
@@ -597,6 +608,9 @@ class AgentService:
                 )
                 raise
             except Exception:
+                manager = getattr(app.state, "checkpoint_manager", None)
+                if manager:
+                    await asyncio.to_thread(manager.settle, plan_id, "NEEDS_REVIEW")
                 if context.work_session_id and not app.state.work_state.is_stopped(
                     context.work_session_id
                 ):
@@ -631,6 +645,12 @@ class AgentService:
         """
         work = getattr(app.state, "work_state", None)
         work_id = context.work_session_id
+        manager = getattr(app.state, "checkpoint_manager", None)
+        if manager:
+            from app.services.trace.scope import current_trace
+
+            trace = current_trace.get()
+            await asyncio.to_thread(manager.begin, context, work, trace.trace_id if trace else None)
         if work and work_id:
             work.decide(work_id, approved_ids)
         observations = []
@@ -756,7 +776,21 @@ class AgentService:
         )
         # 已确定的本地结果采用本地反馈，其余任务才请求角色模型总结。
         # 不把 queued 请求或部分完成的本地首步描述为整项任务成功。
-        if music_resolved:
+        if context.recovery_task_id:
+            # Safe Resume performs no extra model/voice requests. Reusing prior
+            # file evidence must not imply the original tool/content ran again.
+            reused = len(context.resume_verified or set())
+            failed = next((row for row in details if row["status"] != "done"), None)
+            answer = (
+                f"任务续接已验证完成；{reused} 个步骤复用了重新核验的检查点，其余步骤按当前授权执行。"
+                if goal_verified
+                else "任务续接尚未完成："
+                + str(
+                    (failed or {}).get("result", {}).get("public_error")
+                    or "请查看恢复面板中的执行证据。"
+                )
+            )
+        elif music_resolved:
             from app.services.desktop.music_task import music_feedback
 
             answer = music_feedback(
@@ -928,4 +962,8 @@ class AgentService:
                     step=4,
                 )
             response["work_session_id"] = work_id
+        if manager and goal_verified:
+            await asyncio.to_thread(
+                manager.state, context.recovery_task_id or context.task_id, "COMPLETED"
+            )
         return response

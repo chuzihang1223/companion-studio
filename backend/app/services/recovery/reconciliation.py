@@ -139,6 +139,12 @@ class StateReconciler:
                     "requires_approval": decision == "EXECUTE" and call["name"] not in READ_ONLY,
                 }
             )
+        await asyncio.to_thread(
+            self.manager.record_checks,
+            root,
+            sum(bool(item["checkpoint_id"]) for item in items),
+            sum(bool(item["checkpoint_id"]) and item["action"] != "REVIEW" for item in items),
+        )
         return {
             "task_id": root,
             "conversation_id": context.conversation_id,

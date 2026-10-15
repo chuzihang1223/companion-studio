@@ -15,10 +15,14 @@ from app.services.desktop.preferences import read_preferences
 from app.services.trusted_actions import trusted_actions, action_for, risk_for
 from app.core.file_logging import file_logger
 from app.services.desktop.goal_verifier import GoalVerifier
-from app.services.desktop.task_waiter import TaskWaiter
 from app.services.desktop.music_task import music_context
 from app.services.trace.scope import span_scope
 from app.services.trace.privacy import arguments as trace_arguments
+from app.services.trace.scope import current_trace
+from app.services.recovery.checkpoints import RecoveryError
+from app.services.recovery.execution import RecoveryExecution
+from app.services.recovery.events import emit as recovery_event
+from app.services.recovery.step_runner import run_step
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -57,6 +61,7 @@ class AgentTaskRuntime:
     def __init__(self, app: FastAPI) -> None:
         self.app = app
         self.handles: dict[str, TaskHandle] = {}
+        self.executions: dict[str, RecoveryExecution] = {}
         self.logger = file_logger("app.runtime", "agent-runtime.log")
 
     def prepare(self, context: AgentContext) -> None:
@@ -81,6 +86,16 @@ class AgentTaskRuntime:
         handle = self.handles.get(session_id)
         if handle:
             handle.control(action)
+        recovery = self.executions.get(session_id)
+        if recovery and recovery.manager:
+            recovery.manager.state(
+                recovery.root,
+                "WAITING_USER"
+                if action in {"pause", "takeover"}
+                else "RECOVERING"
+                if action == "resume"
+                else "CANCELLED",
+            )
         if action in {"cancel", "stop"} and getattr(self.app.state, "runtime_registry", None):
             self.app.state.runtime_registry.cancel_session(session_id)
         status = {"pause": "paused", "takeover": "waiting_user", "resume": "observing"}.get(
@@ -101,8 +116,20 @@ class AgentTaskRuntime:
         handle = self.handles.setdefault(session, TaskHandle())
         observations, details = [], []
         handle.position = 0
+        manager = getattr(self.app.state, "checkpoint_manager", None)
+        if manager is None and getattr(self.app.state, "recovery_required", False):
+            raise RecoveryError("CHECKPOINT_STORAGE_UNAVAILABLE", 503)
+        trace = current_trace.get()
+        root = (
+            await asyncio.to_thread(manager.begin, context, work, trace.trace_id if trace else None)
+            if manager
+            else context.task_id
+        )
+        recovery = RecoveryExecution(self.app, context, manager, root)
+        recovery.approved_ids = approved_ids
+        self.executions[session] = recovery
         try:
-            for call in context.calls:
+            for index, call in enumerate(context.calls):
                 await handle.checkpoint()
                 if work.is_stopped(session):
                     raise TaskCancelled("任务已停止")
@@ -132,10 +159,42 @@ class AgentTaskRuntime:
                 ) as span:
                     action = action_for(call, context.executor.workspace)
                     allowed = trusted_actions.permitted(action, call["id"], approved_ids, session)
-                    if not allowed:
-                        result = {"error": "未得到用户授权，未执行", "verified": False}
+                    if context.resume_verified and call["id"] in context.resume_verified:
+                        recovery.call = call
+                        if manager:
+                            await asyncio.to_thread(manager.reuse, root, context, call)
+                        work.step_status(session, handle.position, "done")
+                        handle.position += 1
+                        result = {
+                            "verified": True,
+                            "reconciled": True,
+                            "summary": "已重新核验检查点，未重复执行工具。",
+                        }
+                        recovery_event("CHECKPOINT_VALIDATED", evidence={"verified": True})
                     else:
-                        result = await self.execute_call(context, call, handle)
+                        prepared = False
+                        try:
+                            await recovery.before(call, index, allowed)
+                            prepared = True
+                        except (ValueError, OSError) as error:
+                            failure = recovery.classify(error, name=call["name"])
+                            result = {
+                                "error": failure.message,
+                                "code": failure.error_code.value,
+                                "verified": False,
+                            }
+                        if not prepared:
+                            pass  # Invalid resource: no EXECUTING intent, therefore no tool.
+                        elif not allowed:
+                            result = {
+                                "error": "未得到用户授权，未执行",
+                                "verified": False,
+                                "code": "PERMISSION_DENIED",
+                            }
+                            recovery.classify(result=result)
+                        else:
+                            result = await self.execute_call(context, call, handle)
+                            await recovery.after(result)
                     span.result(result)
                     if not allowed:
                         span.code = "PERMISSION_DENIED"
@@ -166,6 +225,8 @@ class AgentTaskRuntime:
                             "content": json.dumps(result, ensure_ascii=False),
                         }
                     )
+                    if status == "failed":
+                        break  # A failed prerequisite cannot authorize later planned effects.
             verified = GoalVerifier().verify(context.user_text, details)
             work.emit(
                 session,
@@ -176,8 +237,16 @@ class AgentTaskRuntime:
                 },
                 status="verifying",
             )
+            if manager and not verified:
+                await asyncio.to_thread(
+                    manager.state,
+                    root,
+                    "NEEDS_REVIEW" if recovery.blocked else "FAILED",
+                    recovery.failure,
+                )
             return observations, details, verified
         finally:
+            self.executions.pop(session, None)
             if handle.cancelled:
                 self.handles.pop(session, None)
 
@@ -189,118 +258,33 @@ class AgentTaskRuntime:
         handle: TaskHandle,
         max_attempts: int = 3,
         music_identity: dict[str, Any] | None = None,
+        operation_name: str | None = None,
     ) -> ToolResult:
-        """运行一个步骤并验证结果，普通等待65秒、编码等待1200秒。
+        """Classify failures and recover only with evidence, budget and fresh grants."""
+        recovery = self.executions.get(context.work_session_id)
 
-        启动、完整编码和超时不整步重复；音乐调用明确使用一次尝试，
-        由适配器内部恢复。用户干扰会等待接管，再观察当前步骤。
-        """
-        session = context.work_session_id
-        work = self.app.state.work_state
-        await handle.checkpoint()
-        position = handle.position
-        handle.position += 1
-        work.step_status(session, position, "active")
-        bound = {"music_context": music_identity} if music_identity else {}
-        work.emit(session, "step_started", {"title": title, **bound}, status="executing")
-        self.logger.info("session=%s phase=execute step=%s", session, title)
-        attempt = 0
-        while attempt < max_attempts:
-            await handle.checkpoint()
-            try:
-                with span_scope(
-                    "operation",
-                    "OPERATION_STARTED",
-                    "OPERATION_COMPLETED",
-                    metadata={"step": title, "operation": "execute"},
-                ) as attempt_span:
-                    result = await TaskWaiter.run(
-                        operation, handle, 1200 if title == "代码智能体执行与验证" else 65
-                    )
-                    attempt_span.result(result)
-                await handle.checkpoint()
-                if result.get("verified") is False:
-                    raise VerificationFailure(result)
-                work.step_status(session, position, "done")
-                work.emit(
-                    session,
-                    "verification",
-                    {"title": title, "verified": True, "summary": title + "已验证", **bound},
-                    status="observing",
-                )
-                return result
-            except Exception as exc:
-                if isinstance(exc, TaskCancelled):
-                    raise
-                if "task_cancelled" in str(exc):
-                    raise TaskCancelled("任务已停止")
-                if any(
-                    code in str(exc)
-                    for code in ("APP_EXITED_BEFORE_READY", "TARGET_WINDOW_CLOSED", "target_exited")
-                ):
-                    work.step_status(session, position, "failed")
-                    return {
-                        "error": "应用刚打开就被关闭了，已结束这次操作。",
-                        "code": "APP_EXITED_BEFORE_READY",
-                        "verified": False,
-                    }
-                if any(
-                    code in str(exc)
-                    for code in ("user_interruption", "automation_paused", "desktop_locked")
-                ):
-                    # 不越过焦点/锁屏保护。checkpoint 最多等待600秒，恢复后
-                    # 重新执行当前观察步骤，而不是声称干扰期间已完成操作。
-                    handle.control("takeover")
-                    summary = (
-                        "Windows 已锁屏；解锁后点击继续重新观察。"
-                        if "desktop_locked" in str(exc)
-                        else "自动操作已暂停；点击继续后重新观察目标窗口。"
-                    )
-                    work.emit(
-                        session,
-                        "user_interruption",
-                        {"summary": summary, **bound},
-                        status="waiting_user",
-                    )
-                    await handle.checkpoint()
-                    continue
-                if "ambiguous_song" in str(exc):
-                    work.step_status(session, position, "failed")
-                    return {"error": "找到多个同等匹配版本，请指定歌手或版本。", "verified": False}
-                # Coding may consume account quota; never restart a complete coding task automatically.
-                if (
-                    attempt + 1 == max_attempts
-                    or title in {"代码智能体执行与验证", "启动应用", "启动并等待窗口"}
-                    or isinstance(exc, TimeoutError)
-                ):
-                    work.step_status(session, position, "failed")
-                    if music_identity:
-                        work.emit(
-                            session,
-                            "verification",
-                            {
-                                "title": title,
-                                "verified": False,
-                                "summary": getattr(exc, "result", {}).get("public_error")
-                                or title + "尚未验证",
-                                **bound,
-                            },
-                        )
-                    return {
-                        **getattr(exc, "result", {}),
-                        "error": str(exc)[:400],
-                        "verified": False,
-                    }
-                work.emit(
-                    session,
-                    "retrying",
-                    {"title": title, "attempt": attempt + 1, "summary": "重新观察后尝试备用方案"},
-                    status="retrying",
-                )
-                self.logger.info("session=%s phase=replan attempt=%s", session, attempt + 1)
-                attempt += 1
-                await asyncio.sleep(0.3)
-        return {"error": "步骤未完成", "verified": False}
+        def permitted():
+            if not recovery or not recovery.call:
+                return True
+            call = recovery.call
+            return trusted_actions.permitted(
+                action_for(call, context.executor.workspace),
+                call["id"],
+                recovery.approved_ids,
+                context.work_session_id,
+            )
+
+        return await run_step(
+            self,
+            context,
+            title,
+            operation,
+            handle,
+            max_attempts,
+            music_identity,
+            operation_name,
+            permitted,
+        )
 
     async def execute_call(
         self, context: AgentContext, call: ToolCall, handle: TaskHandle

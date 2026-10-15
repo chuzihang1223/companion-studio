@@ -45,6 +45,9 @@ from app.services.trace.repository import TraceRepository
 from app.api.agent_traces import router as agent_traces_router
 from app.api.evaluation import router as evaluation_router
 from app.services.evaluation.engine import AgentEvaluationEngine
+from app.services.recovery.checkpoints import CheckpointManager
+from app.services.recovery.coordinator import ResumeCoordinator
+from app.api.agent_recovery import router as recovery_router
 
 
 @asynccontextmanager
@@ -68,6 +71,19 @@ async def lifespan(app: FastAPI):
     app.state.agent_service = AgentService()
     app.state.work_state = WorkState()
     app.state.runtime_registry = RuntimeTaskRegistry()
+    app.state.recovery_required = True
+    app.state.checkpoint_manager = None
+    app.state.recovery = None
+    try:
+        manager = CheckpointManager()
+        manager.on_change = app.state.work_state.notify_recovery
+        await asyncio.to_thread(manager.recover)
+        app.state.checkpoint_manager = manager
+        app.state.recovery = ResumeCoordinator(app, manager)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("recovery_initialization_unavailable")
     app.state.evaluation = None
     try:
         evaluation = AgentEvaluationEngine()
@@ -110,6 +126,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        if app.state.recovery:
+            await app.state.recovery.close()
         if app.state.evaluation:
             await app.state.evaluation.close()
         runtime_watchdog.cancel()
@@ -153,6 +171,7 @@ app.include_router(personalization_router)
 app.include_router(agent_router)
 app.include_router(agent_traces_router)
 app.include_router(evaluation_router)
+app.include_router(recovery_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

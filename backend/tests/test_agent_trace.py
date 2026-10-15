@@ -47,6 +47,8 @@ class Model:
                         "arguments": json.dumps(
                             {"path": "demo.py", "content": "private source do not trace"}
                             if self.tool == "code_create_file"
+                            else {"path": "fixture.txt"}
+                            if self.tool == "code_read_file"
                             else {"app": "notepad"}
                         ),
                     },
@@ -191,6 +193,10 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
     app, store, _, _ = runtime_app
     original = app.state.task_runtime.execute_call
     count = 0
+    if outcome == "retry":
+        # Recovery no longer repeats a write after an unclassified failure.
+        # Exercise the real safe read/transient path while preserving Trace assertions.
+        app.state.llm_service.provider.tool = "code_read_file"
 
     async def controlled(context, call, handle):
         async def operation():
@@ -201,7 +207,11 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
             if outcome == "cancel":
                 raise asyncio.CancelledError()
             if outcome == "failure" or outcome == "retry" and count == 1:
-                return {"verified": False, "error": "private failure"}
+                return {
+                    "verified": False,
+                    "error": "private failure",
+                    **({"code": "NETWORK_TIMEOUT"} if outcome == "retry" else {}),
+                }
             return {"verified": True}
 
         app.state.work_state.emit(context.work_session_id, "tool_started", {"name": call["name"]})
@@ -237,6 +247,7 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
             assert 200 <= totals["recovery_ms"] < totals["task_total_ms"]
         if outcome == "timeout":
             assert any(row["error_code"] == "TIMEOUT" for row in rows)
+            assert count == 1  # An uncertain write is not automatically repeated.
         assert not app.state.runtime_registry.active
         await store.stop()
 

@@ -52,6 +52,8 @@ def action_for(call: dict, workspace: Path | None = None) -> str:
         return f"app.control:{args.get('app', 'netease')}"
     if name == "coding.task":
         return f"coding.execute:{workspace.resolve()}"
+    if name == "browser.observe":
+        return name
     if name.startswith("browser."):
         return "browser.open:any"
     if name.startswith(("code.", "filesystem.", "workspace.")) and workspace:

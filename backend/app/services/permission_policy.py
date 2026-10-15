@@ -31,6 +31,7 @@ class PermissionPolicyEngine:
             "workspace.read",
             "workspace.list",
             "workspace.search",
+            "browser.observe",
         }
         if readonly:
             return "allow"

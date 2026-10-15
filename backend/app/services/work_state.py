@@ -27,6 +27,25 @@ class WorkState:
         self.loop = None
         self.trace_recorder = None
         self.trace_revisions = OrderedDict()
+        self.recovery_revisions = OrderedDict()
+
+    def notify_recovery(self, session_id: str) -> None:
+        # Same bounded SSE channel, independent invalidation sentinel. A ledger
+        # update is not execution progress and must not reset the watchdog.
+        self.recovery_revisions[session_id] = self.recovery_revisions.get(session_id, 0) + 1
+        self.recovery_revisions.move_to_end(session_id)
+        while len(self.recovery_revisions) > 1024:
+            self.recovery_revisions.popitem(last=False)
+
+        def publish():
+            for queue in list(self.subscribers.get(session_id, set())):
+                try:
+                    queue.put_nowait(-1)
+                except asyncio.QueueFull:
+                    pass
+
+        if self.loop and self.loop.is_running():
+            self.loop.call_soon_threadsafe(publish)
 
     def notify_trace(self, session_id: str) -> None:
         # Projection invalidation shares SSE subscriptions, but is not task progress:
@@ -437,6 +456,7 @@ class WorkState:
             return {
                 "id": row.id,
                 "trace_revision": self.trace_revisions.get(row.id, 0),
+                "recovery_revision": self.recovery_revisions.get(row.id, 0),
                 "conversation_id": row.conversation_id,
                 "goal": row.goal,
                 "status": row.status,
@@ -544,6 +564,8 @@ class WorkState:
                     notification = await asyncio.wait_for(queue.get(), timeout=15)
                     if notification == 0:
                         yield "event: trace_updated\ndata: {}\n\n"
+                    elif notification == -1:
+                        yield "event: recovery_updated\ndata: {}\n\n"
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"
         finally:

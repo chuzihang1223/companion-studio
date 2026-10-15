@@ -44,6 +44,21 @@ BOOLEANS = {
     "queued",
 }
 ENUMS = {
+    "strategy": {
+        "retry_read",
+        "stop",
+        "cancel",
+        "budget_exhausted",
+        "observe_page",
+        "takeover",
+        "reconcile_file",
+        "inspect_side_effect",
+        "budget_or_permission",
+        "refresh_known_search",
+        "refocus_observed_window",
+        "unchanged_observation",
+        "safe_resume",
+    },
     "step": {
         "启动应用",
         "检测应用",
@@ -135,6 +150,10 @@ def metadata(value: object) -> dict:
             result[key] = item
         elif key == "tool_call_id" and identifier(item, 100):
             result[key] = item
+        elif key in {"step_id", "checkpoint_id", "recovery_id", "origin_task_id"} and uuid_value(
+            item
+        ):
+            result[key] = uuid_value(item)
         elif key == "parameter_summary" and isinstance(item, dict):
             result[key] = {
                 name: kind

@@ -149,6 +149,11 @@ class CheckpointManager:
     def prepare(self, root, call, index, intent):
         step_id = str(uuid5(UUID(root), call["id"]))
         with self.factory() as db:
+            task = db.get(RecoveryTask, root)
+            self.budget_check(task)
+            counters = decoded(task.counters_json)
+            counters["total_steps"] = counters.get("total_steps", 0) + 1
+            task.counters_json = encoded(counters)
             row = db.get(AgentCheckpoint, step_id)
             key = digest({"task_id": root, "call": call})
             if row:
@@ -208,6 +213,13 @@ class CheckpointManager:
                 row.permission_state = permission
             db.commit()
 
+    def intent(self, step_id):
+        with self.factory() as db:
+            row = db.get(AgentCheckpoint, step_id)
+            if not row or row.schema_version != 1:
+                raise RecoveryError("CHECKPOINT_INVALID")
+            return decoded(row.intent_json)
+
     def state(self, root, state, failure=None):
         with self.factory() as db:
             row = db.get(RecoveryTask, root)
@@ -215,10 +227,26 @@ class CheckpointManager:
                 return
             if row.state != state and state not in TRANSITIONS.get(row.state, set()):
                 raise RecoveryError("INVALID_RECOVERY_TRANSITION")
-            row.state, row.updated_at = state, datetime.now(timezone.utc)
-            row.revision += 1
+            values = {
+                "state": state,
+                "updated_at": datetime.now(timezone.utc),
+                "revision": row.revision + 1,
+            }
             if failure:
-                row.failure_json = failure.model_dump_json()
+                values["failure_json"] = failure.model_dump_json()
+            elif state == "COMPLETED":
+                values["failure_json"] = "{}"
+            changed = db.execute(
+                update(RecoveryTask)
+                .where(
+                    RecoveryTask.id == root,
+                    RecoveryTask.state == row.state,
+                    RecoveryTask.revision == row.revision,
+                )
+                .values(**values)
+            )
+            if changed.rowcount != 1:
+                raise RecoveryError("RECOVERY_CONFLICT")
             db.commit()
             session_id = row.work_session_id
         if self.on_change:
@@ -318,6 +346,9 @@ class CheckpointManager:
             row = self.scope(db, root, conversation_id, session_id)
             if row.request_id == request_id:
                 return None  # persistent request deduplication, including completed requests
+            self.budget_check(row, resume=True)
+            counters = decoded(row.counters_json)
+            counters["resume_count"] = counters.get("resume_count", 0) + 1
             if row.state not in {
                 "INTERRUPTED",
                 "RECOVERY_AVAILABLE",
@@ -340,6 +371,7 @@ class CheckpointManager:
                     request_id=request_id,
                     execution_id=execution_id,
                     revision=revision + 1,
+                    counters_json=encoded(counters),
                     updated_at=datetime.now(timezone.utc),
                 )
             )
@@ -367,12 +399,14 @@ class CheckpointManager:
     def attempt(self, root, step_id, failure, decision):
         with self.factory() as db:
             row = db.get(RecoveryTask, root)
+            self.budget_check(row)
             counters = decoded(row.counters_json)
             budget = RecoveryBudget.model_validate(decoded(row.budget_json))
             if counters.get("recovery_attempts", 0) >= budget.max_recovery_cycles:
                 raise RecoveryError("MAX_RETRIES_EXCEEDED")
             counters["recovery_attempts"] = counters.get("recovery_attempts", 0) + 1
             counters["retry_count"] = counters.get("retry_count", 0) + int(decision.retry)
+            counters["total_steps"] = counters.get("total_steps", 0) + int(decision.retry)
             counters["replanning_count"] = counters.get("replanning_count", 0) + int(
                 decision.level == 2
             )
@@ -392,6 +426,29 @@ class CheckpointManager:
             )
             db.commit()
         return attempt_id
+
+    @staticmethod
+    def budget_check(row, resume=False):
+        budget = RecoveryBudget.model_validate(decoded(row.budget_json))
+        counters = decoded(row.counters_json)
+        age = (
+            datetime.now(timezone.utc) - row.created_at.replace(tzinfo=timezone.utc)
+        ).total_seconds()
+        if (
+            age >= budget.max_task_duration
+            or counters.get("total_steps", 0) >= budget.max_total_steps
+            or (resume and counters.get("resume_count", 0) >= budget.max_recovery_cycles)
+        ):
+            raise RecoveryError("MAX_RETRIES_EXCEEDED")
+
+    def record_checks(self, root, checks, validated):
+        with self.factory() as db:
+            row = db.get(RecoveryTask, root)
+            counters = decoded(row.counters_json)
+            counters["checkpoint_checks"] = counters.get("checkpoint_checks", 0) + checks
+            counters["validated_checkpoints"] = counters.get("validated_checkpoints", 0) + validated
+            row.counters_json = encoded(counters)
+            db.commit()
 
     def finish_attempt(self, attempt_id, status, duration_ms, observation=None):
         with self.factory() as db:

@@ -62,7 +62,7 @@ class FailureClassifier:
             if code == "TASK_CANCELLED"
             else "state",
             message=MESSAGES[code],
-            source="tool",
+            source="model" if code in {"MODEL_TIMEOUT", "MODEL_UNAVAILABLE"} else "tool",
             tool_name=identifier(tool_name) or "unknown",
             task_id=UUID(str(task_id)),
             step_id=UUID(str(step_id)),

@@ -240,10 +240,30 @@ class TraceRepository:
                 for kind in PHASES
             }
             tool_rows = [row for row in spans if row.kind == "tool"]
-            executed = sum(
-                privacy.metadata(decoded(row.metadata_json, {})).get("executed") is True
+            executed_ids = {
+                row.id
                 for row in tool_rows
+                if privacy.metadata(decoded(row.metadata_json, {})).get("executed") is True
+            }
+            tool_ids = {row.id for row in tool_rows}
+            # A hard exit can prevent span_finish from persisting executed=True.
+            # The already persisted tool-entry observation is valid evidence of
+            # entering that path, not proof that the side effect completed.
+            observations = db.scalars(
+                select(TraceEvent)
+                .where(
+                    TraceEvent.trace_id == trace_id, TraceEvent.event_type == "OBSERVATION_CREATED"
+                )
+                .limit(self.store.event_limit)
             )
+            executed_ids.update(
+                row.span_id
+                for row in observations
+                if row.span_id in tool_ids
+                and privacy.metadata(decoded(row.data_json, {}).get("metadata")).get("executed")
+                is True
+            )
+            executed = len(executed_ids)
             counts = dict(
                 db.execute(
                     select(TraceEvent.event_type, func.count())
