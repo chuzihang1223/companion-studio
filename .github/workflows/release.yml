@@ -2,10 +2,16 @@ name: Windows Release Draft
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable version tag to build
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
   cancel-in-progress: false
 jobs:
   windows:
@@ -13,9 +19,12 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -29,8 +38,11 @@ jobs:
       - name: Validate immutable version
         shell: pwsh
         run: |
+          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') { throw 'Invalid version tag' }
           $version = (Get-Content desktop/package.json -Raw | ConvertFrom-Json).version
-          if ($env:GITHUB_REF_NAME -ne ('v' + $version)) { throw 'Tag/package version mismatch' }
+          if ($env:RELEASE_TAG -ne ('v' + $version)) { throw 'Tag/package version mismatch' }
+          $tagCommit = git rev-parse --verify ('refs/tags/' + $env:RELEASE_TAG + '^{}')
+          if ($LASTEXITCODE -ne 0 -or $tagCommit -ne (git rev-parse HEAD)) { throw 'Checkout must match the immutable tag' }
       - name: Install locked build environment
         shell: pwsh
         run: |
@@ -46,7 +58,15 @@ jobs:
         run: ./scripts/check.ps1
       - name: Build and audit Windows installer
         shell: pwsh
-        run: npm.cmd run build:public --prefix desktop
+        run: |
+          # npm invokes Windows PowerShell 5.1. A pwsh runner can otherwise pass
+          # only PowerShell 7 module paths, hiding the built-in Get-FileHash.
+          $winPSModules = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\Modules'
+          $env:PSModulePath = $winPSModules + [IO.Path]::PathSeparator + $env:PSModulePath
+          powershell.exe -NoProfile -NonInteractive -Command 'Get-Command Get-FileHash -ErrorAction Stop | Out-Null'
+          if ($LASTEXITCODE -ne 0) { throw 'Windows PowerShell built-in module preflight failed' }
+          npm.cmd run build:public --prefix desktop
+          if ($LASTEXITCODE -ne 0) { throw 'Windows production build failed' }
       - name: Create draft with audited assets
         shell: pwsh
         env:
