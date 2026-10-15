@@ -14,10 +14,12 @@ const home =
 const userData = path.join(home, 'UserData');
 const cache = path.join(home, 'Cache');
 const logs = path.join(userData, 'logs');
+const exportsDirectory = path.join(home, 'Exports');
 for (const dir of [
   userData,
   cache,
   logs,
+  exportsDirectory,
   path.join(userData, 'session'),
   path.join(cache, 'chromium'),
 ])
@@ -26,6 +28,8 @@ for (const dir of [
 // 在创建窗口和浏览器 session 前设置路径，保证 Chromium 与应用档案归属一致。
 app.setPath('userData', userData);
 app.setPath('sessionData', path.join(userData, 'session'));
+// Trace JSON downloads follow this edition's home, including isolated reviews.
+app.setPath('downloads', exportsDirectory);
 const crashDumps = path.join(cache, 'crash-dumps');
 fs.mkdirSync(crashDumps, { recursive: true });
 app.setPath('crashDumps', crashDumps);
