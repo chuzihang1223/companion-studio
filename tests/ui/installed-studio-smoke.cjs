@@ -90,6 +90,9 @@ async function applicationDiscovery() {
   if (process.env.COMPANION_TEST_START_NOTEPAD === '1') {
     await driver.c.evaluate("window.desktopAPI.setTrustedAction('app.launch:notepad','always')");
     const launched = await driver.c.evaluate("window.desktopAPI.launchKnownApp('notepad')");
+    // Keep the actual local result even if the readiness assertion fails.
+    driver.report.notepadLaunch = launched;
+    driver.persist();
     driver.check(
       launched.verified === true && launched.window_ready === true && launched.focused === true,
       'Notepad has a ready focused window through the authorized product launch path',
