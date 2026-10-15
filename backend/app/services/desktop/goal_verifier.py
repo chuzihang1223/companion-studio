@@ -21,6 +21,13 @@ class GoalVerifier:
         """
         if not details or any(item["status"] != "done" for item in details):
             return False
+        # EVAL-014 exposed that an acknowledgement without ready-state evidence
+        # could be promoted to success. Existing verified launchers are unchanged.
+        if any(
+            item["name"] == "app.launch" and item["result"].get("verified") is not True
+            for item in details
+        ):
+            return False
         if "播放" in goal and any(word in goal for word in ("音乐", "歌曲", "歌", "网易云", "QQ")):
             return any(
                 item["name"] in {"music.play", "media.play"}

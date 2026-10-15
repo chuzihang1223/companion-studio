@@ -43,6 +43,8 @@ from app.services.trace.store import TraceStore
 from app.services.trace.recorder import TraceRecorder
 from app.services.trace.repository import TraceRepository
 from app.api.agent_traces import router as agent_traces_router
+from app.api.evaluation import router as evaluation_router
+from app.services.evaluation.engine import AgentEvaluationEngine
 
 
 @asynccontextmanager
@@ -66,6 +68,8 @@ async def lifespan(app: FastAPI):
     app.state.agent_service = AgentService()
     app.state.work_state = WorkState()
     app.state.runtime_registry = RuntimeTaskRegistry()
+    app.state.evaluation = AgentEvaluationEngine()
+    await app.state.evaluation.initialize()
     runtime_watchdog = asyncio.create_task(app.state.runtime_registry.watchdog())
     app.state.work_state.registry = app.state.runtime_registry
     app.state.desktop_bridge = DesktopBridge()
@@ -97,6 +101,7 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        await app.state.evaluation.close()
         runtime_watchdog.cancel()
         await asyncio.gather(runtime_watchdog, return_exceptions=True)
         await app.state.runtime_registry.close()
@@ -137,6 +142,7 @@ app.include_router(llm_settings_router)
 app.include_router(personalization_router)
 app.include_router(agent_router)
 app.include_router(agent_traces_router)
+app.include_router(evaluation_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

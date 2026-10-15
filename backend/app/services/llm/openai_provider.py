@@ -5,6 +5,7 @@ import httpx
 
 from app.services.llm.base import LLMProvider
 from app.services.llm.test_budget import record_test_request
+from app.services.llm.usage import before_request, observe_response
 
 
 class LLMConfigurationError(Exception):
@@ -93,10 +94,12 @@ class OpenAIProvider(LLMProvider):
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
                     headers=self._headers(),
-                    json=self._payload(messages),
+                    json=before_request(self._payload(messages)),
                 )
                 response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
+                data = response.json()
+                observe_response(data)
+                content = data["choices"][0]["message"]["content"]
                 if not isinstance(content, str) or not content.strip():
                     raise ValueError("Empty model response")
                 return content.strip()
@@ -115,6 +118,7 @@ class OpenAIProvider(LLMProvider):
         record_test_request(self.base_url)
         body = self._payload(messages)
         body.update({"tools": tools, "tool_choice": "auto"})
+        before_request(body)
         try:
             async with self._client() as client:
                 response = await client.post(
@@ -125,7 +129,9 @@ class OpenAIProvider(LLMProvider):
                         "当前模型或 API 不支持工具调用，请切换模型或使用聊天模式。"
                     )
                 response.raise_for_status()
-                message = response.json()["choices"][0]["message"]
+                data = response.json()
+                observe_response(data)
+                message = data["choices"][0]["message"]
                 if not isinstance(message, dict):
                     raise ValueError("Invalid tool response")
                 return message
@@ -145,7 +151,7 @@ class OpenAIProvider(LLMProvider):
                     "POST",
                     f"{self.base_url}/chat/completions",
                     headers=self._headers(),
-                    json=self._payload(messages, stream=True),
+                    json=before_request(self._payload(messages, stream=True)),
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():

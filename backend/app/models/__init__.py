@@ -7,3 +7,4 @@ from .work import WorkSession, WorkflowStep, WorkEvent, WorkPermission, Workspac
 from .virtual_document import VirtualCodeDocument
 from .runtime_task import RuntimeTask
 from .agent_trace import AgentTrace, TraceSpan, TraceEvent
+from .evaluation import EvaluationRun, EvaluationAttempt

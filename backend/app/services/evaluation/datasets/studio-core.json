@@ -402,7 +402,7 @@
       "description": "在独立测试档案中验证：网页超时。所有桌面及网页观察在 Mock 模式均标记为模拟。",
       "category": "browser",
       "difficulty": "intermediate",
-      "input": "请打开超时的受控网页",
+      "input": "请验证受控页面的超时行为",
       "environment": "studio-fixture-v1",
       "execution_mode": [
         "mock",
@@ -437,7 +437,7 @@
       "description": "在独立测试档案中验证：发现登记应用。所有桌面及网页观察在 Mock 模式均标记为模拟。",
       "category": "desktop",
       "difficulty": "intermediate",
-      "input": "请检测记事本是否已登记",
+      "input": "请验证已登记测试应用的发现结果",
       "environment": "studio-fixture-v1",
       "execution_mode": [
         "mock",

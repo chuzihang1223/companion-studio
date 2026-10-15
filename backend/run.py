@@ -30,6 +30,11 @@ def watch_parent(parent_pid: int) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:] == ["--evaluation-worker"]:
+        from app.services.evaluation.worker import main as evaluation_main
+
+        evaluation_main()
+        return
     data_dir = Path(os.environ["COMPANION_DATA_DIR"])
     log_dir = data_dir / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
