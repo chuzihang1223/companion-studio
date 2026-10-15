@@ -8,7 +8,7 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 [![CI](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml)
 
-**[Download for Windows](https://github.com/chuzihang1223/companion-studio/releases)** · 0.1.2 安装包准备中，完成草稿审核后公开。当前 0.1.0 Release 提供源码。
+**[Download for Windows · v0.1.2](https://github.com/chuzihang1223/companion-studio/releases/download/v0.1.2/Companion-Studio-0.1.2-Setup.exe)** · [发布说明与 SHA256](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2)
 
 ## 系统架构与 Agent 实现
 
@@ -67,7 +67,7 @@ flowchart LR
 
 ### Windows 正式版
 
-Windows 安装包下载入口：[GitHub Releases](https://github.com/chuzihang1223/companion-studio/releases)。`v0.1.2` 正在进行安装包审核，当前公开的 `v0.1.0` 提供源码；审核完成后才会提供可直接下载的 Setup。准备期间可按下方步骤自行构建。
+下载 [Companion-Studio-0.1.2-Setup.exe](https://github.com/chuzihang1223/companion-studio/releases/download/v0.1.2/Companion-Studio-0.1.2-Setup.exe)，并用同一 [Release](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2) 的 `SHA256SUMS.txt` 核对摘要后安装。安装包包含 Electron、React 和 Python 后端，运行不需要另装 Python、Node.js 或 npm。安装器尚未签名，Windows 可能提示未知发行者；请核对下载来源与摘要。自行构建的方法见下方。
 
 使用构建好的安装包无需安装 Python、Node.js 或 npm。
 
