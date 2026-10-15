@@ -124,6 +124,11 @@ def span_scope(kind, start_event, end_event, **options):
     active_token = None
     try:
         if context and not context.finished:
+            if kind == "operation" and context.recovery:
+                # Retry waiting ends when the next actual attempt starts; its
+                # execution and final model reply are not recovery wait time.
+                context.recovery.finish()
+                context.recovery = None
             span = Span(context, kind, start_event, end_event, **options)
             token = current_span.set(span.id)
             active_token = active_span.set(span)

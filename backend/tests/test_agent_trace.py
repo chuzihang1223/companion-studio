@@ -233,6 +233,8 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
         ) in names
         if outcome == "retry":
             assert "RETRY_STARTED" in names and count == 2
+            totals = app.state.trace_repository.summary(trace_id, conversation)
+            assert 200 <= totals["recovery_ms"] < totals["task_total_ms"]
         if outcome == "timeout":
             assert any(row["error_code"] == "TIMEOUT" for row in rows)
         assert not app.state.runtime_registry.active
