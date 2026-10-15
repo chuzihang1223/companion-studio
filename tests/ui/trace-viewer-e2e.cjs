@@ -37,6 +37,7 @@ async function run() {
   await driver.click('模块');
   await driver.click('Agent Trace · 执行追踪', "document.querySelector('.workspace-module-picker')");
   await driver.c.until("document.querySelectorAll('.trace-row').length>0");
+  await driver.c.evaluate("document.querySelector('.trace-viewer').scrollIntoView({block:'center'});true");
   driver.check(await driver.c.evaluate(`document.querySelector('.trace-details')?.innerText.includes(${q(trace.task_id)})`), 'Workbench TraceViewer displays the real task and details');
   await driver.screenshot('trace-real-task');
   // Add a known synthetic tail ONLY to the new isolated test DB, for paging and
@@ -45,12 +46,13 @@ async function run() {
   const seed = `import sqlite3,sys,json,datetime\np=sys.argv[1]\nassert p.endswith('chat.db')\ndb=sqlite3.connect(p,timeout=5)\nt=sys.argv[2]\nn=db.execute('select event_count from agent_traces where id=?',(t,)).fetchone()[0]\nrows=[(t,n+i,None,None,'OBSERVATION_CREATED','task','completed',datetime.datetime.now(datetime.timezone.utc).isoformat(),json.dumps({'metadata':{'observed_count':i}})) for i in range(1,1001)]\ndb.executemany('insert into trace_events(trace_id,sequence,span_id,source_work_event_id,event_type,phase,status,created_at,data_json) values(?,?,?,?,?,?,?,?,?)',rows)\ndb.execute('update agent_traces set event_count=? where id=?',(n+1000,t))\ndb.commit()\n`;
   const seeded = spawnSync(python, ['-B', '-c', seed, path.join(driver.home, 'UserData/chat.db'), trace.trace_id], {encoding:'utf8', windowsHide:true});
   assert.equal(seeded.status, 0, seeded.stderr);
+  const heapBefore = await driver.c.evaluate('performance.memory?.usedJSHeapSize || null');
   const modelBefore = driver.report.localModelRequests;
   const mark = Date.now();
   await driver.click('刷新', "document.querySelector('.trace-viewer')");
   await driver.c.until("Number(document.querySelector('[aria-label=回放进度]')?.max)>999");
   const perf = await driver.c.evaluate(`({rows:document.querySelectorAll('.trace-row').length,eventCount:Number(document.querySelector('[aria-label=回放进度]').max)+1,heap:performance.memory?.usedJSHeapSize||null,diagnostic:document.querySelector('.trace-viewer')?.innerText.split('条事件').at(-1)})`);
-  driver.check(perf.eventCount > 1000 && perf.rows <= 24, '1000-event history paginates with bounded visible DOM', {...perf, history_load_ms:Date.now()-mark});
+  driver.check(perf.eventCount > 1000 && perf.rows <= 24, '1000-event history paginates with bounded visible DOM', {...perf, heap_before:heapBefore, heap_delta_bytes:perf.heap && heapBefore ? perf.heap - heapBefore : null, history_load_ms:Date.now()-mark});
   await driver.c.evaluate("document.querySelectorAll('.trace-row')[2].click();true");
   driver.check(await driver.c.evaluate("document.querySelector('[aria-label=回放进度]').value==='2'"), 'Clicking a timeline step selects its details');
   await select('回放速度', '4');
