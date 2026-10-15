@@ -91,9 +91,14 @@ async function applicationDiscovery() {
     await driver.c.evaluate("window.desktopAPI.setTrustedAction('app.launch:notepad','always')");
     const launched = await driver.c.evaluate("window.desktopAPI.launchKnownApp('notepad')");
     driver.check(
-      launched.verified === true && launched.window_ready !== false,
-      'Notepad launch succeeds through the software authorization and verification path',
-      { pid: launched.pid, alreadyRunning: launched.already_running === true },
+      launched.verified === true && launched.window_ready === true && launched.focused === true,
+      'Notepad has a ready focused window through the authorized product launch path',
+      {
+        pid: launched.pid,
+        alreadyRunning: launched.already_running === true,
+        windowReady: launched.window_ready,
+        focused: launched.focused,
+      },
     );
     driver.report.manual.push(
       '测试经软件授权打开/聚焦了记事本。未自动关闭用户应用；请人工确认窗口内容和按需退出。',
