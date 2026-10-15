@@ -37,6 +37,12 @@ def migrate(engine: Engine) -> None:
 
     # V8.3: add virtual_code_documents only; existing data and tables stay intact.
     Base.metadata.create_all(bind=engine)
+    # Evaluation was introduced on an unpublished candidate branch. Preserve its
+    # earlier local histories; an absent start time remains unknown, never guessed.
+    with engine.begin() as conn:
+        columns = {row[1] for row in conn.execute(text("PRAGMA table_info(evaluation_runs)"))}
+        if "started_at" not in columns:
+            conn.execute(text("ALTER TABLE evaluation_runs ADD COLUMN started_at DATETIME"))
     with engine.begin() as conn:
         conversation_columns = {
             row[1] for row in conn.execute(text("PRAGMA table_info(conversations)"))

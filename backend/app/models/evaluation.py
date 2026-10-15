@@ -22,6 +22,7 @@ class EvaluationRun(Base):
         DateTime(timezone=True), index=True, default=lambda: datetime.now(timezone.utc)
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class EvaluationAttempt(Base):

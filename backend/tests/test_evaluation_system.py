@@ -10,7 +10,7 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import create_engine, inspect, select
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import sessionmaker
 
 from app.api.evaluation import router
@@ -73,6 +73,7 @@ def test_twenty_case_api_runtime_trace_database_and_exports(evaluation):
                 break
             time.sleep(0.1)
         assert run["status"] == "COMPLETED", run
+        assert run["started_at"] and run["completed_at"]
         metrics = client.get(url + "/metrics", headers=HEADERS).json()
         rows = client.get(url + "/results?limit=100", headers=HEADERS).json()["items"]
         assert len(rows) == 20
@@ -215,6 +216,8 @@ def test_additive_migration_duplicate_score_and_interrupted_recovery(evaluation)
     with factory() as db:
         db.add(Message(character_id="assistant", role="user", content="existing data"))
         db.commit()
+    with factory.kw["bind"].begin() as connection:
+        connection.execute(text("ALTER TABLE evaluation_runs DROP COLUMN started_at"))
     migrate(factory.kw["bind"])
     migrate(factory.kw["bind"])
     assert "evaluation_runs" in inspect(factory.kw["bind"]).get_table_names()

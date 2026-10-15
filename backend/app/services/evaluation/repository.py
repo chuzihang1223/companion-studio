@@ -31,23 +31,34 @@ def attempt_dto(row):
         "work_session_id": row.work_session_id,
         "duration_ms": row.duration_ms,
         "error_code": row.error_code,
-        "created_at": row.created_at.isoformat(),
+        "created_at": row.created_at.replace(tzinfo=timezone.utc).isoformat(),
         "result": json.loads(row.result_json),
     }
 
 
 def run_dto(row):
+    metrics = json.loads(row.metrics_json)
+    counts = metrics.get("counts", {})
     return {
         "run_id": row.id,
         "status": row.status,
         "mode": row.mode,
         "snapshot": json.loads(row.snapshot_json),
         "options": json.loads(row.request_json),
-        "metrics": json.loads(row.metrics_json),
+        "metrics": metrics,
         "total_cases": row.total,
+        "completed_cases": metrics.get("total_count", 0),
+        "passed_cases": counts.get("PASS", 0),
+        "failed_cases": counts.get("FAIL", 0),
+        "blocked_cases": counts.get("BLOCKED", 0),
         "revision": row.revision,
-        "created_at": row.created_at.isoformat(),
-        "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+        "created_at": row.created_at.replace(tzinfo=timezone.utc).isoformat(),
+        "started_at": row.started_at.replace(tzinfo=timezone.utc).isoformat()
+        if row.started_at
+        else None,
+        "completed_at": row.completed_at.replace(tzinfo=timezone.utc).isoformat()
+        if row.completed_at
+        else None,
     }
 
 
@@ -141,6 +152,8 @@ class EvaluationRepository:
             if row.status in TERMINAL:
                 return
             row.status, row.revision = status, row.revision + 1
+            if status == "RUNNING" and row.started_at is None:
+                row.started_at = datetime.now(timezone.utc)
             if status in TERMINAL:
                 row.completed_at = datetime.now(timezone.utc)
             db.commit()

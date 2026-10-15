@@ -56,6 +56,7 @@ export type EvaluationRun = {
   total_cases: number;
   revision: number;
   created_at: string;
+  started_at: string | null;
   completed_at: string | null;
   options: EvaluationOptions;
   metrics: Partial<EvaluationMetrics>;
