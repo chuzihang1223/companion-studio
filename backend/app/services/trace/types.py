@@ -1,0 +1,59 @@
+from enum import StrEnum
+
+
+class TraceEventType(StrEnum):
+    TASK_CREATED = "TASK_CREATED"
+    TASK_PLANNING = "TASK_PLANNING"
+    PLANNING_COMPLETED = "PLANNING_COMPLETED"
+    TASK_QUEUED = "TASK_QUEUED"
+    TASK_RUNNING = "TASK_RUNNING"
+    MODEL_REQUEST_STARTED = "MODEL_REQUEST_STARTED"
+    MODEL_REQUEST_COMPLETED = "MODEL_REQUEST_COMPLETED"
+    MODEL_REQUEST_FAILED = "MODEL_REQUEST_FAILED"
+    TOOL_STARTED = "TOOL_STARTED"
+    TOOL_COMPLETED = "TOOL_COMPLETED"
+    TOOL_FAILED = "TOOL_FAILED"
+    OPERATION_STARTED = "OPERATION_STARTED"
+    OPERATION_COMPLETED = "OPERATION_COMPLETED"
+    OPERATION_FAILED = "OPERATION_FAILED"
+    OBSERVATION_CREATED = "OBSERVATION_CREATED"
+    VERIFICATION_STARTED = "VERIFICATION_STARTED"
+    VERIFICATION_PASSED = "VERIFICATION_PASSED"
+    VERIFICATION_FAILED = "VERIFICATION_FAILED"
+    RETRY_STARTED = "RETRY_STARTED"
+    PERMISSION_REQUESTED = "PERMISSION_REQUESTED"
+    PERMISSION_RESOLVED = "PERMISSION_RESOLVED"
+    TASK_PAUSED = "TASK_PAUSED"
+    TASK_RESUMED = "TASK_RESUMED"
+    TASK_INTERRUPTED = "TASK_INTERRUPTED"
+    TASK_COMPLETED = "TASK_COMPLETED"
+    TASK_FAILED = "TASK_FAILED"
+    TASK_CANCELLED = "TASK_CANCELLED"
+
+
+TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
+STATUSES = TERMINAL | {"planning", "ready", "queued", "running", "paused", "waiting_permission"}
+PHASES = {
+    "task",
+    "planning",
+    "model",
+    "tool",
+    "operation",
+    "verification",
+    "scheduler",
+    "permission",
+    "recovery",
+}
+ERRORS = {
+    "TIMEOUT": "操作等待超时",
+    "PERMISSION_DENIED": "用户未授权，工具未执行",
+    "MODEL_ERROR": "模型请求失败，未记录原始请求或错误内容",
+    "TOOL_ERROR": "工具未成功完成",
+    "PLANNING_ERROR": "任务规划未完成",
+    "VERIFICATION_FAILED": "实际结果未通过验证",
+    "APP_NOT_READY": "未发现可操作的应用窗口",
+    "APP_EXITED_BEFORE_READY": "目标窗口在就绪前退出",
+    "PROCESS_RESTARTED": "进程重启，原执行未自动恢复",
+    "CANCELLED": "任务已取消",
+    "TASK_ERROR": "任务未完成，请查看原任务提示",
+}

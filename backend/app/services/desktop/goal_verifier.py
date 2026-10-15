@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from app.services.trace.integration import traced_verification
 
 if TYPE_CHECKING:
     from app.services.agent_tools import ToolDetail
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
 class GoalVerifier:
     """检查执行状态及音乐/编码验证，不承担完整语义目标拆解。"""
 
+    @traced_verification
     def verify(self, goal: str, details: list[ToolDetail]) -> bool:
         """全部工具 done 后再检查特定目标；不证明所有子目标均被规划。
 

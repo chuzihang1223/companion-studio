@@ -39,6 +39,10 @@ from app.services.music_library import LocalMusicLibrary
 from app.services.work_state import WorkState
 from app.services.trusted_actions import trusted_actions
 from app.services.runtime_registry import RuntimeTaskRegistry
+from app.services.trace.store import TraceStore
+from app.services.trace.recorder import TraceRecorder
+from app.services.trace.repository import TraceRepository
+from app.api.agent_traces import router as agent_traces_router
 
 
 @asynccontextmanager
@@ -67,6 +71,23 @@ async def lifespan(app: FastAPI):
     app.state.desktop_bridge = DesktopBridge()
     app.state.task_runtime = AgentTaskRuntime(app)
     app.state.work_state.recover_interrupted()
+    app.state.trace_repository = None
+    app.state.trace_recorder = None
+    trace_store = None
+    try:
+        trace_store = TraceStore()
+        await asyncio.to_thread(trace_store.recover)
+        trace_store.on_commit = app.state.work_state.notify_trace
+        trace_store.start()
+        app.state.trace_repository = TraceRepository(trace_store)
+        app.state.trace_recorder = TraceRecorder(trace_store)
+        app.state.work_state.trace_recorder = app.state.trace_recorder
+        app.state.runtime_registry.trace_recorder = app.state.trace_recorder
+    except Exception:
+        # Trace is optional; inaccessible projection storage cannot block startup.
+        if trace_store:
+            await trace_store.stop()
+            trace_store = None
     app.state.music_library = LocalMusicLibrary()
     app.state.voice_jobs = VoiceJobManager(app.state.voice_client)
     app.state.native_player = NativeAudioPlayer(settings.data_root)
@@ -91,6 +112,8 @@ async def lifespan(app: FastAPI):
         app.state.native_player.stop()
         app.state.voice_client.stop()
         await app.state.fish_voice.aclose()
+        if trace_store:
+            await trace_store.stop()
 
 
 from app.api.presence import router as presence_router
@@ -113,6 +136,7 @@ app.include_router(conversations_router)
 app.include_router(llm_settings_router)
 app.include_router(personalization_router)
 app.include_router(agent_router)
+app.include_router(agent_traces_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

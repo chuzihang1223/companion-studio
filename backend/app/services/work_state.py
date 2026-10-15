@@ -1,6 +1,7 @@
 """Persistent Workbench progress plus event notifications."""
 
 import asyncio
+from collections import OrderedDict
 from datetime import datetime, timezone
 import json
 from uuid import uuid4
@@ -24,6 +25,26 @@ class WorkState:
         self.subscribers: dict[str, set[asyncio.Queue[int]]] = {}
         self.logger = file_logger("app.work", "work.log")
         self.loop = None
+        self.trace_recorder = None
+        self.trace_revisions = OrderedDict()
+
+    def notify_trace(self, session_id: str) -> None:
+        # Projection invalidation shares SSE subscriptions, but is not task progress:
+        # do not persist a second WorkEvent or feed the registry watchdog.
+        self.trace_revisions[session_id] = self.trace_revisions.get(session_id, 0) + 1
+        self.trace_revisions.move_to_end(session_id)
+        while len(self.trace_revisions) > 1024:
+            self.trace_revisions.popitem(last=False)
+
+        def publish():
+            for queue in list(self.subscribers.get(session_id, set())):
+                try:
+                    queue.put_nowait(0)
+                except asyncio.QueueFull:
+                    pass
+
+        if self.loop and self.loop.is_running():
+            self.loop.call_soon_threadsafe(publish)
 
     def ensure(self, conversation_id: str) -> str:
         with SessionLocal() as db:
@@ -227,6 +248,13 @@ class WorkState:
         self.logger.info("session=%s event=%s status=%s", session_id, kind, status or "unchanged")
         if registry:
             registry.event(session_id, kind, status)
+        if self.trace_recorder:
+            try:
+                self.trace_recorder.project_work_event(
+                    session_id, detail.get("conversation_id"), kind, detail, event_id
+                )
+            except Exception:
+                pass  # Optional projection must never roll back the business event.
 
         def publish():
             for queue in list(self.subscribers.get(session_id, set())):
@@ -408,6 +436,7 @@ class WorkState:
             plan = json.loads(row.plan_json or "{}")
             return {
                 "id": row.id,
+                "trace_revision": self.trace_revisions.get(row.id, 0),
                 "conversation_id": row.conversation_id,
                 "goal": row.goal,
                 "status": row.status,
@@ -512,7 +541,9 @@ class WorkState:
                         last = item.id
                         yield f"id: {item.id}\nevent: {item.type}\ndata: {item.detail_json}\n\n"
                 try:
-                    await asyncio.wait_for(queue.get(), timeout=15)
+                    notification = await asyncio.wait_for(queue.get(), timeout=15)
+                    if notification == 0:
+                        yield "event: trace_updated\ndata: {}\n\n"
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"
         finally:

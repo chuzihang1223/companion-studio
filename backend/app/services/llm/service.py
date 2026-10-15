@@ -2,6 +2,7 @@ from app.core.config import settings
 from app.services.llm.base import LLMProvider
 from app.services.llm.openai_provider import OpenAIProvider
 from app.services.llm.configuration import LLMConfig
+from app.services.trace.integration import traced_model, traced_stream
 
 
 class LLMService:
@@ -12,6 +13,7 @@ class LLMService:
         self.availability_checked = False
         self.observed_capabilities = {}
 
+    @traced_model("chat")
     async def chat(self, messages: list[dict[str, str]]) -> str:
         try:
             result = await self.provider.chat(messages)
@@ -24,6 +26,7 @@ class LLMService:
         finally:
             self.availability_checked = True
 
+    @traced_stream
     async def stream_chat(self, messages: list[dict[str, str]]):
         if self.config and self.config.capabilities.get("streaming") is False:
             yield await self.chat(messages)
@@ -39,6 +42,7 @@ class LLMService:
         finally:
             self.availability_checked = True
 
+    @traced_model("plan_tools")
     async def plan_tools(self, messages: list[dict], tools: list[dict]) -> dict:
         if not hasattr(self.provider, "plan_tools"):
             raise ValueError("当前模型不支持工具调用")

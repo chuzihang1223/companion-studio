@@ -33,11 +33,19 @@ class RuntimeTaskRegistry:
         self.active: dict[str, asyncio.Task[Any] | None] = {}
         self.by_session: dict[str, str] = {}
         self.progress: dict[str, tuple[float, str | None]] = {}
+        self.trace_recorder = None
         with SessionLocal() as db:
             for row in db.scalars(select(RuntimeTask).where(RuntimeTask.status.not_in(TERMINAL))):
                 row.status = "interrupted"
                 row.wait_reason = "process_restarted"
             db.commit()
+
+    def _trace(self, task_id: str, stage: str) -> None:
+        if self.trace_recorder:
+            try:
+                self.trace_recorder.lifecycle(task_id, stage)
+            except Exception:
+                pass  # Observability never changes gate/lock/cancellation behavior.
 
     def update(self, task_id: str, status: str, reason: str | None = None) -> None:
         """记录单调时钟进度，并只更新尚未进入终态的持久记录。"""
@@ -98,6 +106,7 @@ class RuntimeTaskRegistry:
             )
             db.commit()
         self.active[task_id] = asyncio.current_task()
+        self._trace(task_id, "queued")
         if session_id:
             self.by_session[session_id] = task_id
         lock_key = (kind, conversation_id or task_id)
@@ -106,17 +115,21 @@ class RuntimeTaskRegistry:
         try:
             await asyncio.wait_for(lock.acquire(), 120)
             acquired_lock = True
+            self._trace(task_id, "capacity")
             await asyncio.wait_for(self.gates[kind].acquire(), 120)
             acquired_gate = True
             self.update(task_id, "executing")
+            self._trace(task_id, "running")
             # Explicit tool, model and user waits have shorter individual bounds.
             async with asyncio.timeout(1800):
                 yield
             self.update(task_id, "completed")
         except asyncio.CancelledError:
+            self._trace(task_id, "cancelled")
             self.update(task_id, "cancelled")
             raise
         except TimeoutError:
+            self._trace(task_id, "timeout")
             self.update(task_id, "stalled", "deadline")
             raise TimeoutError("任务等待超时，已释放执行状态")
         except Exception:

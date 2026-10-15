@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import base64
 from collections.abc import Awaitable, Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -38,6 +39,8 @@ from app.services.application_alias import ApplicationAliasResolver
 from app.services.local_action_intent import LocalActionIntentResolver
 from app.services.llm.model_roles import ExecutionModelUnavailable
 from app.services.desktop.lifecycle import TaskCancelled
+from app.services.trace.integration import traced_planning
+from app.services.trace.scope import planning_task_id
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -80,6 +83,7 @@ class AgentService:
         self.executor = ToolExecutor(settings.data_root / "agent_workspace")
         self.pending: dict[str, AgentContext] = {}
 
+    @traced_planning
     async def plan(
         self,
         app: FastAPI,
@@ -313,7 +317,7 @@ class AgentService:
         self.pending = {
             key: value for key, value in self.pending.items() if now - value.created < 300
         }
-        plan_id = str(uuid4())
+        plan_id = planning_task_id() or str(uuid4())
         # Store the user's request before waiting for permissions or running tools.
         with SessionLocal() as db:
             conversation = (
@@ -533,66 +537,80 @@ class AgentService:
         if context is None or time.monotonic() - context.created > 300:
             raise LookupError("任务计划已过期，请重新发送")
         context.task_id = plan_id
-        try:
-            registry = getattr(app.state, "runtime_registry", None)
-            if registry:
-                async with registry.run(
-                    plan_id, context.conversation_id, context.work_session_id, context.renderer_id
-                ):
-                    return await self._execute_context(
-                        app,
-                        context,
-                        approved_ids,
-                        expression,
-                        voice_enabled,
-                        speed_factor,
-                        on_text,
-                        on_started,
+        recorder = getattr(app.state, "trace_recorder", None)
+        tracing = (
+            await recorder.execution_scope(
+                plan_id, context.conversation_id, context.work_session_id
+            )
+            if recorder
+            else nullcontext()
+        )
+        with tracing:
+            try:
+                registry = getattr(app.state, "runtime_registry", None)
+                if registry:
+                    async with registry.run(
+                        plan_id,
+                        context.conversation_id,
+                        context.work_session_id,
+                        context.renderer_id,
+                    ):
+                        return await self._execute_context(
+                            app,
+                            context,
+                            approved_ids,
+                            expression,
+                            voice_enabled,
+                            speed_factor,
+                            on_text,
+                            on_started,
+                        )
+                return await self._execute_context(
+                    app,
+                    context,
+                    approved_ids,
+                    expression,
+                    voice_enabled,
+                    speed_factor,
+                    on_text,
+                    on_started,
+                )
+            except asyncio.CancelledError:
+                if context.work_session_id:
+                    app.state.work_state.emit(
+                        context.work_session_id,
+                        "task_cancelled",
+                        {"summary": "任务已停止"},
+                        status="cancelled",
                     )
-            return await self._execute_context(
-                app,
-                context,
-                approved_ids,
-                expression,
-                voice_enabled,
-                speed_factor,
-                on_text,
-                on_started,
-            )
-        except asyncio.CancelledError:
-            if context.work_session_id:
+                raise
+            except TaskCancelled:
+                handle = getattr(app.state, "task_runtime", None).handles.get(
+                    context.work_session_id
+                )
+                status = "interrupted" if handle and handle.exit_reason else "cancelled"
                 app.state.work_state.emit(
                     context.work_session_id,
-                    "task_cancelled",
-                    {"summary": "任务已停止"},
-                    status="cancelled",
+                    "task_" + status,
+                    {"summary": "目标应用已关闭" if status == "interrupted" else "任务已停止"},
+                    status=status,
                 )
-            raise
-        except TaskCancelled:
-            handle = getattr(app.state, "task_runtime", None).handles.get(context.work_session_id)
-            status = "interrupted" if handle and handle.exit_reason else "cancelled"
-            app.state.work_state.emit(
-                context.work_session_id,
-                "task_" + status,
-                {"summary": "目标应用已关闭" if status == "interrupted" else "任务已停止"},
-                status=status,
-            )
-            raise
-        except Exception:
-            if context.work_session_id and not app.state.work_state.is_stopped(
-                context.work_session_id
-            ):
-                app.state.work_state.emit(
-                    context.work_session_id,
-                    "task_failed",
-                    {"summary": "任务请求未完成，请查看错误提示"},
-                    status="failed",
-                )
-            raise
-        finally:
-            trusted_actions.finish_task(context.work_session_id)
-            if getattr(app.state, "task_runtime", None):
-                app.state.task_runtime.handles.pop(context.work_session_id, None)
+                raise
+            except Exception:
+                if context.work_session_id and not app.state.work_state.is_stopped(
+                    context.work_session_id
+                ):
+                    app.state.work_state.emit(
+                        context.work_session_id,
+                        "task_failed",
+                        {"summary": "任务请求未完成，请查看错误提示"},
+                        status="failed",
+                    )
+                raise
+            finally:
+                trusted_actions.finish_task(context.work_session_id)
+                if getattr(app.state, "task_runtime", None):
+                    app.state.task_runtime.handles.pop(context.work_session_id, None)
 
     async def _execute_context(
         self,

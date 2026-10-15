@@ -6,3 +6,4 @@ from .personalization import Personalization, ManualMemory
 from .work import WorkSession, WorkflowStep, WorkEvent, WorkPermission, WorkspaceTab
 from .virtual_document import VirtualCodeDocument
 from .runtime_task import RuntimeTask
+from .agent_trace import AgentTrace, TraceSpan, TraceEvent

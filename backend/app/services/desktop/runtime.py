@@ -17,6 +17,8 @@ from app.core.file_logging import file_logger
 from app.services.desktop.goal_verifier import GoalVerifier
 from app.services.desktop.task_waiter import TaskWaiter
 from app.services.desktop.music_task import music_context
+from app.services.trace.scope import span_scope
+from app.services.trace.privacy import arguments as trace_arguments
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -104,34 +106,66 @@ class AgentTaskRuntime:
                 await handle.checkpoint()
                 if work.is_stopped(session):
                     raise TaskCancelled("任务已停止")
-                action = action_for(call, context.executor.workspace)
-                if not trusted_actions.permitted(action, call["id"], approved_ids, session):
-                    result = {"error": "未得到用户授权，未执行", "verified": False}
-                else:
-                    result = await self.execute_call(context, call, handle)
-                status = (
-                    "failed" if result.get("error") or result.get("verified") is False else "done"
-                )
-                work.emit(
-                    session,
-                    "tool_completed",
-                    {
-                        "name": call["name"],
-                        "status": status,
-                        "result": result,
-                        "summary": result.get("public_error")
-                        or result.get("summary")
-                        or LABELS.get(call["name"], "未完成" if status == "failed" else "已执行"),
-                    },
-                )
-                details.append({"name": call["name"], "status": status, "result": result})
-                observations.append(
-                    {
-                        "role": "tool",
+                with span_scope(
+                    "tool",
+                    "TOOL_STARTED",
+                    "TOOL_COMPLETED",
+                    tool_name=call["name"],
+                    metadata={
+                        "requires_permission": call.get("requires_confirmation", False),
+                        "executed": False,
+                        "side_effect": call["name"]
+                        not in {
+                            "app.detect",
+                            "app.status",
+                            "system.get_status",
+                            "workspace.list",
+                            "workspace.search",
+                            "workspace.read",
+                            "filesystem.read",
+                            "filesystem.list",
+                            "code.read_file",
+                        },
                         "tool_call_id": call["id"],
-                        "content": json.dumps(result, ensure_ascii=False),
-                    }
-                )
+                        "parameter_summary": trace_arguments(call["arguments"]),
+                    },
+                ) as span:
+                    action = action_for(call, context.executor.workspace)
+                    allowed = trusted_actions.permitted(action, call["id"], approved_ids, session)
+                    if not allowed:
+                        result = {"error": "未得到用户授权，未执行", "verified": False}
+                    else:
+                        result = await self.execute_call(context, call, handle)
+                    span.result(result)
+                    if not allowed:
+                        span.code = "PERMISSION_DENIED"
+                    status = (
+                        "failed"
+                        if result.get("error") or result.get("verified") is False
+                        else "done"
+                    )
+                    work.emit(
+                        session,
+                        "tool_completed",
+                        {
+                            "name": call["name"],
+                            "status": status,
+                            "result": result,
+                            "summary": result.get("public_error")
+                            or result.get("summary")
+                            or LABELS.get(
+                                call["name"], "未完成" if status == "failed" else "已执行"
+                            ),
+                        },
+                    )
+                    details.append({"name": call["name"], "status": status, "result": result})
+                    observations.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": call["id"],
+                            "content": json.dumps(result, ensure_ascii=False),
+                        }
+                    )
             verified = GoalVerifier().verify(context.user_text, details)
             work.emit(
                 session,
@@ -174,9 +208,16 @@ class AgentTaskRuntime:
         while attempt < max_attempts:
             await handle.checkpoint()
             try:
-                result = await TaskWaiter.run(
-                    operation, handle, 1200 if title == "代码智能体执行与验证" else 65
-                )
+                with span_scope(
+                    "operation",
+                    "OPERATION_STARTED",
+                    "OPERATION_COMPLETED",
+                    metadata={"step": title, "operation": "execute"},
+                ) as attempt_span:
+                    result = await TaskWaiter.run(
+                        operation, handle, 1200 if title == "代码智能体执行与验证" else 65
+                    )
+                    attempt_span.result(result)
                 await handle.checkpoint()
                 if result.get("verified") is False:
                     raise VerificationFailure(result)
