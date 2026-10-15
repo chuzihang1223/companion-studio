@@ -1,0 +1,43 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('../../desktop/node_modules/typescript');
+const React = require('../../desktop/node_modules/react');
+const { renderToStaticMarkup } = require('../../desktop/node_modules/react-dom/server');
+for (const extension of ['.ts', '.tsx']) require.extensions[extension] = (m, f) => m._compile(ts.transpileModule(fs.readFileSync(f, 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX}}).outputText, f);
+require.extensions['.css'] = () => {};
+const R = require('../../desktop/frontend/src/trace/replay.ts');
+const before = process.memoryUsage().heapUsed, started = performance.now();
+const rows = Array.from({length: 1000}, (_, i) => ({sequence: 1000 - i, created_at: new Date(Date.UTC(2026, 0, 1) + (1000-i)*100).toISOString()}));
+const ordered = R.orderedEvents([...rows, rows[0]]);
+assert.equal(ordered.length, 1000);
+assert.equal(ordered[0].sequence, 1);
+assert.equal(ordered.at(-1).sequence, 1000);
+assert.equal(R.replayDelay(ordered[0], ordered[1], 1), 100);
+assert.equal(R.replayDelay(ordered[0], ordered.at(-1), 1), 2000);
+assert.equal(R.replayDelay(ordered[0], ordered[1], 4), 80);
+for (let top = 0; top < 58000; top += 31) {
+  const window = R.virtualWindow(1000, top, 340);
+  assert.ok(window.start >= 0 && window.end <= 1000 && window.end - window.start <= 14);
+}
+global.window = {};
+const Viewer = require('../../desktop/frontend/src/trace/TraceViewer.tsx').default;
+assert.match(renderToStaticMarkup(React.createElement(Viewer, {conversationId: null, sessionId: null, visible: true, revision: 0})), /工作会话/);
+assert.match(renderToStaticMarkup(React.createElement(Viewer, {conversationId: 'c', sessionId: null, visible: true, revision: 0})), /桌面版/);
+// Fixed IPC capability surface: no arbitrary URL, model or execution operation.
+const handlers = {}, requests = [];
+require('../../desktop/electron/agent-traces.cjs')({ipcMain: {handle: (name, callback) => handlers[name] = callback}, requireMainWindow: event => {if (event !== 'main') throw Error('Unauthorized');}, request: (...args) => requests.push(args)});
+const conversation_id = '11111111-1111-4111-8111-111111111111', trace_id = '22222222-2222-4222-8222-222222222222';
+const read = handlers['agent-traces-read'];
+assert.throws(() => read('other', 'list', {conversation_id}), /Unauthorized/);
+assert.throws(() => read('main', 'execute', {conversation_id}), /只允许/);
+assert.throws(() => read('main', 'events', {conversation_id, trace_id: '../secrets'}));
+assert.throws(() => read('main', 'list', {conversation_id, limit: 1000}));
+assert.throws(() => read('main', 'list', {conversation_id, tool_name: 'https://private.invalid'}));
+read('main', 'list', {conversation_id});
+read('main', 'events', {conversation_id, trace_id, after: 250, limit: 250});
+assert.ok(requests.every(row => row.length === 1 && row[0].startsWith('/api/agent/traces')));
+assert.ok(requests[1][0].includes('after=250'));
+handlers['agent-trace-delete']('main', {conversation_id, trace_id});
+assert.equal(requests[2][2], 'DELETE');
+console.log(JSON.stringify({pass: true, checks: ['event_order', 'dedupe', 'replay_delays', 'virtual_1000', 'viewer_empty', 'viewer_desktop_only', 'ipc_sender', 'ipc_fixed_routes', 'ipc_validation', 'scoped_delete'], events: 1000, pure_cpu_ms: performance.now()-started, heap_delta_bytes: process.memoryUsage().heapUsed-before, real_gui_acceptance: false}));
