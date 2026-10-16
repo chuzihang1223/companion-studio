@@ -35,6 +35,22 @@ export const traceStatuses: Record<string, string> = {
   denied: '已拒绝',
 };
 export const eventNames: Record<string, string> = {
+  WORKFLOW_CREATED: '创建工作流运行',
+  WORKFLOW_VALIDATED: '流程校验通过',
+  WORKFLOW_STARTED: '开始工作流',
+  WORKFLOW_NODE_READY: '节点准备执行',
+  WORKFLOW_NODE_STARTED: '执行节点',
+  WORKFLOW_NODE_COMPLETED: '节点完成',
+  WORKFLOW_NODE_FAILED: '节点失败',
+  WORKFLOW_NODE_SKIPPED: '跳过未激活节点',
+  WORKFLOW_CONDITION_EVALUATED: '条件分支判定',
+  WORKFLOW_APPROVAL_REQUESTED: '请求节点审批',
+  WORKFLOW_PAUSED: '工作流暂停',
+  WORKFLOW_RESUMED: '工作流续接',
+  WORKFLOW_COMPLETED: '工作流完成',
+  WORKFLOW_FAILED: '工作流失败',
+  WORKFLOW_CANCELLED: '工作流取消',
+
   MCP_CONNECTION_STARTED: '开始连接 MCP',
   MCP_CONNECTION_ESTABLISHED: 'MCP 已连接',
   MCP_CONNECTION_FAILED: 'MCP 连接失败',

@@ -16,6 +16,7 @@ const ids = [
   'permissions',
   'trace',
   'evaluation',
+  'workflow_builder',
 ];
 const finite = (v, f) => (Number.isFinite(Number(v)) ? Number(v) : f);
 /**
@@ -51,7 +52,7 @@ function cleanFree(value, history = true) {
       closed:
         id === 'conversation'
           ? false
-          : ['trace', 'evaluation'].includes(id) && p.closed === undefined
+          : ['trace', 'evaluation', 'workflow_builder'].includes(id) && p.closed === undefined
             ? true
             : !!p.closed,
       order: finite(p.order, order),

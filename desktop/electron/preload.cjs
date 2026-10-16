@@ -6,6 +6,15 @@ const { contextBridge, ipcRenderer } = require('electron');
  * 增减方法时同步 main.cjs handler、前端 vite-env.d.ts 与相关回归。
  */
 contextBridge.exposeInMainWorld('desktopAPI', {
+  readWorkflows: (operation, options) => ipcRenderer.invoke('workflow-read', operation, options),
+  controlWorkflows: (operation, options) =>
+    ipcRenderer.invoke('workflow-control', operation, options),
+  watchWorkflow: (options) => ipcRenderer.invoke('workflow-watch', options),
+  onWorkflowProgress: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on('workflow-progress', listener);
+    return () => ipcRenderer.removeListener('workflow-progress', listener);
+  },
   readExtensions: (operation, options) => ipcRenderer.invoke('extension-read', operation, options),
   controlExtensions: (operation, options) =>
     ipcRenderer.invoke('extension-control', operation, options),

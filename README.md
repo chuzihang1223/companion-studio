@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-extensions.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接，以及 MCP 与 Agent Skills 扩展；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-workflow.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills 和可视化工作流；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -76,6 +76,35 @@ Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出�
 
 ![安装版的 MCP 与 Skills 评测：20 项受控结果、协议指标及 Trace 入口](docs/screenshots/mcp-evaluation.png)
 
+### Visual Workflow Builder（本地审核分支）
+
+工作模式 →「模块」→「Visual Workflow · 流程设计」。可在画布上添加、拖动和连接节点，
+选择工具 / MCP / Skill、绑定输入和祖先节点的输出，校验后保存并发布本地不可变版本。
+支持多选、复制粘贴、撤销重做、平移缩放、整理节点、JSON 导入导出与草稿归档；图编辑不改变历史运行。
+新模块使用按需加载，不重写原工作台的布局、拖拽或自动滚动引擎。
+
+支持手动触发、输入、模型分析、内置工具、MCP 工具、Agent Skill、条件、数据转换、人工审批、
+Merge 和输出共 11 种节点。Tool Node 经过原权限和 Agent Runtime；人工审批不会提前授权下游工具。
+当前为有界串行 DAG，不支持循环、定时任务、自动后台续跑或任意代码节点。
+
+下图来自独立测试档案中实际运行的画布；模型测试使用本机模拟服务，不代表真实 AI 质量：
+
+![实际工作流运行后，画布显示节点完成状态并保留只读版本快照](docs/screenshots/workflow-builder.png)
+
+例如打开「项目检查报告」模板，选择测试项目、导入并启用 project-review 示例 Skill、配置模型，
+输入 `{"path":"README.md"}`：流程读取该文件 → Skill 分析 → 模型整理 → Markdown 输出。
+「代码测试与报告」模板逐次授权后运行所选 .py 测试，并按退出码 / 错误分支汇合输出；
+「MCP 数据整理」可使用本机受控 Demo，无需第三方账号。模板不会自动连接或授权外部服务。
+
+运行状态、审批和错误会定位到具体节点；可查看真实 Trace、历史版本和输出。中断后先核验原检查点，
+确认安全才续接；未知副作用不会重复。原 Evaluation 增加 Workflow Core 20 项受控评测，
+Mock 断言通过率和流程完成数与真实 AI 任务成功率分开显示。正式模型、外部客户端和费用另有运行条件。
+
+[工作流架构](docs/WORKFLOW_ARCHITECTURE.md) · [协议](docs/WORKFLOW_SCHEMA.md) ·
+[执行与恢复](docs/WORKFLOW_EXECUTION.md) · [变量](docs/WORKFLOW_VARIABLES.md) ·
+[安全](docs/WORKFLOW_SECURITY.md) · [模板](docs/WORKFLOW_TEMPLATES.md) ·
+[评测与 Windows 验收](docs/WORKFLOW_EVALUATION.md)。
+
 | 功能 | 当前实现与条件 |
 | --- | --- |
 | 文字聊天 | 流式显示回复；Enter 发送、Shift + Enter 换行；加载和错误提示；单条消息最多 4000 字符。 |
@@ -85,6 +114,7 @@ Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出�
 | API 配置 | OpenAI-compatible Provider；多配置预设、连接测试、热切换、模型能力及职责设置。密钥由 Electron 主进程通过 Windows 安全存储加密保存。 |
 | MCP 扩展（审核分支） | 官方 Python SDK 2.3.0；手动连接 stdio / Streamable HTTP；工具发现、独立启用、受控调用、资源和模板预览；支持受控新版及旧式握手协议。 |
 | Agent Skills（审核分支） | 本地目录导入、标准 frontmatter 校验、按需匹配、自建编辑与导出；Skill 不授予执行权限，脚本仅查看。 |
+| 可视化工作流（审核分支） | 11 种节点、版本快照、受控 DAG 执行、变量/条件/汇合、节点审批、Trace、检查点续接、20 项受控评测及三个 MIT 模板。 |
 | 附件 | 每条最多 4 个文件，每个最多 8 MB；支持文本、代码、PDF、DOCX 和图片。图片理解需要当前模型支持视觉能力。 |
 | 工作台 | 项目目录、协作对话、工作流、文件、代码、Diff、终端、网页、应用观察和媒体模块；支持 Dock、拖动、缩放、布局保存与撤销。 |
 | 本机操作 | Windows 应用发现与启动、网站搜索、项目文件操作及代码任务；简单指令可走本地路由，复杂任务需要支持 Tool Calling 的模型和相应权限。 |

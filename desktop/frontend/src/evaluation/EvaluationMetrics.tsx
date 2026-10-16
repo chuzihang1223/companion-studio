@@ -6,6 +6,7 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
   const m = run?.metrics;
   const recovery = m?.recovery;
   const mcp = m?.mcp;
+  const workflow = m?.workflow;
   const values = [
     ['有效评分 / 总任务', `${m?.valid_count ?? 0} / ${run?.total_cases ?? 0}`],
     [run?.mode === 'mock' ? 'Mock 回归通过率' : '评测通过率', rate(m?.success_rate)],
@@ -41,6 +42,18 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
       ],
       ['Skill 加载 ms', number(mcp.average_skill_load_ms)],
       ['Skill 合成匹配准确率', rate(mcp.skill_match_accuracy)],
+    );
+  if (workflow)
+    values.push(
+      [
+        '工作流运行 / 流程完成（合成）',
+        `${workflow.executed_workflows} / ${workflow.completed_workflows}`,
+      ],
+      ['未知副作用阻断', String(workflow.blocked_side_effects)],
+      [
+        '流程校验 P50 / P95 ms',
+        `${number(workflow.validation_p50_ms)} / ${number(workflow.validation_p95_ms)}`,
+      ],
     );
   return (
     <>

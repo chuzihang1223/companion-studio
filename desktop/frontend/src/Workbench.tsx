@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import WorkspaceBrowser from './WorkspaceBrowser';
 import FilesModule from './FilesModule';
 import { WorkspaceModule } from './WorkModule';
@@ -22,6 +22,7 @@ import WorkbenchExtensions from './extensions/WorkbenchExtensions';
 import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
+const WorkflowBuilder = lazy(() => import('./workflows/WorkflowBuilder'));
 
 type Props = {
   visible: boolean;
@@ -212,6 +213,12 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'workflow_builder')
+      return (
+        <Suspense fallback={<p>正在打开流程设计器…</p>}>
+          <WorkflowBuilder conversationId={conversationId} visible={visible && moduleVisible} />
+        </Suspense>
+      );
     if (id === 'evaluation') return <EvaluationDashboard visible={visible && moduleVisible} />;
     if (id === 'trace')
       return (

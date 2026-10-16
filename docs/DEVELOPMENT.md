@@ -178,3 +178,14 @@ SDK stdio，原生授权对话框的响应和模型输出由受控测试替代�
 
 使用、限制和评测解释见 [MCP 配置](MCP_CONFIGURATION.md)、[扩展安全](MCP_SECURITY.md)、
 [Agent Skills](AGENT_SKILLS.md) 与 [MCP 评测](MCP_EVALUATION.md)。
+
+## 8. Visual Workflow 审核分支
+
+候选版本 `0.2.0-workflow.1`，开发分支 `feature/visual-workflow-builder`，基于已验收的 Skill 04。
+新增画布使用 React / SVG / HTML，未新增依赖。外层仅增加模块注册和安全布局白名单，既有布局协议不升级。
+画布代码按需加载；状态通过持久事件游标和原受控 SSE 方式更新。
+
+[架构](WORKFLOW_ARCHITECTURE.md) 与 [工作流测试](WORKFLOW_EVALUATION.md) 列出协议、权限、
+命令和边界。`workflow-unit.cjs` 加入原 Electron 检查，共 16 组；实际界面测试仍需显式执行
+`workflow-e2e.cjs`，新空白档案和可执行文件边界检查不能省略。
+新增数据库表采用原增量迁移；不能把本地 Run 数据、测试模型配置或性能档案放进发行文件。

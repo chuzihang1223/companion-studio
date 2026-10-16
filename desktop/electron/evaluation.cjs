@@ -38,7 +38,7 @@ module.exports = ({
     if (operation === 'datasets' || operation === 'models') route += operation;
     else if (operation === 'dataset') {
       const dataset = options.dataset_id || 'studio-core';
-      if (!['studio-core', 'recovery-core', 'mcp-skills-core'].includes(dataset))
+      if (!['studio-core', 'recovery-core', 'mcp-skills-core', 'workflow-core'].includes(dataset))
         throw Error('未知内置数据集');
       route += 'datasets/' + dataset;
     } else if (operation === 'compare') {

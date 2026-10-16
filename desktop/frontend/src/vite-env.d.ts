@@ -2,6 +2,20 @@
 
 interface Window {
   desktopAPI?: {
+    readWorkflows: <K extends keyof import('./workflows/types').WorkflowReads>(
+      operation: K,
+      options?: import('./workflows/types').WorkflowQuery,
+    ) => Promise<import('./workflows/types').WorkflowReads[K]>;
+    controlWorkflows: (
+      operation: import('./workflows/types').WorkflowControl,
+      options?: Record<string, unknown>,
+    ) => Promise<unknown>;
+    watchWorkflow: (
+      options: { run_id: string; conversation_id: string; after?: number } | null,
+    ) => Promise<boolean>;
+    onWorkflowProgress: (
+      callback: (event: import('./workflows/types').WorkflowProgress) => void,
+    ) => () => void;
     readExtensions: <K extends keyof import('./extensions/types').ExtensionReads>(
       operation: K,
       options?: { server_id?: string; skill_id?: string; file?: string },

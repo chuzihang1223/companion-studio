@@ -371,6 +371,17 @@ const stopEvaluationSubscriptions = require('./evaluation.cjs')({
   controlToken: backendManager.controlToken,
 });
 app.on('before-quit', stopEvaluationSubscriptions);
+const stopWorkflowSubscriptions = require('./workflows.cjs')({
+  ipcMain,
+  requireMainWindow,
+  request: privateBackend,
+  dialog,
+  exportsDirectory: path.join(paths.home, 'Exports'),
+  authorizeMCP: extensionHost.approvePlan,
+  backendURL: backend.url,
+  controlToken: backendManager.controlToken,
+});
+app.on('before-quit', stopWorkflowSubscriptions);
 // 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher = null,
   projectWatchTimer = null,

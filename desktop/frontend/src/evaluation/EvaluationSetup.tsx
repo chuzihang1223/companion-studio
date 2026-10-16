@@ -1,7 +1,7 @@
 import type { Dataset, EvaluationMode, ModelChoice } from './types';
 
 export type EvaluationForm = {
-  datasetId: 'studio-core' | 'recovery-core' | 'mcp-skills-core';
+  datasetId: 'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core';
   mode: EvaluationMode;
   role: string;
   caseId: string;
@@ -61,6 +61,7 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             <option value="studio-core">Studio Core · 20 项</option>
             <option value="recovery-core">Recovery Core · 16 项</option>
             <option value="mcp-skills-core">MCP & Skills Core · 20 项</option>
+            <option value="workflow-core">Workflow Core · 20 项</option>
           </select>
         </label>
         <label>
