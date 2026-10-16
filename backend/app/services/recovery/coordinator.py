@@ -162,8 +162,16 @@ class ResumeCoordinator:
                     await asyncio.to_thread(self.manager.state, root, "RESUMING")
                     emit("RESUME_STARTED", strategy="safe_resume")
                     self.notify(session, "recovery_resuming", "observing")
-                    await self.app.state.agent_service._execute_context(
+                    response = await self.app.state.agent_service._execute_context(
                         self.app, context, approved_ids, "natural", False, 1.0
+                    )
+                    self.app.state.work_state.emit(
+                        session,
+                        "recovery_completed",
+                        {
+                            "message_id": response["message_id"],
+                            "verified": response.get("goal_verified") is True,
+                        },
                     )
                     successful = (
                         self.manager.detail(root, context.conversation_id)["state"] == "COMPLETED"

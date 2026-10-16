@@ -341,6 +341,7 @@ require('./agent-traces.cjs')({
   request: privateBackend,
   exportDirectory: path.join(paths.home, 'Exports'),
 });
+require('./agent-recovery.cjs')({ ipcMain, requireMainWindow, request: privateBackend });
 const stopEvaluationSubscriptions = require('./evaluation.cjs')({
   ipcMain,
   requireMainWindow,

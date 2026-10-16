@@ -567,11 +567,29 @@ export default function AppV3() {
         'user_interruption',
         'workspace_changed',
         'trace_updated',
+        'recovery_updated',
+        'recovery_completed',
       ]) {
         stream.addEventListener(type, () => {
           void loadWorkSession(workSession.id)
             .then((row) => {
               if (live && activeIdRef.current === row.conversation_id) setWorkSession(row);
+              if (type === 'recovery_completed' && live && row.conversation_id) {
+                const id = row.conversation_id;
+                void loadConversation(id)
+                  .then((history) => {
+                    // Resume saves into its original conversation. A concurrent
+                    // stream keeps its current projection; navigation loads DB history.
+                    const store = runtimeRef.current;
+                    if (!live || store.get(id).generating) return;
+                    store.patch(id, { messages: history, completed: true });
+                    if (activeIdRef.current === id) {
+                      setMessages(history);
+                      setWorkMessages(history);
+                    }
+                  })
+                  .catch(() => {});
+              }
             })
             .catch(() => {});
         });

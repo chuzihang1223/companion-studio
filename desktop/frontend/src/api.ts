@@ -249,6 +249,7 @@ export type AgentResult = {
 
 export type WorkSession = {
   trace_revision?: number;
+  recovery_revision?: number;
   id: string;
   conversation_id: string | null;
   goal: string;

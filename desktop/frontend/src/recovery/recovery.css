@@ -1,0 +1,55 @@
+.recovery-panel {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.recovery-panel h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.recovery-panel p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.recovery-panel select {
+  max-width: 100%;
+  display: block;
+  margin-top: 6px;
+}
+.recovery-panel label {
+  display: block;
+  margin: 8px 0;
+}
+.recovery-panel input[type='checkbox'] {
+  margin-right: 6px;
+}
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.recovery-panel button,
+.recovery-panel select {
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font: inherit;
+}
+.recovery-preview,
+.recovery-checkpoints {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+.recovery-panel pre {
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.recovery-panel .trace-viewer {
+  max-height: 450px;
+}

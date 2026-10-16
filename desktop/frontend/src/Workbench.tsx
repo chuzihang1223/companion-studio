@@ -17,6 +17,7 @@ import TerminalModule from './TerminalModule';
 import MediaModule from './MediaModule';
 import TraceViewer from './trace/TraceViewer';
 import EvaluationDashboard from './evaluation/EvaluationDashboard';
+import RecoveryPanel from './recovery/RecoveryPanel';
 import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
@@ -276,20 +277,29 @@ export default function Workbench({
       );
     if (id === 'workflow')
       return (
-        <ol className="workflow-steps">
-          {session?.steps.map((s) => (
-            <li className={s.status} key={s.id}>
-              <span>
-                <Icon
-                  name={s.status === 'done' ? 'check' : s.status === 'failed' ? 'alert' : 'clock'}
-                  size={12}
-                />
-              </span>
-              {s.title}
-            </li>
-          ))}
-          {!session && <li>收到任务后生成步骤</li>}
-        </ol>
+        <>
+          <ol className="workflow-steps">
+            {session?.steps.map((s) => (
+              <li className={s.status} key={s.id}>
+                <span>
+                  <Icon
+                    name={s.status === 'done' ? 'check' : s.status === 'failed' ? 'alert' : 'clock'}
+                    size={12}
+                  />
+                </span>
+                {s.title}
+              </li>
+            ))}
+            {!session && <li>收到任务后生成步骤</li>}
+          </ol>
+          <RecoveryPanel
+            key={conversationId || 'none'}
+            conversationId={conversationId}
+            sessionId={session?.id || null}
+            visible={visible && moduleVisible}
+            revision={session?.recovery_revision || session?.events.at(-1)?.id || 0}
+          />
+        </>
       );
     if (id === 'collaboration')
       return (

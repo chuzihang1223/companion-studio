@@ -18,6 +18,7 @@ const tests = [
   'app-launcher-unit.cjs',
   'trace-unit.cjs',
   'evaluation-unit.cjs',
+  'recovery-unit.cjs',
 ];
 
 for (const test of tests) {

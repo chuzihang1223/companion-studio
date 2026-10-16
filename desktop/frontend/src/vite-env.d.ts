@@ -2,6 +2,15 @@
 
 interface Window {
   desktopAPI?: {
+    readAgentRecovery: <K extends keyof import('./recovery/types').RecoveryReads>(
+      operation: K,
+      options: import('./recovery/types').RecoveryScope,
+    ) => Promise<import('./recovery/types').RecoveryReads[K]>;
+    controlAgentRecovery: (
+      taskId: string,
+      action: import('./recovery/types').RecoveryAction,
+      options: import('./recovery/types').RecoveryControl,
+    ) => Promise<Record<string, unknown>>;
     readEvaluation: <K extends keyof import('./evaluation/types').EvaluationReads>(
       operation: K,
       options?: import('./evaluation/types').EvaluationQuery,

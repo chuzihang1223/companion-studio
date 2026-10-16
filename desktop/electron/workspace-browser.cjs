@@ -328,6 +328,29 @@ class WorkspaceBrowserManager {
    * @param {string} taskId 隔离任务标签的归属标识。
    */
   async automate(operation, args, taskId) {
+    if (operation === 'browser.observe') {
+      const tab = this.tabs.get('agent-browser-' + taskId);
+      if (!tab || tab.view.webContents.isDestroyed())
+        return { verified: false, code: 'WINDOW_NOT_FOUND' };
+      const content = await readPage(tab.view.webContents);
+      return {
+        verified: true,
+        url: content.url,
+        ready: content.ready,
+        dom_fingerprint: crypto
+          .createHash('sha256')
+          .update(
+            JSON.stringify({
+              url: content.url,
+              ready: content.ready,
+              text: content.text,
+              links: content.links,
+            }),
+          )
+          .digest('hex'),
+        observed_count: content.links.length,
+      };
+    }
     const tabId = 'agent-browser-' + taskId,
       query = String(args.query || '')
         .trim()
