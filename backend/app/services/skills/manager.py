@@ -12,6 +12,7 @@ import time
 from uuid import uuid4
 
 from app.core.config import settings
+from app.core.filesystem import disk_path
 from app.services.mcp_ext.contracts import MCPError, digest
 from app.services.mcp_ext.events import emit
 from app.services.skills.parser import parse_skill, skill_name
@@ -22,21 +23,6 @@ CAPABILITIES = {
     "write_report": {"workspace.create", "workspace.write"},
     "run_tests": {"code.run"},
 }
-
-
-def disk_path(value):
-    """Use Win32 extended paths without changing system long-path policy.
-
-    Isolated profiles and immutable Skill revisions can exceed MAX_PATH. Keep
-    this prefix internal; persisted paths remain relative to the owned root.
-    """
-    path = Path(value)
-    if os.name != "nt" or not path.is_absolute():
-        return path
-    raw = os.path.abspath(path)
-    if raw.startswith("\\\\?\\"):
-        return Path(raw)
-    return Path("\\\\?\\UNC\\" + raw[2:] if raw.startswith("\\\\") else "\\\\?\\" + raw)
 
 
 def safe_file(root, relative):

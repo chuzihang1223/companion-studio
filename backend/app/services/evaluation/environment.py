@@ -13,6 +13,8 @@ import secrets
 import sys
 from uuid import UUID, uuid4
 
+from app.core.filesystem import disk_path
+
 
 class OwnedJob:
     """Windows Job 的 kill-on-close 覆盖 worker 的后代，父进程崩溃也不遗留它们。"""
@@ -213,7 +215,9 @@ class EnvironmentManager:
                     await asyncio.to_thread(self.archive_database, source, archive)
             finally:
                 if home.resolve().parent == (self.root / "_w").resolve() and not home.is_symlink():
-                    await asyncio.to_thread(shutil.rmtree, home)
+                    # Skills may contain immutable revisions below MAX_PATH.
+                    # Ownership is checked above, before applying the IO prefix.
+                    await asyncio.to_thread(shutil.rmtree, disk_path(home))
 
     async def launch_worker(self, command, env, home, attempt_id, payload, timeout):
         """One authenticated process/Job. No profiles or payload files cross IPC."""
