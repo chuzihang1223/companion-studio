@@ -115,3 +115,36 @@ def test_launch_requires_exact_current_config_approval(tmp_path):
         assert not manager.connections
 
     asyncio.run(run())
+
+
+def test_cancel_call_and_remove_server_leave_other_server_usable(tmp_path):
+    async def run():
+        manager = host(tmp_path)
+        cfg = config()
+        first, second = (
+            manager.save(cfg),
+            manager.save(cfg.model_copy(update={"display_name": "Other"})),
+        )
+        processes = []
+        try:
+            for key in (first, second):
+                await manager.connect(
+                    key, approved_fingerprint=digest(manager.config(key).model_dump())
+                )
+                processes.append(manager.connections[key].transport.process)
+            pending = asyncio.create_task(manager.invoke(first, "call_tool", "timeout", {}))
+            await asyncio.sleep(0.15)
+            assert pending in manager.connections[first].calls
+            pending.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await pending
+            assert not manager.connections[first].calls
+            await manager.remove(first)
+            assert processes[0].returncode is not None
+            reply = await manager.invoke(second, "call_tool", "echo", {"text": "still owned"})
+            assert reply.content[0].text == "still owned"
+        finally:
+            await manager.close()
+        assert all(process.returncode is not None for process in processes)
+
+    asyncio.run(run())

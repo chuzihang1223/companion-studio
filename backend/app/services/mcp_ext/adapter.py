@@ -78,6 +78,7 @@ class MCPToolAdapter:
             "trace_id": trace.trace_id if trace else None,
             "goal_verified": False,
             "trust": "untrusted_external_data",
+            "request_status": "not_sent",
         }
         emit(
             "MCP_TOOL_STARTED",
@@ -90,9 +91,11 @@ class MCPToolAdapter:
             # Refresh before execution to detect changed schemas even without notifications.
             await self.registry.discover(row["server_id"])
             row = self.registry.validate_call(call)
+            result["request_status"] = "dispatched"
             response = await self.connections.invoke(
                 row["server_id"], "call_tool", row["name"], call["arguments"]
             )
+            result["request_status"] = "response_received"
             creds = self.connections.credentials.get(row["server_id"], {})
             secrets = [creds.get("token", ""), *creds.get("environment", {}).values()]
             result.update(normalize(response, secrets=secrets))

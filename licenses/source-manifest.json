@@ -12,8 +12,8 @@
     },
     {
       "path": "licenses/inventory.json",
-      "sha256": "4a5ba13e8aef7cf8c1ce8d7f6aae90d736c64cc6c124eed9ae326e866aa71b52",
-      "bytes": 56987
+      "sha256": "0d73e7effc3f1f7fe716777b3c2c64e593a5f5d1cb9d99d32dcf3195f1d8d0ff",
+      "bytes": 59438
     },
     {
       "path": "licenses/MPL-2.0.txt",
@@ -24,6 +24,11 @@
       "path": "licenses/native/cpython-liblzma-5.2.5/COPYING",
       "sha256": "bcb02973ef6e87ea73d331b3a80df7748407f17efdb784b61b47e0e610d3bb5c",
       "bytes": 2775
+    },
+    {
+      "path": "licenses/native/cryptography-openssl-4.0.3/LICENSE.txt",
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+      "bytes": 10175
     },
     {
       "path": "licenses/native/openssl-3.0.13/LICENSE",
@@ -91,6 +96,11 @@
       "bytes": 989
     },
     {
+      "path": "licenses/python/cffi-2.1.1/licenses/LICENSE",
+      "sha256": "5ba24ddc57067f9249add644c3afc41a5d6dc37e23433ef759d95df370b0af63",
+      "bytes": 1123
+    },
+    {
       "path": "licenses/python/click-8.5.0/licenses/LICENSE.txt",
       "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d",
       "bytes": 1475
@@ -99,6 +109,21 @@
       "path": "licenses/python/colorama-0.4.6/licenses/LICENSE.txt",
       "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318",
       "bytes": 1491
+    },
+    {
+      "path": "licenses/python/cryptography-50.0.2/licenses/LICENSE",
+      "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb",
+      "bytes": 197
+    },
+    {
+      "path": "licenses/python/cryptography-50.0.2/licenses/LICENSE.APACHE",
+      "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe",
+      "bytes": 11360
+    },
+    {
+      "path": "licenses/python/cryptography-50.0.2/licenses/LICENSE.BSD",
+      "sha256": "602c4c7482de6479dd2e9793cda275e5e63d773dacd1eca689232ab7008fb4fb",
+      "bytes": 1532
     },
     {
       "path": "licenses/python/fastapi-0.141.1/licenses/LICENSE",
@@ -224,6 +249,11 @@
       "path": "licenses/python/pluggy-1.6.0/licenses/LICENSE",
       "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606",
       "bytes": 1110
+    },
+    {
+      "path": "licenses/python/pycparser-3.11/licenses/LICENSE",
+      "sha256": "0a9e78156ae8b96caf1b4f11ac2df424b83de29736f9e757630548a6272fdf90",
+      "bytes": 1543
     },
     {
       "path": "licenses/python/pydantic-2.13.5/licenses/LICENSE",

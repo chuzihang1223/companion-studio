@@ -18,6 +18,7 @@ import MediaModule from './MediaModule';
 import TraceViewer from './trace/TraceViewer';
 import EvaluationDashboard from './evaluation/EvaluationDashboard';
 import RecoveryPanel from './recovery/RecoveryPanel';
+import WorkbenchExtensions from './extensions/WorkbenchExtensions';
 import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
@@ -298,6 +299,12 @@ export default function Workbench({
             sessionId={session?.id || null}
             visible={visible && moduleVisible}
             revision={session?.recovery_revision || session?.events.at(-1)?.id || 0}
+          />
+          <WorkbenchExtensions
+            key={session?.id || 'none'}
+            session={session}
+            conversationId={conversationId}
+            calls={pending?.calls || session?.pending_plan?.calls || []}
           />
         </>
       );

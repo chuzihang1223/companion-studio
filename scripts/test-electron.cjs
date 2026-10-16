@@ -19,6 +19,7 @@ const tests = [
   'trace-unit.cjs',
   'evaluation-unit.cjs',
   'recovery-unit.cjs',
+  'extensions-unit.cjs',
 ];
 
 for (const test of tests) {

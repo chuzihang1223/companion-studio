@@ -69,3 +69,15 @@ jobs:
           name: recovery-mock-results
           path: .cache/checks/recovery.xml
           if-no-files-found: warn
+      - name: MCP protocol, Skills, permissions and synthetic benchmark
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -B -m pytest backend/tests/test_mcp_connection.py backend/tests/test_mcp_security.py backend/tests/test_mcp_api.py backend/tests/test_skill_security.py backend/tests/test_mcp_evaluation.py -q --basetemp .cache/mcp-ci-temp --junitxml .cache/checks/mcp-extensions.xml
+          node tests/ui/extensions-unit.cjs
+      - name: Keep synthetic MCP test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mcp-extensions-results
+          path: .cache/checks/mcp-extensions.xml
+          if-no-files-found: warn

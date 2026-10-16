@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-recovery.1 本地审核版**，新增 Agent Trace、只读回放、Agent Evaluation 与安全检查点续接；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-extensions.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接，以及 MCP 与 Agent Skills 扩展；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -23,6 +23,9 @@ flowchart LR
     R --> T[AgentTaskRuntime / ToolExecutor]
     T -->|本机桥接| E
     T --> V[Observation / GoalVerifier]
+    T --> MCP[MCP Adapter / 官方 Python SDK]
+    MCP --> Ext[用户明确连接的 stdio / Streamable HTTP Server]
+    Skills[按需加载的 Agent Skills] --> R
     API --> DB[(SQLite / SQLAlchemy)]
     API --> L[LLMService / OpenAI-compatible Provider]
 ```
@@ -53,6 +56,18 @@ flowchart LR
 
 ![安装版在执行中断并重启后，核验检查点并显示安全续接预览](docs/screenshots/recovery.png)
 
+本分支新增 [MCP & Skills Extension](docs/MCP_ARCHITECTURE.md)。在「设置 → MCP & Skills」
+手动配置并连接本地 stdio 或远程 Streamable HTTP Server，逐项审阅、启用工具。外部工具经过
+原 ToolRegistry、权限、Runtime、Trace 和 Recovery；工具定义变化或未知副作用会停止，
+不会自动重复外部操作。Resources / Prompts 可授权预览，返回内容属于低信任数据。
+Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出模板。
+
+[Agent Skills](docs/AGENT_SKILLS.md) 支持标准 SKILL.md 目录导入、自建、启用/禁用、更新、
+内容与文件查看及自建导出。工作任务可用 `$project-review` 显式选择；平时只读元数据，命中后
+才加载说明，需要时再读 references。随附三个 MIT 示例，不自动运行脚本、不继承 Codex 开发权限。
+[配置方法](docs/MCP_CONFIGURATION.md) · [安全边界](docs/MCP_SECURITY.md) ·
+[Skills 编写](docs/SKILLS_DEVELOPMENT.md) · [20 项受控评测](docs/MCP_EVALUATION.md)。
+
 | 功能 | 当前实现与条件 |
 | --- | --- |
 | 文字聊天 | 流式显示回复；Enter 发送、Shift + Enter 换行；加载和错误提示；单条消息最多 4000 字符。 |
@@ -60,6 +75,8 @@ flowchart LR
 | 角色管理 | 导入本应用 JSON、Tavern V2/V3 JSON 或含角色卡元数据的 PNG；手动创建、编辑和启用角色；角色设定与聊天历史分别保存。 |
 | 个性化与记忆 | 调整身份、性格、称呼、关系、回复风格和规则；手工管理记忆，从有限历史中提取相关信息。 |
 | API 配置 | OpenAI-compatible Provider；多配置预设、连接测试、热切换、模型能力及职责设置。密钥由 Electron 主进程通过 Windows 安全存储加密保存。 |
+| MCP 扩展（审核分支） | 官方 Python SDK 2.3.0；手动连接 stdio / Streamable HTTP；工具发现、独立启用、受控调用、资源和模板预览；支持受控新版及旧式握手协议。 |
+| Agent Skills（审核分支） | 本地目录导入、标准 frontmatter 校验、按需匹配、自建编辑与导出；Skill 不授予执行权限，脚本仅查看。 |
 | 附件 | 每条最多 4 个文件，每个最多 8 MB；支持文本、代码、PDF、DOCX 和图片。图片理解需要当前模型支持视觉能力。 |
 | 工作台 | 项目目录、协作对话、工作流、文件、代码、Diff、终端、网页、应用观察和媒体模块；支持 Dock、拖动、缩放、布局保存与撤销。 |
 | 本机操作 | Windows 应用发现与启动、网站搜索、项目文件操作及代码任务；简单指令可走本地路由，复杂任务需要支持 Tool Calling 的模型和相应权限。 |
@@ -75,6 +92,8 @@ flowchart LR
 - Codex 编码模式依赖另行安装并登录的 Codex CLI，以及账号可用额度。
 - 没有用户登录、云同步、向量检索、Live2D 或 3D 角色功能。
 - 本机操作受客户端版本、登录状态、网络、桌面解锁和窗口焦点影响，不能保证所有客户端和操作均成功。
+- MCP 当前只验证受控本机 Server；不宣称任意第三方服务兼容。OAuth 登录暂未提供，远程仅支持手动 Bearer 凭据。JSON Schema 有明确子集及限额；不自动安装第三方 Server。
+- 本地 MCP 程序仍具有当前账号权限；权限 UI 与目录边界不是 OS 沙箱。有效外部响应不会单独变成用户目标的验证证据。
 - 聊天上下文和主动附加并发送的文件内容会发送到所选模型服务；启用 Fish 时，朗读文本会发送给 Fish。费用和服务条款由对应服务提供方决定。
 
 ## 2. 安装方法
@@ -215,6 +234,18 @@ JSON 上限 **256 KB**，桌面选择角色卡文件上限 **6 MB**。每次导�
 - **附件**：输入框「+」选择 UTF-8 文本 / 代码、PDF、DOCX、PNG / JPEG / WebP / GIF；每条最多 4 个文件，每个最多 8 MB。
 
 PDF 提取前 30 页文本，没有 OCR，不读取加密 PDF；DOCX 提取段落；长文件选择相关片段，不保证发送全文。图片需 API 配置与模型实际支持视觉能力，GIF 使用第一帧。
+
+### MCP 与 Skills（本地审核版）
+
+1. 在 MCP & Skills 设置中添加现有程序或准确 MCP 端点，保存后手动连接并审阅原生确认框。
+2. 工具初始禁用；查看 Schema、来源和风险，再按需要启用。高风险操作每次确认。
+3. Agent Skills 页面可导入文件夹或预览随附示例；确认导入后自行启用。
+4. 在工作模式选择项目并输入 `$project-review 检查项目中的代码质量`；结果取决于当前模型、
+   已启用工具及权限。工作流显示所选 Skill 和外部工具来源。
+5. 在 Agent Evaluation 选择 MCP & Skills Core，可运行 20 项隔离合成测试，不使用私人账号。
+
+安装版自带客户端与示例测试 Server 所需依赖，无需为本应用重新装 Python/Node；第三方
+MCP 程序仍可能要求自行安装运行时。配置与超时示例见 [MCP 配置](docs/MCP_CONFIGURATION.md)。
 
 ## 4. 输入输出示例
 

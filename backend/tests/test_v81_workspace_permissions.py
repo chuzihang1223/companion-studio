@@ -342,6 +342,8 @@ def test_runtime_denies_unknown_executable_even_with_approved_id(tmp_path, monke
         task_id=str(uuid4()),
         resume_verified=None,
         work_session_id="s",
+        conversation_id="isolated-permission-test",
+        selected_skills=None,
         user_text="打开未知应用",
         executor=ToolExecutor(tmp_path / "workspace"),
         calls=[

@@ -72,6 +72,13 @@ class ServerConfig(BaseModel):
     def consistent(self):
         if self.transport == "http" and (self.args or self.environment_names):
             raise ValueError("MCP_CONFIG_INVALID")
+        if self.transport == "http":
+            import httpx2
+
+            try:
+                self.endpoint_or_command = str(httpx2.URL(self.endpoint_or_command))
+            except (httpx2.InvalidURL, ValueError):
+                raise ValueError("MCP_CONFIG_INVALID") from None
         return self
 
 

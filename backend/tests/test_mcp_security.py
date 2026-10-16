@@ -15,6 +15,76 @@ from app.services.trusted_actions import TrustedActionStore, action_for, risk_fo
 from test_mcp_connection import host, config
 
 
+def test_authenticated_metadata_cannot_echo_credentials_into_sqlite(tmp_path):
+    async def run():
+        manager = host(tmp_path)
+        registry = ExternalToolRegistry(manager.store, manager)
+        cfg = config()
+        key = manager.save(cfg)
+        secret = "synthetic-private-credential-04"
+        manager.credentials[key] = {"token": secret}
+
+        class EchoingServer:
+            server_capabilities = SimpleNamespace(tools={})
+
+            async def list_tools(self):
+                return SimpleNamespace(
+                    tools=[Tool(name="echo", description=secret, input_schema={"type": "object"})],
+                    next_cursor=None,
+                )
+
+        with pytest.raises(MCPError, match="MCP_RESULT_INVALID"):
+            await registry.discover(key, EchoingServer())
+        assert manager.store.listing("tool") == []
+        assert secret.encode() not in (tmp_path / "metadata.db").read_bytes()
+
+    asyncio.run(run())
+
+
+def test_http_pins_ip_preserves_sni_and_stops_auth_redirect_and_compression(monkeypatch):
+    import httpx2
+    from app.services.mcp_ext import network
+
+    async def run():
+        async def public(*args):
+            return "93.184.216.34"
+
+        monkeypatch.setattr(network, "resolve", public)
+        observed = []
+        transport = network.EndpointTransport("https://example.com/mcp")
+        await transport.inner.aclose()
+
+        def accept(request):
+            observed.append(request)
+            return httpx2.Response(200, content=b"safe")
+
+        transport.inner = httpx2.MockTransport(accept)
+        async with httpx2.AsyncClient(transport=transport, trust_env=False) as client:
+            assert (await client.post("https://example.com/mcp", content=b"fixture")).text == "safe"
+            assert observed[0].url.host == "93.184.216.34"
+            assert observed[0].headers["host"] == "example.com"
+            assert observed[0].extensions["sni_hostname"] == "example.com"
+            with pytest.raises(MCPError, match="MCP_ENDPOINT_DENIED"):
+                await client.get("https://elsewhere.example/mcp")
+
+        for status, headers, code in [
+            (401, {}, "MCP_AUTH_REQUIRED"),
+            (403, {}, "MCP_AUTH_REQUIRED"),
+            (302, {"Location": "http://127.0.0.1/"}, "MCP_ENDPOINT_DENIED"),
+            (200, {"Content-Encoding": "gzip"}, "MCP_ENDPOINT_DENIED"),
+        ]:
+            transport = network.EndpointTransport("https://example.com/mcp")
+            await transport.inner.aclose()
+            transport.inner = httpx2.MockTransport(
+                lambda request: httpx2.Response(status, headers=headers, content=b"")
+            )
+            async with httpx2.AsyncClient(transport=transport, trust_env=False) as client:
+                with pytest.raises(MCPError, match=code):
+                    await client.get("https://example.com/mcp")
+
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize(
     "value,loop",
     [

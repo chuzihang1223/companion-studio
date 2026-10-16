@@ -5,6 +5,7 @@ import { number, rate } from './presentation';
 export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | null }) {
   const m = run?.metrics;
   const recovery = m?.recovery;
+  const mcp = m?.mcp;
   const values = [
     ['有效评分 / 总任务', `${m?.valid_count ?? 0} / ${run?.total_cases ?? 0}`],
     [run?.mode === 'mock' ? 'Mock 回归通过率' : '评测通过率', rate(m?.success_rate)],
@@ -25,6 +26,21 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
       ['未确认副作用', String(recovery.unresolved_side_effects)],
       ['合成用户干预', String(recovery.human_interventions)],
       ['合成目标完成率', rate(recovery.goal_completion_rate)],
+    );
+  if (mcp)
+    values.push(
+      ['MCP 连接成功率（合成）', rate(mcp.connection_success_rate)],
+      ['工具发现成功率（合成）', rate(mcp.discovery_success_rate)],
+      ['工具调用成功率（含故障）', rate(mcp.tool_success_rate)],
+      ['Schema 拒绝', String(mcp.schema_failures)],
+      ['重新连接', String(mcp.reconnections)],
+      ['权限拒绝', String(mcp.permission_denials)],
+      [
+        '调用 P50 / P95 ms',
+        `${number(mcp.tool_latency_p50_ms)} / ${number(mcp.tool_latency_p95_ms)}`,
+      ],
+      ['Skill 加载 ms', number(mcp.average_skill_load_ms)],
+      ['Skill 合成匹配准确率', rate(mcp.skill_match_accuracy)],
     );
   return (
     <>

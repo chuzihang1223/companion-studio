@@ -149,3 +149,32 @@ GitHub 的 `v*` tag 工作流准备**草稿 Release**。自动构建成功不等
 | 系统无法解密已存密钥 | Windows 安全存储可能绑定账号/环境；由档案所有者重新录入，不把私密文件导入测试或公开仓库。 |
 
 排障资料应只包含经过脱敏的错误、版本和复现步骤。删除或迁移用户数据前必须获得用户授权并确认备份；缓存清理也不能覆盖用户角色、聊天或声音配置。
+
+## 7. MCP 与 Agent Skills 审核分支
+
+本地候选版为 `0.2.0-extensions.1`；已公开下载的版本不因此改变。安装后的扩展配置属于该档案，
+不会从个人版、其他审核版或正式档案复制。新增依赖固定在 Python lock 中，使用官方 `mcp==2.3.0`。
+标准示例位于 `examples/agent-skills`，随安装包提供，但不自动导入或启用。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_mcp_connection.py backend/tests/test_mcp_security.py backend/tests/test_mcp_api.py backend/tests/test_skill_security.py backend/tests/test_mcp_evaluation.py
+node tests/ui/extensions-unit.cjs
+```
+
+协议测试实际启动本项目的受控 Server；模型规划使用合成回复。CI 不连接第三方服务器，不读取私人
+凭据，也不发送收费模型请求。完整安装版界面测试为显式执行的独立步骤：
+
+```powershell
+$env:COMPANION_TEST_EXE = 'F:\StudioReview\Program\CompanionStudio.exe'
+$env:COMPANION_TEST_HOME = 'F:\StudioReview\NewEmptyProfile'
+node tests/ui/extensions-e2e.cjs
+```
+
+上述路径为示例，`NewEmptyProfile` 必须为空。测试使用实际 Electron、IPC、冻结后端、SQLite 和
+SDK stdio，原生授权对话框的响应和模型输出由受控测试替代；它不证明人工点击、外部服务可靠性或
+真实模型效果。源码诊断可设置 `COMPANION_TEST_SOURCE=1`，并将 executable 指向**本项目锁定的**
+`desktop/node_modules/electron/dist/electron.exe`；报告会明确标为 source mode，不能当作安装验收。
+重启检查验证保存的元数据和 Skill，不自动重连外部 Server。
+
+使用、限制和评测解释见 [MCP 配置](MCP_CONFIGURATION.md)、[扩展安全](MCP_SECURITY.md)、
+[Agent Skills](AGENT_SKILLS.md) 与 [MCP 评测](MCP_EVALUATION.md)。

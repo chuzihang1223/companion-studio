@@ -498,6 +498,23 @@ export default function AppV3() {
     }
   }, [panel]);
   useEffect(() => {
+    const insertPreview = (event: Event) => {
+      const text = (event as CustomEvent<{ text?: unknown }>).detail?.text;
+      if (typeof text !== 'string' || text.length > 3200) return;
+      rawSetInput((previous) => {
+        const next = (previous + '\n\nMCP 低信任参考（请在发送前审阅）：\n' + text).slice(0, 4000);
+        const key =
+          activeIdRef.current ||
+          '$new:' + (characterIdRef.current || 'assistant') + ':' + agentModeRef.current;
+        runtimeRef.current.draft(key, next);
+        return next;
+      });
+      setPanel(null);
+    };
+    window.addEventListener('companion-extension-preview', insertPreview);
+    return () => window.removeEventListener('companion-extension-preview', insertPreview);
+  }, [setPanel]);
+  useEffect(() => {
     let active = true;
     void loadCharacter()
       .then(async (profile) => {

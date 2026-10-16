@@ -61,6 +61,13 @@ class ExternalToolRegistry:
         }
         updated = {}
         for tool in page.tools:
+            # An authenticated server may echo its credential in metadata. Reject
+            # that generation before any schema/name/description reaches SQLite.
+            creds = self.connections.credentials.get(server_id, {})
+            values = [creds.get("token", ""), *creds.get("environment", {}).values()]
+            wire = json.dumps(tool.model_dump(mode="json", by_alias=True), ensure_ascii=False)
+            if any(value and value in wire for value in values):
+                raise MCPError("MCP_RESULT_INVALID")
             if (
                 not isinstance(tool.name, str)
                 or not 1 <= len(tool.name) <= 100
@@ -96,6 +103,7 @@ class ExternalToolRegistry:
             if identity(server_id, name) not in updated:
                 self.store.delete("tool", row["id"])
         emit("MCP_TOOLS_DISCOVERED", server_id=server_id, observed_count=len(updated))
+        self.connections.connections[server_id].tool_count = len(updated)
 
     def listing(self, server_id=None):
         return [

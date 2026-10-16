@@ -2,6 +2,14 @@
 
 interface Window {
   desktopAPI?: {
+    readExtensions: <K extends keyof import('./extensions/types').ExtensionReads>(
+      operation: K,
+      options?: { server_id?: string; skill_id?: string; file?: string },
+    ) => Promise<import('./extensions/types').ExtensionReads[K]>;
+    controlExtensions: (
+      operation: import('./extensions/types').ExtensionControl,
+      options?: Record<string, unknown>,
+    ) => Promise<unknown>;
     readAgentRecovery: <K extends keyof import('./recovery/types').RecoveryReads>(
       operation: K,
       options: import('./recovery/types').RecoveryScope,

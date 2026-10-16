@@ -24,6 +24,21 @@ CAPABILITIES = {
 }
 
 
+def disk_path(value):
+    """Use Win32 extended paths without changing system long-path policy.
+
+    Isolated profiles and immutable Skill revisions can exceed MAX_PATH. Keep
+    this prefix internal; persisted paths remain relative to the owned root.
+    """
+    path = Path(value)
+    if os.name != "nt" or not path.is_absolute():
+        return path
+    raw = os.path.abspath(path)
+    if raw.startswith("\\\\?\\"):
+        return Path(raw)
+    return Path("\\\\?\\UNC\\" + raw[2:] if raw.startswith("\\\\") else "\\\\?\\" + raw)
+
+
 def safe_file(root, relative):
     parts = PurePosixPath(relative)
     if (
@@ -47,7 +62,7 @@ def safe_file(root, relative):
 
 
 def snapshot(folder):
-    root = Path(folder)
+    root = disk_path(folder)
     if not root.is_absolute() or not root.is_dir() or root.is_symlink():
         raise MCPError("SKILL_PATH_DENIED")
     files, size = {}, 0
@@ -84,7 +99,7 @@ def snapshot(folder):
 class AgentSkillManager:
     def __init__(self, store, root=None):
         self.store = store
-        self.root = root or settings.data_root / "extensions" / "skills"
+        self.root = disk_path(root or settings.data_root / "extensions" / "skills")
         self.root.mkdir(parents=True, exist_ok=True)
 
     def listing(self):

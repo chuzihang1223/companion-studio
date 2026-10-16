@@ -1,6 +1,6 @@
 export type EvaluationMode = 'mock' | 'sandbox' | 'windows_gui' | 'live_model';
 export type EvaluationOptions = {
-  dataset_id?: 'studio-core' | 'recovery-core';
+  dataset_id?: 'studio-core' | 'recovery-core' | 'mcp-skills-core';
   case_ids?: string[];
   mode?: EvaluationMode;
   model_role?: string;
@@ -29,6 +29,20 @@ export type Dataset = {
 };
 export type Usage = { status: string; total_tokens: number | null; observed_requests?: number };
 export type EvaluationMetrics = {
+  mcp?: {
+    source: string;
+    connection_success_rate: number | null;
+    discovery_success_rate: number | null;
+    tool_success_rate: number | null;
+    schema_failures: number;
+    reconnections: number;
+    permission_denials: number;
+    tool_latency_p50_ms: number | null;
+    tool_latency_p95_ms: number | null;
+    average_skill_load_ms: number | null;
+    skill_match_accuracy: number | null;
+    real_third_party_reliability: null;
+  } | null;
   recovery?: {
     attempt_count: number;
     successful_attempts: number;
@@ -119,7 +133,7 @@ export type Comparison = {
   cases: { left: EvaluationResult[]; right: EvaluationResult[] };
 };
 export type EvaluationQuery = {
-  dataset_id?: 'studio-core' | 'recovery-core';
+  dataset_id?: 'studio-core' | 'recovery-core' | 'mcp-skills-core';
   trace_id?: string;
   run_id?: string;
   attempt_id?: string;

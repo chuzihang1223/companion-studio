@@ -8,6 +8,7 @@ import PermissionSettings from './PermissionSettings';
 import BackgroundSettings from './BackgroundSettings';
 import AutomationDiagnostics from './AutomationDiagnostics';
 import RuntimeDiagnostics from './RuntimeDiagnostics';
+import ExtensionsSettings from './extensions/ExtensionsSettings';
 import type { ExpressionLevel } from './api';
 import type { PlaybackDiagnostic } from './AudioPlaybackService';
 type Props = {
@@ -69,6 +70,7 @@ export default function AppSettings(p: Props) {
     <SettingsPage
       onBack={p.onBack}
       sections={{
+        extensions: <ExtensionsSettings />,
         general: (
           <AppPanel title="启动与主题" icon="settings">
             <label>

@@ -153,3 +153,18 @@ Schema 本身不能承担所有运行时检查。当前解析器对列表成员�
 - `backend/tests/test_v85_waiters.py`：等待、取消和超时释放。
 
 新增工具时必须同时定义 Schema、参数检查、权限动作、执行分发、结果语义和必要测试。新增参数不能通过随意执行 Shell 命令实现。修改注释或格式时保留已有执行顺序、风险规则、用户数据格式和第三方协议字段。
+
+## MCP 外部工具与 Skill 参考
+
+审核分支的 `ExternalToolRegistry` 将外部名称映射为 `mcp.<身份哈希>`，保留 Server 身份、原始
+工具名与输入/输出 Schema 指纹；不会覆盖内置工具。新发现工具默认禁用、高风险、逐次确认。
+本地改为只读也不是外部程序沙箱。参数、定义或服务器变化后，旧授权不能继续使用。
+
+外部调用经过 `LLM → ToolRegistry → AgentTaskRuntime → MCPToolAdapter → MCP Client`，
+沿用 Trace、任务所有权、取消、恢复预算与持久检查点。未知副作用停止并等待审阅；重启不重放。
+仅本地审阅为只读的工具可以按既有恢复预算重试。
+
+内置 `skill.read_reference` 仅能读取本任务已选 Skill 的 `references/` 文件，验证快照摘要。
+`allowed-tools` 与能力声明仅用于依赖匹配，不是执行授权；Skill 中的脚本不能自动运行。
+Resources / Prompts 必须在扩展设置中单独授权预览，加入输入框后仍需用户主动发送。
+具体限制见 [MCP 安全](MCP_SECURITY.md) 与 [工具生命周期](MCP_TOOL_LIFECYCLE.md)。

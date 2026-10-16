@@ -453,6 +453,10 @@ class ToolRegistry:
             if not isinstance(item, dict) or not isinstance(item.get("function"), dict):
                 raise ValueError("工具调用格式无效")
             function = item.get("function") or {}
+            if not isinstance(function.get("name"), str) or (
+                function.get("arguments") is not None and not isinstance(function["arguments"], str)
+            ):
+                raise ValueError("工具调用格式无效")
             call_id = item.get("id")
             if (
                 not isinstance(call_id, str)

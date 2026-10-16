@@ -127,6 +127,30 @@ def native_components(root: Path, network: bool) -> list[dict]:
                 "files": [public_copy(root, relative, license_url, network)],
             }
         )
+    # PyJWT[crypto] brings a separate OpenSSL linked into the cryptography wheel;
+    # the interpreter's ssl.OPENSSL_VERSION does not describe that binary.
+    from cryptography.hazmat.bindings.openssl.binding import Binding
+
+    binding = Binding()
+    crypto_version = binding.ffi.string(binding.lib.OpenSSL_version(0)).decode("ascii").split()[1]
+    components.append(
+        {
+            "name": "OpenSSL (cryptography wheel)",
+            "version": crypto_version,
+            "ecosystem": "native",
+            "scope": "cryptography wheel statically linked library",
+            "license": "Apache-2.0",
+            "upstream": [f"https://github.com/openssl/openssl/tree/openssl-{crypto_version}"],
+            "files": [
+                public_copy(
+                    root,
+                    f"licenses/native/cryptography-openssl-{crypto_version}/LICENSE.txt",
+                    f"https://raw.githubusercontent.com/openssl/openssl/openssl-{crypto_version}/LICENSE.txt",
+                    network,
+                )
+            ],
+        }
+    )
     # The exact Windows dependency pins used by this Python release are public,
     # and add context to the runtime's original LICENSE.txt and acknowledgements.
     pins_url = (
@@ -253,25 +277,32 @@ def python_packages(root: Path) -> list[dict]:
     for line in (root / "backend/requirements.txt").read_text(encoding="utf-8-sig").splitlines():
         if line.strip() and not line.lstrip().startswith("#"):
             declared.append(Requirement(line))
-    runtime = [r.name for r in declared if canonical(r.name) != "pytest"]
-    development = [r.name for r in declared if canonical(r.name) == "pytest"] + [
+    runtime = [str(r) for r in declared if canonical(r.name) != "pytest"]
+    development = [str(r) for r in declared if canonical(r.name) == "pytest"] + [
         "pyinstaller",
         "pyinstaller-hooks-contrib",
     ]
     found: dict[str, str] = {}
+    visited = set()
 
     def closure(names: list[str], scope: str) -> None:
         queue = list(names)
         while queue:
-            name = canonical(queue.pop())
-            if found.get(name) == "runtime" or (name in found and scope == "build/test"):
+            request = Requirement(queue.pop())
+            name = canonical(request.name)
+            marker_key = (name, scope, tuple(sorted(request.extras)))
+            if marker_key in visited:
                 continue
+            visited.add(marker_key)
             dist = metadata.distribution(name)
-            found[name] = scope
+            if found.get(name) != "runtime":
+                found[name] = scope
             for value in dist.requires or []:
                 requirement = Requirement(value)
-                if requirement.marker is None or requirement.marker.evaluate({"extra": ""}):
-                    queue.append(requirement.name)
+                if requirement.marker is None or any(
+                    requirement.marker.evaluate({"extra": extra}) for extra in {"", *request.extras}
+                ):
+                    queue.append(str(requirement))
 
     closure(runtime, "runtime")
     closure(development, "build/test")

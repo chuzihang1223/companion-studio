@@ -30,6 +30,7 @@ PRIVATE_NAMES = {
     "api-presets.json",
     "auth.json",
     "credentials.json",
+    "extension-credentials.json",
     "secrets.json",
     "agent-preferences.json",
     "trusted-actions.json",

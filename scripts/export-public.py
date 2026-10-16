@@ -22,8 +22,23 @@ ROOT_FILES = {
     "AGENTS.md",
     "CONTRIBUTING.md",
 }
-TREES = {"backend", "characters", "desktop", "scripts", "tests", "licenses"}
+TREES = {
+    "backend",
+    "characters",
+    "desktop",
+    "scripts",
+    "tests",
+    "licenses",
+    "examples/agent-skills",
+}
 PUBLIC_DOCS = {
+    "MCP_ARCHITECTURE.md",
+    "MCP_CONFIGURATION.md",
+    "MCP_SECURITY.md",
+    "MCP_TOOL_LIFECYCLE.md",
+    "AGENT_SKILLS.md",
+    "SKILLS_DEVELOPMENT.md",
+    "MCP_EVALUATION.md",
     "AGENT_RECOVERY.md",
     "CHECKPOINT_DESIGN.md",
     "RECOVERY_SAFETY.md",
@@ -114,7 +129,7 @@ ALLOWED_BINARY = {
     "desktop/assets/companion-studio.ico",
     "desktop/assets/companion-studio.png",
 } | SCREENSHOTS
-PRIVATE_NAMES = {"api-keys.json", "fish-key.json", "secrets.json"}
+PRIVATE_NAMES = {"api-keys.json", "fish-key.json", "secrets.json", "extension-credentials.json"}
 SECRET_PATTERNS = [
     r"\bsk-[A-Za-z0-9_-]{24,}",
     r"\bgh[pousr]_[A-Za-z0-9]{30,}",

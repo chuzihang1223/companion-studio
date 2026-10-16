@@ -217,6 +217,10 @@ async function readResponse<T>(response: Response): Promise<T> {
 }
 
 export type AgentCall = {
+  server_id?: string;
+  original_tool_name?: string;
+  schema_fingerprint?: string;
+  side_effect_class?: string;
   id: string;
   name: string;
   arguments: Record<string, unknown>;
@@ -358,6 +362,11 @@ export async function executeAgent(
   expression: ExpressionLevel,
   speedFactor: number,
 ): Promise<AgentResult> {
+  if (window.desktopAPI?.controlExtensions)
+    await window.desktopAPI.controlExtensions('approve-plan', {
+      plan_id: planId,
+      approved_ids: approvedIds,
+    });
   return readResponse(
     await fetch(`${await backendUrl()}/api/agent/execute`, {
       method: 'POST',
@@ -389,6 +398,11 @@ export async function* streamAgent(
   speedFactor: number,
   signal?: AbortSignal,
 ): AsyncGenerator<ChatStreamEvent> {
+  if (window.desktopAPI?.controlExtensions)
+    await window.desktopAPI.controlExtensions('approve-plan', {
+      plan_id: planId,
+      approved_ids: approvedIds,
+    });
   yield* readEventStream(
     await fetch(`${await backendUrl()}/api/agent/execute/stream`, {
       signal,

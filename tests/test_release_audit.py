@@ -243,7 +243,7 @@ def test_cli_failure_nonzero_and_error_does_not_echo_input(tmp_path):
     for name in POLICY.ROOT_FILES:
         (tmp_path / name).write_text("", encoding="utf-8")
     for name in POLICY.TREES:
-        (tmp_path / name).mkdir(exist_ok=True)
+        (tmp_path / name).mkdir(parents=True, exist_ok=True)
     for name in getattr(POLICY, "DOC_FILES", set()):
         file = tmp_path / name
         file.parent.mkdir(parents=True, exist_ok=True)

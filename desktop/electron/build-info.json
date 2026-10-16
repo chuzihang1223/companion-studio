@@ -1,8 +1,8 @@
 {
-  "version": "0.2.0-recovery.1",
+  "version": "0.2.0-extensions.1",
   "product_name": "Companion Studio",
-  "build_label": "Companion Studio Recovery Local Review",
-  "build_id": "studio-0.2.0-recovery.1-source",
+  "build_label": "Companion Studio MCP Skills Local Review",
+  "build_id": "studio-0.2.0-extensions.1-source",
   "built_at": null,
   "channel": "review",
   "app_id": "com.companionstudio.desktop",

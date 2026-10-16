@@ -24,7 +24,7 @@ def test_upstream_build_sources_survive_while_generated_builds_are_excluded(tmp_
     for name in POLICY["ROOT_FILES"]:
         (tmp_path / name).write_text("fixture", encoding="utf-8")
     for name in POLICY["TREES"]:
-        (tmp_path / name).mkdir()
+        (tmp_path / name).mkdir(parents=True)
     paths = [
         "licenses/source/upstream/build/args/release.gn",
         "desktop/build/generated.txt",

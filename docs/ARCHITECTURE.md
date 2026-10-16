@@ -195,3 +195,16 @@ URL 策略用于拒绝不允许的协议、凭据及明显本机/私有 IP 地�
 审核分支的恢复层复用原任务锁、权限、执行器、Trace 和 Evaluation。运行前提交意图，异常按固定
 Schema 分类，再按预算和当前证据恢复；重启不自动重放。工作流中提供续接面板，评测中新增
 Recovery Core 16 项合成故障。设计和当前限制见 [检查点](CHECKPOINT_DESIGN.md) 与 [恢复安全](RECOVERY_SAFETY.md)。
+
+## 10. MCP 与 Agent Skills 扩展（本地候选版）
+
+`services/mcp_ext` 使用官方 SDK 连接手动授权的 stdio / Streamable HTTP Server。
+外部工具经过独立命名空间、Schema 指纹、本地风险审阅和原有执行器授权，结果标记为低信任数据。
+协议成功与目标验证分别记录，不将外部服务器的自报成功当成整个任务完成。
+
+`services/skills` 解析标准 `SKILL.md`，先匹配元数据，再按需加载一份说明及显式请求的参考文件。
+Skill 不授予权限，不启动 `scripts`；脚本文件仅可查看。新增 SQLite `extension_records` 表以
+增量方式存储元数据，凭据由 Electron 主进程加密保管，只在当前连接内存使用。
+
+详细边界见 [MCP 架构](MCP_ARCHITECTURE.md)、[工具生命周期](MCP_TOOL_LIFECYCLE.md)
+与 [Skills 开发](SKILLS_DEVELOPMENT.md)。布局、缩放、拖拽和滚动引擎不属于此次扩展的修改范围。

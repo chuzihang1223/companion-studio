@@ -25,11 +25,18 @@ async function unusedPort() {
 class StudioSmokeDriver {
   constructor() {
     const project = path.resolve(__dirname, '../..');
+    this.source = process.env.COMPANION_TEST_SOURCE === '1' ? project : null;
     this.exe = process.env.COMPANION_TEST_EXE;
     assert.ok(
       this.exe && fs.statSync(this.exe).isFile(),
       'Set COMPANION_TEST_EXE to the installed test executable',
     );
+    if (this.source)
+      assert.equal(
+        path.resolve(this.exe).toLowerCase(),
+        path.join(project, 'desktop/node_modules/electron/dist/electron.exe').toLowerCase(),
+        "Source mode only accepts this product's locked Electron",
+      );
     this.home = path.resolve(
       process.env.COMPANION_TEST_HOME ||
         path.join(path.dirname(project), 'Smoke', 'installed-' + Date.now()),
@@ -41,6 +48,7 @@ class StudioSmokeDriver {
     this.report = {
       profile: this.home,
       executable: this.exe,
+      sourceMode: !!this.source,
       realModelRequests: 0,
       realVoiceRequests: 0,
       checks: [],
@@ -122,6 +130,7 @@ class StudioSmokeDriver {
     this.child = spawn(
       this.exe,
       [
+        ...(this.source ? [path.join(this.source, 'desktop')] : []),
         '--compat',
         '--remote-debugging-port=' + this.ports.renderer,
         '--inspect=' + this.ports.main,

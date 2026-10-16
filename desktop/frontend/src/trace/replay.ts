@@ -35,6 +35,18 @@ export const traceStatuses: Record<string, string> = {
   denied: '已拒绝',
 };
 export const eventNames: Record<string, string> = {
+  MCP_CONNECTION_STARTED: '开始连接 MCP',
+  MCP_CONNECTION_ESTABLISHED: 'MCP 已连接',
+  MCP_CONNECTION_FAILED: 'MCP 连接失败',
+  MCP_TOOLS_DISCOVERED: '发现 MCP 工具',
+  MCP_TOOL_STARTED: '开始 MCP 调用',
+  MCP_TOOL_COMPLETED: 'MCP 调用返回',
+  MCP_TOOL_FAILED: 'MCP 调用失败',
+  MCP_SERVER_DISCONNECTED: 'MCP 已断开',
+  MCP_RECONNECT_ATTEMPTED: '重新建立 MCP 连接',
+  SKILL_SELECTED: '选中 Skill',
+  SKILL_LOADED: '按需加载 Skill',
+  SKILL_EXECUTION_BLOCKED: 'Skill 已阻断',
   RECOVERY_DETECTED: '检测到恢复需求',
   RECOVERY_CLASSIFIED: '识别失败类型',
   RECOVERY_PLAN_CREATED: '生成恢复策略',

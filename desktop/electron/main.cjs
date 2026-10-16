@@ -315,7 +315,7 @@ ipcMain.handle('theme-settings', (event, value) => {
   return value ? appearanceConfig.apply(value) : appearanceConfig.current();
 });
 /** 代理本地控制接口；Token 留在主进程，不返回给渲染层。 */
-async function privateBackend(route, body, method = 'POST') {
+async function privateBackend(route, body, method = 'POST', timeout = 15000) {
   const response = await fetch(backend.url + route, {
     method: body ? method : 'GET',
     headers: {
@@ -323,10 +323,13 @@ async function privateBackend(route, body, method = 'POST') {
       'X-Companion-Control-Token': backendManager.controlToken,
     },
     body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(timeout),
   });
   const result = await response.json();
-  if (!response.ok) throw Error(result.detail || '操作未完成');
+  if (!response.ok)
+    throw Error(
+      typeof result.detail === 'string' ? result.detail : result.detail?.code || '操作未完成',
+    );
   return result;
 }
 require('./virtual-documents.cjs')({
@@ -341,7 +344,24 @@ require('./agent-traces.cjs')({
   request: privateBackend,
   exportDirectory: path.join(paths.home, 'Exports'),
 });
-require('./agent-recovery.cjs')({ ipcMain, requireMainWindow, request: privateBackend });
+const extensionHost = require('./extensions.cjs')({
+  ipcMain,
+  requireMainWindow,
+  request: (...args) => privateBackend(args[0], args[1], args[2], 95000),
+  dialog,
+  safeStorage: require('electron').safeStorage,
+  userData: paths.userData,
+  examplesDirectory: app.isPackaged
+    ? path.join(process.resourcesPath, 'agent-skills')
+    : path.join(paths.projectRoot, 'examples', 'agent-skills'),
+  exportsDirectory: path.join(paths.home, 'Exports'),
+});
+require('./agent-recovery.cjs')({
+  ipcMain,
+  requireMainWindow,
+  request: privateBackend,
+  authorizeMCP: extensionHost.approvePlan,
+});
 const stopEvaluationSubscriptions = require('./evaluation.cjs')({
   ipcMain,
   requireMainWindow,

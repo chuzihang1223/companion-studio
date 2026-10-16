@@ -12,8 +12,10 @@ This inventory records the actual dependency versions in the build environment. 
 | anyio | 4.15.1 | runtime | MIT | [Files](licenses/python/anyio-4.15.1/licenses/LICENSE) |
 | attrs | 26.1.0 | runtime | MIT | [Files](licenses/python/attrs-26.1.0/licenses/LICENSE) |
 | certifi | 2026.7.22 | runtime | MPL-2.0 | [Files](licenses/python/certifi-2026.7.22/licenses/LICENSE) |
+| cffi | 2.1.1 | runtime | MIT-0 | [Files](licenses/python/cffi-2.1.1/licenses/LICENSE) |
 | click | 8.5.0 | runtime | BSD-3-Clause | [Files](licenses/python/click-8.5.0/licenses/LICENSE.txt) |
 | colorama | 0.4.6 | build/test | BSD-3-Clause | [Files](licenses/python/colorama-0.4.6/licenses/LICENSE.txt) |
+| cryptography | 50.0.2 | runtime | Apache-2.0 OR BSD-3-Clause | [Files](licenses/python/cryptography-50.0.2/licenses/LICENSE) |
 | fastapi | 0.141.1 | runtime | MIT | [Files](licenses/python/fastapi-0.141.1/licenses/LICENSE) |
 | fish-audio-sdk | 1.3.0 | runtime | Apache-2.0 | [Files](licenses/python/fish-audio-sdk-1.3.0/licenses/LICENSE) |
 | greenlet | 3.5.6 | runtime | MIT AND PSF-2.0 | [Files](licenses/python/greenlet-3.5.6/licenses/LICENSE) |
@@ -35,6 +37,7 @@ This inventory records the actual dependency versions in the build environment. 
 | pefile | 2024.8.26 | build/test | MIT | [Files](licenses/python/pefile-2024.8.26/LICENSE) |
 | pillow | 12.3.0 | runtime | MIT-CMU | [Files](licenses/python/pillow-12.3.0/licenses/LICENSE) |
 | pluggy | 1.6.0 | build/test | MIT | [Files](licenses/python/pluggy-1.6.0/licenses/LICENSE) |
+| pycparser | 3.11 | runtime | BSD-3-Clause | [Files](licenses/python/pycparser-3.11/licenses/LICENSE) |
 | pydantic | 2.13.5 | runtime | MIT | [Files](licenses/python/pydantic-2.13.5/licenses/LICENSE) |
 | pydantic_core | 2.46.5 | runtime | MIT | [Files](licenses/python/pydantic-core-2.46.5/licenses/LICENSE) |
 | Pygments | 2.21.0 | build/test | BSD-2-Clause | [Files](licenses/python/pygments-2.21.0/licenses/AUTHORS) |
@@ -67,6 +70,7 @@ This inventory records the actual dependency versions in the build environment. 
 | CPython | 3.12.3 | runtime | Python-2.0 | [Files](licenses/python-runtime-3.12.3/LICENSE.txt) |
 | OpenSSL | 3.0.13 | Python runtime native library | Apache-2.0 | [Files](licenses/native/openssl-3.0.13/LICENSE) |
 | zlib | 1.3.1 | Python runtime native library | Zlib | [Files](licenses/native/zlib-1.3.1/LICENSE) |
+| OpenSSL (cryptography wheel) | 4.0.3 | cryptography wheel statically linked library | Apache-2.0 | [Files](licenses/native/cryptography-openssl-4.0.3/LICENSE.txt) |
 | liblzma (CPython) | 5.2.5 | Python runtime statically linked library | LicenseRef-XZ-Public-Domain | [Files](licenses/native/cpython-liblzma-5.2.5/COPYING) |
 | SQLite | 3.45.1 | Python runtime native library | blessing | [Files](licenses/native/sqlite-3.45.1/copyright.html) |
 | brotli | 1.2.0 | Pillow wheel native component | MIT | [Files](licenses/python/pillow-12.3.0/licenses/LICENSE) |

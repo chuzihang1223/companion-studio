@@ -1,0 +1,89 @@
+.extensions-settings nav,
+.extension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.extension-manager {
+  min-width: 0;
+}
+.extensions-settings nav button,
+.extension-manager button,
+.work-extension-summary button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 7px 12px;
+}
+.extensions-settings nav button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.extension-manager input:not([type='checkbox']),
+.extension-manager textarea,
+.extension-manager select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px;
+  font: inherit;
+}
+.extension-manager fieldset,
+.extension-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.extension-manager label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+.extension-manager input:not([type='checkbox']),
+.extension-manager textarea {
+  width: 100%;
+  min-width: 0;
+}
+.extension-manager textarea {
+  min-height: 64px;
+}
+.extension-manager .skill-editor {
+  min-height: 280px;
+  font-family: monospace;
+}
+.extension-manager pre,
+.work-extension-summary pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 360px;
+  overflow: auto;
+  font-size: 12px;
+  padding: 8px;
+}
+.extension-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+.extension-list > button {
+  text-align: left;
+  padding: 12px;
+}
+.extension-list small {
+  display: block;
+  opacity: 0.75;
+}
+.work-extension-summary {
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.work-extension-summary button {
+  margin: 4px;
+}

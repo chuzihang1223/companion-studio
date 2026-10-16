@@ -234,11 +234,13 @@ async def catalog(request: Request, server_id: UUID):
     key = str(server_id)
     state = await invoke(manager.status, key)
     result = {"resources": [], "prompts": [], "capabilities": state["capabilities"]}
+    creds = manager.credentials.get(key, {})
+    secrets = [creds.get("token", ""), *creds.get("environment", {}).values()]
     for kind in ("resources", "prompts"):
         if state["capabilities"].get(kind) is not None:
             page = await invoke(manager.invoke, key, "list_" + kind)
             raw = bounded_json(page.model_dump(mode="json", by_alias=True, exclude_none=True))
-            result[kind] = clean(raw.get(kind, [])[:50])
+            result[kind] = clean(raw.get(kind, [])[:50], secrets)
     return result
 
 
@@ -279,12 +281,12 @@ async def export_template(request: Request):
         "schema_version": 1,
         "servers": [
             {
-                "display_name": row["config"]["display_name"],
+                "display_name": "MCP Server " + str(index + 1),
                 "transport": row["config"]["transport"],
                 "endpoint_or_command": "REPLACE_BEFORE_ENABLE",
                 "enabled": False,
             }
-            for row in request.app.state.extension_store.listing("server")
+            for index, row in enumerate(request.app.state.extension_store.listing("server"))
         ],
     }
 

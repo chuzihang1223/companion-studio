@@ -10,6 +10,17 @@ from test_mcp_connection import host
 VALID = "---\nname: project-review\ndescription: Review project quality and search code 代码质量检查\nmetadata:\n  version: '1.0'\n  companion-capabilities: read_project_files\n---\nRead selected project files. Never execute scripts.\n"
 
 
+def test_deep_profile_skill_revision_preserves_relative_metadata(tmp_path):
+    manager = host(tmp_path)
+    skills = AgentSkillManager(manager.store, tmp_path / ("deep-" + "a" * 64) / ("b" * 64))
+    item = skills.create("project-review", VALID)
+    assert not item["installation_path"].startswith(("/", "\\"))
+    skills.enable(item["id"], True)
+    assert skills.select("$project-review", {"workspace.read"})["context"].startswith(
+        "Read selected"
+    )
+
+
 @pytest.mark.parametrize(
     "text",
     [

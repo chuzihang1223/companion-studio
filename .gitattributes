@@ -2,3 +2,6 @@
 * -text
 # Preserve the upstream RST heading bytes; it is not a Git conflict marker.
 licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst conflict-marker-size=32
+# These exact upstream license bytes include spaces; do not rewrite legal evidence.
+licenses/python/cffi-2.1.1/licenses/LICENSE whitespace=-blank-at-eol,-blank-at-eof
+licenses/python/pycparser-3.11/licenses/LICENSE whitespace=-blank-at-eol,-blank-at-eof

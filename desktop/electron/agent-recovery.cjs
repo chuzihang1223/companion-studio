@@ -15,7 +15,7 @@ const object = (value, allowed) => {
   )
     throw Error('无效恢复参数');
 };
-module.exports = ({ ipcMain, requireMainWindow, request }) => {
+module.exports = ({ ipcMain, requireMainWindow, request, authorizeMCP }) => {
   ipcMain.handle('agent-recovery-read', (event, operation, options) => {
     requireMainWindow(event);
     object(options, ['task_id', 'conversation_id', 'work_session_id']);
@@ -58,14 +58,18 @@ module.exports = ({ ipcMain, requireMainWindow, request }) => {
         typeof options.confirm_model_requests !== 'boolean')
     )
       throw Error('无效的恢复授权或版本');
-    return request('/api/agent/recovery/tasks/' + uuid(taskId) + '/' + action, {
-      conversation_id: uuid(options.conversation_id),
-      work_session_id: uuid(options.work_session_id),
-      request_id: uuid(options.request_id),
-      revision: options.revision,
-      approved_ids: approved,
-      renderer_id: 'renderer-' + event.sender.id,
-      confirm_model_requests: options.confirm_model_requests === true,
-    });
+    const execute = () =>
+      request('/api/agent/recovery/tasks/' + uuid(taskId) + '/' + action, {
+        conversation_id: uuid(options.conversation_id),
+        work_session_id: uuid(options.work_session_id),
+        request_id: uuid(options.request_id),
+        revision: options.revision,
+        approved_ids: approved,
+        renderer_id: 'renderer-' + event.sender.id,
+        confirm_model_requests: options.confirm_model_requests === true,
+      });
+    if (action === 'resume' && authorizeMCP && approved.length)
+      return authorizeMCP(event, uuid(taskId), approved).then(execute);
+    return execute();
   });
 };

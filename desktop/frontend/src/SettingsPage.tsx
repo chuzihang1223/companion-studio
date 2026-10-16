@@ -6,6 +6,7 @@ export type SettingsKey =
   | 'chat'
   | 'work'
   | 'permissions'
+  | 'extensions'
   | 'api'
   | 'voice'
   | 'voiceInput'
@@ -20,6 +21,7 @@ const categories: Array<[SettingsKey, string, IconName]> = [
   ['chat', '聊天', 'conversation'],
   ['work', '工作模式', 'network'],
   ['permissions', '权限', 'check'],
+  ['extensions', 'MCP & Skills', 'package'],
   ['api', 'API', 'code'],
   ['voice', '语音', 'wave'],
   ['voiceInput', '语音输入', 'volume'],

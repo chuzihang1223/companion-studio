@@ -54,6 +54,7 @@ class Connection:
         self.last_connected_at = None
         self.protocol_version = None
         self.capabilities = {}
+        self.tool_count = 0
         self.client = None
         self.owner = None
         self.stop = asyncio.Event()
@@ -90,16 +91,18 @@ class MCPConnectionManager:
 
     def status(self, server_id):
         config = self.config(server_id)
+        saved = self.store.get("server", server_id).get("last_connection", {})
         c = self.connections.get(server_id)
         return {
             "server_id": server_id,
             "config": config.model_dump(),
             "config_fingerprint": digest(config.model_dump()),
             "connection_status": c.status if c else S.DISCONNECTED,
-            "protocol_version": c.protocol_version if c else None,
-            "capabilities": c.capabilities if c else {},
+            "protocol_version": c.protocol_version if c else saved.get("protocol_version"),
+            "capabilities": c.capabilities if c else saved.get("capabilities", {}),
+            "tool_count": c.tool_count if c else saved.get("tool_count", 0),
             "last_error": c.last_error if c else None,
-            "last_connected_at": c.last_connected_at if c else None,
+            "last_connected_at": c.last_connected_at if c else saved.get("at"),
             "reconnection_count": c.reconnections if c else 0,
             "recent_calls": list(c.history) if c else [],
         }
@@ -186,13 +189,25 @@ class MCPConnectionManager:
                         async with asyncio.timeout(config.connect_timeout):
                             c.client = await stack.enter_async_context(client)
                             c.protocol_version = client.protocol_version
-                            c.capabilities = client.server_capabilities.model_dump(
-                                exclude_none=True
-                            )
+                            # Persist only supported feature flags. Vendor extras are
+                            # untrusted and could echo credentials or arbitrary text.
+                            c.capabilities = {
+                                name: {}
+                                for name in ("tools", "resources", "prompts")
+                                if getattr(client.server_capabilities, name, None) is not None
+                            }
                             if self.on_discovery:
                                 await self.on_discovery(server_id, client)
                         c.last_error = None
                         c.last_connected_at = datetime.now(timezone.utc).isoformat()
+                        saved = self.store.get("server", server_id)
+                        saved["last_connection"] = {
+                            "at": c.last_connected_at,
+                            "protocol_version": c.protocol_version,
+                            "capabilities": c.capabilities,
+                            "tool_count": c.tool_count,
+                        }
+                        self.store.save("server", saved, server_id)
                         c.status = S.CONNECTED
                         emit("MCP_CONNECTION_ESTABLISHED", server_id=server_id)
                         c.ready.set()

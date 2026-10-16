@@ -24,6 +24,8 @@ class ConversationRouter:
         """
         if mode == "chat":
             return "chat"
+        if re.search(r"\bmcp\b|(?:\$|skill:)[a-z0-9][a-z0-9-]{0,63}", message, re.I):
+            return "agent"
         from app.services.local_action_intent import LocalActionIntentResolver
 
         return (

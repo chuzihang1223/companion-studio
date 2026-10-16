@@ -71,6 +71,7 @@ tests/**/diagnostics/current/
 api-keys.json
 fish-key.json
 secrets.json
+extension-credentials.json
 .[eE][nN][vV]
 .[eE][nN][vV].*
 !.env.example
