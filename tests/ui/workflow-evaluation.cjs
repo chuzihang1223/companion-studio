@@ -8,10 +8,18 @@ const { q, sleep } = require('./studio-smoke-driver.cjs');
 module.exports = async function exerciseEvaluation(driver) {
   const read = (op, options = {}) =>
     driver.c.evaluate(`window.desktopAPI.readEvaluation(${q(op)},${q(options)})`);
+  // A maximized module owns the work area until its existing Restore action is used.
+  await driver.c.evaluate(
+    '(()=>{const n=document.querySelector(\'[data-module=workflow_builder].module-maximized [aria-label="最大化Visual Workflow · 流程设计"]\');n?.click();return true})()',
+  );
+  await sleep(100);
   await driver.click('模块');
   await driver.click(
     'Agent Evaluation · 评测',
     "document.querySelector('.workspace-module-picker')",
+  );
+  await driver.c.evaluate(
+    "document.querySelector('[data-module=evaluation]')?.scrollIntoView({block:'start'});true",
   );
   await driver.c.until("!!document.querySelector('.evaluation-dashboard')");
   await driver.c.evaluate(
