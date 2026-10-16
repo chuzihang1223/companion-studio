@@ -122,6 +122,12 @@ class AgentEvaluationEngine:
             snapshot = {
                 "dataset_id": self.registry.dataset_id,
                 "dataset_version": self.registry.version,
+                "workflow_schema_version": 1
+                if self.registry.dataset_id == "workflow-core"
+                else None,
+                "workflow_templates_version": "1"
+                if self.registry.dataset_id == "workflow-core"
+                else None,
                 "dataset_sha256": self.registry.digest,
                 "case_ids": [c.case_id for c in cases],
                 "repetitions": options.repetitions,

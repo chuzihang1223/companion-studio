@@ -9,7 +9,7 @@ from app.schemas.evaluation import BenchmarkCase
 
 class BenchmarkRegistry:
     def __init__(self, dataset_id="studio-core"):
-        if dataset_id not in {"studio-core", "recovery-core", "mcp-skills-core"}:
+        if dataset_id not in {"studio-core", "recovery-core", "mcp-skills-core", "workflow-core"}:
             raise ValueError("未知内置数据集")
         raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
         self.digest = hashlib.sha256(raw).hexdigest()
@@ -30,6 +30,8 @@ class BenchmarkRegistry:
             if self.dataset_id == "studio-core"
             else "Recovery Core · 16 项"
             if self.dataset_id == "recovery-core"
+            else "Workflow Core · 20 项"
+            if self.dataset_id == "workflow-core"
             else "MCP & Skills Core · 20 项",
             "case_count": len(self.cases),
             "sha256": self.digest,

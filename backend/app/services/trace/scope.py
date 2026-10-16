@@ -93,12 +93,14 @@ class Span:
             "OPERATION_COMPLETED",
             "MODEL_REQUEST_COMPLETED",
             "VERIFICATION_PASSED",
+            "WORKFLOW_NODE_COMPLETED",
         }:
             end_event = {
                 "TOOL_COMPLETED": "TOOL_FAILED",
                 "OPERATION_COMPLETED": "OPERATION_FAILED",
                 "MODEL_REQUEST_COMPLETED": "MODEL_REQUEST_FAILED",
                 "VERIFICATION_PASSED": "VERIFICATION_FAILED",
+                "WORKFLOW_NODE_COMPLETED": "WORKFLOW_NODE_FAILED",
             }[end_event]
         self.context.send(
             "span_finish",

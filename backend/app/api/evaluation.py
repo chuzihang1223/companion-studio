@@ -40,14 +40,15 @@ async def datasets(request: Request):
     return {
         "items": [
             BenchmarkRegistry(key).public()
-            for key in ("studio-core", "recovery-core", "mcp-skills-core")
+            for key in ("studio-core", "recovery-core", "mcp-skills-core", "workflow-core")
         ]
     }
 
 
 @router.get("/datasets/{dataset_id}")
 async def dataset(
-    dataset_id: Literal["studio-core", "recovery-core", "mcp-skills-core"], request: Request
+    dataset_id: Literal["studio-core", "recovery-core", "mcp-skills-core", "workflow-core"],
+    request: Request,
 ):
     engine(request)
     return BenchmarkRegistry(dataset_id).public(True)

@@ -6,11 +6,14 @@ import time
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
-from app.services.workflows.contracts import Definition, WorkflowError
+from app.services.workflows.contracts import Definition, WorkflowError, bounded
 from app.services.workflows.variables import PATH, references, validate_condition
+from app.services.workflows.config_validation import validate_config
 
 
 def schema_check(schema):
+    bounded(schema, limit=16000)
+
     # No references, regex engines or remote schema fetching in user documents.
     def walk(value, depth=0):
         if depth > 12:
@@ -45,6 +48,7 @@ class Compiled:
     parents: dict
     ancestors: dict
     validation_ms: float
+    compile_ms: float
 
 
 class GraphValidator:
@@ -54,6 +58,8 @@ class GraphValidator:
     def compile(self, definition: Definition) -> Compiled:
         started = time.perf_counter()
         nodes = {n.node_id: n for n in definition.nodes}
+        if self.catalog:
+            self.catalog.validate_definition(definition)
         if len(nodes) != len(definition.nodes) or len({e.edge_id for e in definition.edges}) != len(
             definition.edges
         ):
@@ -65,6 +71,12 @@ class GraphValidator:
             raise WorkflowError("WORKFLOW_TERMINAL_REQUIRED")
         schema_check(definition.input_schema)
         schema_check(definition.output_schema)
+        if (
+            definition.input_schema.get("type") != "object"
+            or not isinstance(definition.input_schema.get("properties", {}), dict)
+            or len(definition.input_schema.get("properties", {})) > 30
+        ):
+            raise WorkflowError("WORKFLOW_INPUT_SCHEMA_INVALID")
         parents = {key: [] for key in nodes}
         children = {key: [] for key in nodes}
         signatures = set()
@@ -90,6 +102,7 @@ class GraphValidator:
                 raise WorkflowError("WORKFLOW_EDGE_INVALID", b.node_id)
             parents[b.node_id].append(edge)
             children[a.node_id].append(edge)
+        compile_started = time.perf_counter()
         indegree = {key: len(value) for key, value in parents.items()}
         queue = sorted(k for k, degree in indegree.items() if degree == 0)
         order, ancestors = [], {key: set() for key in nodes}
@@ -105,6 +118,7 @@ class GraphValidator:
                     queue.sort()
         if len(order) != len(nodes):
             raise WorkflowError("WORKFLOW_CYCLE")
+        compile_ms = (time.perf_counter() - compile_started) * 1000
         for node in nodes.values():
             key, config = node.node_id, node.config
             if node.type != "manual_trigger" and starts[0].node_id not in ancestors[key]:
@@ -124,6 +138,7 @@ class GraphValidator:
             }.get(node.type, set())
             if required - config.keys():
                 raise WorkflowError("WORKFLOW_CONFIG_REQUIRED", key)
+            validate_config(node)
             for ref in references({k: v for k, v in config.items() if k != "output_schema"}):
                 if not isinstance(ref, str) or not PATH.fullmatch(ref):
                     raise WorkflowError("WORKFLOW_VARIABLE_INVALID", key)
@@ -172,7 +187,8 @@ class GraphValidator:
             tuple(order),
             parents,
             ancestors,
-            (time.perf_counter() - started) * 1000,
+            (time.perf_counter() - started) * 1000 - compile_ms,
+            compile_ms,
         )
 
 

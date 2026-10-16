@@ -161,6 +161,9 @@ def metadata(value: object) -> dict:
             "origin_task_id",
             "server_id",
             "skill_id",
+            "workflow_run_id",
+            "workflow_version_id",
+            "node_execution_id",
         } and uuid_value(item):
             result[key] = uuid_value(item)
         elif key == "parameter_summary" and isinstance(item, dict):

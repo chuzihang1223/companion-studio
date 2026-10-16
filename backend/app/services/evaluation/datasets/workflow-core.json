@@ -1,0 +1,646 @@
+{
+  "dataset_id": "workflow-core",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "WF-001",
+      "title": "空草稿可保存",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 1.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-002",
+      "title": "合法线性流程",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 2.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-003",
+      "title": "循环拒绝",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 3.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-004",
+      "title": "非法连线拒绝",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 4.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-005",
+      "title": "非法变量拒绝",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 5.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-006",
+      "title": "原工具读取文件",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 6.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-007",
+      "title": "Mock 模型节点",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 7.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-008",
+      "title": "已启用 Skill 节点",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 8.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-009",
+      "title": "授权 MCP 节点",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 9.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-010",
+      "title": "断开 MCP 阻断",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 10.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-011",
+      "title": "条件 true 分支",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 11.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-012",
+      "title": "条件 false 分支",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 12.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-013",
+      "title": "Merge 跳过未激活分支",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 13.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-014",
+      "title": "人工批准",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 14.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-015",
+      "title": "人工拒绝",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 15.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-016",
+      "title": "节点超时",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 16.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-017",
+      "title": "运行中取消",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 17.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-018",
+      "title": "中断后检查点续接",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 18.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-019",
+      "title": "未知副作用不重复",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 19.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "WF-020",
+      "title": "Trace 与结果一致",
+      "description": "真实工作流编排与隔离权限/检查点/Trace 回归；模型与用户审批为合成输入。",
+      "category": "workflow",
+      "difficulty": "intermediate",
+      "input": "Check synthetic workflow case 20.",
+      "environment": "workflow-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "workflow",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 35,
+      "max_steps": 8,
+      "max_retries": 2,
+      "tags": [
+        "workflow",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

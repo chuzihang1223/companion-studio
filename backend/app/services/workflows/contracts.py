@@ -75,6 +75,17 @@ class Node(Strict):
 
     @model_validator(mode="after")
     def known_config(self):
+        if self.node_id in {
+            "constructor",
+            "prototype",
+            "toString",
+            "toLocaleString",
+            "valueOf",
+            "hasOwnProperty",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+        }:
+            raise ValueError("节点编号为保留标识")
         if self.type not in NODE_TYPES or set(self.config) - CONFIG_KEYS[self.type]:
             raise ValueError("未知节点类型或配置字段")
         for ports in (self.input_ports, self.output_ports):
@@ -101,6 +112,7 @@ class Budget(Strict):
     max_steps: int = Field(default=100, ge=1, le=100)
     max_duration_seconds: float = Field(default=600, ge=0.1, le=1800)
     max_model_calls: int = Field(default=10, ge=0, le=20)
+    max_total_tokens: int = Field(default=32768, ge=256, le=131072)
     max_tool_calls: int = Field(default=40, ge=0, le=100)
     max_intermediate_bytes: int = Field(default=262144, ge=1024, le=1048576)
 
@@ -131,6 +143,9 @@ class Definition(Strict):
 SECRET_KEY = re.compile(
     r"(?i)(password|api[_-]?key|access[_-]?token|authorization|private[_-]?key|credential|secret)"
 )
+SECRET_VALUE = re.compile(
+    r"(?i)(?:\bsk-[a-z0-9_-]{24,}|\bgithub_pat_[a-z0-9_]{24,}|\bgh[pousr]_[a-z0-9]{24,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bbearer\s+[a-z0-9_.-]{24,})"
+)
 
 
 def bounded(value, *, limit=262144, depth=0):
@@ -156,6 +171,8 @@ def bounded(value, *, limit=262144, depth=0):
             raise WorkflowError("WORKFLOW_SIZE_LIMIT")
         for item in value:
             bounded(item, limit=limit, depth=depth + 1)
+    elif isinstance(value, str) and SECRET_VALUE.search(value):
+        raise WorkflowError("WORKFLOW_SENSITIVE_VALUE")
     elif not isinstance(value, (str, int, float, bool, type(None))):
         raise WorkflowError("WORKFLOW_VALUE_INVALID")
     return value

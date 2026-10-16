@@ -57,6 +57,7 @@ class MetricsCollector:
             "retry_count": sum(row.get("retry_count", 0) for row in results),
             "recovery": recovery,
             "mcp": aggregate_mcp(valid),
+            "workflow": aggregate_workflow(valid),
             "recovery_attempts": recovery["attempt_count"] if recovery else len(recovering),
             "recovery_success_rate": recovery_rate,
             "model_usage": {
@@ -172,6 +173,8 @@ def compare_conditions(left, right):
         "max_duration_seconds",
         "max_requests",
         "token_budget",
+        "workflow_schema_version",
+        "workflow_templates_version",
     )
     differences = [
         {"field": key, "left": left.get(key), "right": right.get(key)}
@@ -186,4 +189,29 @@ def compare_conditions(left, right):
             for k in ("dataset_id", "dataset_version", "dataset_sha256", "case_ids")
         ),
         "warning": "展示观察值；不同条件不能公平排名，单次/小样本不代表模型优劣。",
+    }
+
+
+def aggregate_workflow(results):
+    rows = [r for r in results if r.get("grader_type") == "workflow"]
+    if not rows:
+        return None
+    executions = [r for r in rows if r.get("evidence", {}).get("run_state")]
+    values = [
+        r["workflow_metrics"].get("validation_ms")
+        for r in rows
+        if r.get("workflow_metrics", {}).get("validation_ms") is not None
+    ]
+    return {
+        "source": "owned_synthetic_workflow_coordinator",
+        "case_count": len(rows),
+        "executed_workflows": len(executions),
+        "completed_workflows": sum(r["evidence"]["run_state"] == "COMPLETED" for r in executions),
+        "blocked_side_effects": sum(
+            r.get("evidence", {}).get("run_state") == "NEEDS_REVIEW" for r in rows
+        ),
+        "validation_p50_ms": percentile(values, 0.5),
+        "validation_p95_ms": percentile(values, 0.95),
+        "real_ai_task_success_rate": None,
+        "estimated_cost": None,
     }

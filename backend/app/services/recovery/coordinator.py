@@ -41,7 +41,7 @@ class ResumeCoordinator:
             if len(context.calls) > 5:
                 raise RecoveryError("CHECKPOINT_INVALID")
             for call in context.calls:
-                validate_call(call)
+                validate_call(call, getattr(self.app.state, "external_tools", None))
             if (
                 plan_hash(context) != row.plan_hash
                 or workspace_hash(context, self.app.state.work_state) != row.workspace_hash

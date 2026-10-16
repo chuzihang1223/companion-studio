@@ -82,3 +82,7 @@ def observe_response(data):
     budget = _budget.get()
     if budget:
         budget.observe(data)
+
+
+def current_usage_budget():
+    return _budget.get()

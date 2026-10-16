@@ -76,6 +76,7 @@ class AgentContext:
     recovery_task_id: str | None = None
     resume_verified: set[str] | None = None
     selected_skills: list[dict] | None = None
+    retry_max_attempts: int | None = None
 
 
 class AgentService:

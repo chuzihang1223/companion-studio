@@ -54,6 +54,8 @@ from app.services.mcp_ext.registry import ExternalToolRegistry
 from app.services.mcp_ext.adapter import MCPToolAdapter
 from app.services.skills.manager import AgentSkillManager
 from app.api.extensions import router as extensions_router
+from app.api.workflows import router as workflows_router
+from app.services.workflows.coordinator import WorkflowCoordinator
 
 
 @asynccontextmanager
@@ -143,9 +145,18 @@ async def lifespan(app: FastAPI):
     app.state.voice_jobs.start()
     app.state.voice_states = {}
     app.state.voice_client.start_background()
+    app.state.workflows = None
+    try:
+        app.state.workflows = WorkflowCoordinator(app)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("workflow_initialization_unavailable")
     try:
         yield
     finally:
+        if app.state.workflows:
+            await app.state.workflows.close()
         if app.state.recovery:
             await app.state.recovery.close()
         if app.state.evaluation:
@@ -195,6 +206,7 @@ app.include_router(agent_traces_router)
 app.include_router(evaluation_router)
 app.include_router(recovery_router)
 app.include_router(extensions_router)
+app.include_router(workflows_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

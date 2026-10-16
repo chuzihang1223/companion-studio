@@ -163,6 +163,25 @@ class WorkflowRepository:
                 raise WorkflowError("WORKFLOW_EDIT_CONFLICT", status=409)
             db.commit()
 
+    def archive(self, workflow_id, revision):
+        with self.factory() as db:
+            row = db.get(WorkflowDefinitionRow, workflow_id)
+            if not row or row.revision != revision:
+                raise WorkflowError("WORKFLOW_EDIT_CONFLICT", status=409)
+            body = json.loads(row.body) | {"status": "ARCHIVED"}
+            result = db.execute(
+                update(WorkflowDefinitionRow)
+                .where(
+                    WorkflowDefinitionRow.id == workflow_id,
+                    WorkflowDefinitionRow.revision == revision,
+                )
+                .values(body=encoded(body), revision=revision + 1, updated_at=now())
+            )
+            if result.rowcount != 1:
+                raise WorkflowError("WORKFLOW_EDIT_CONFLICT", status=409)
+            db.commit()
+        return self.get(workflow_id)
+
     def create_run(self, definition, version_id, conversation_id, inputs, renderer_id):
         key = str(uuid4())
         body = {

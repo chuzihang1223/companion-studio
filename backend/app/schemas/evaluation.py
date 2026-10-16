@@ -19,17 +19,19 @@ class StrictModel(BaseModel):
 
 
 class BenchmarkCase(StrictModel):
-    case_id: str = Field(pattern=r"^(EVAL|REC|MCP)-\d{3}$")
+    case_id: str = Field(pattern=r"^(EVAL|REC|MCP|WF)-\d{3}$")
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=500)
-    category: str = Field(pattern=r"^(routing|files|browser|desktop|control|recovery|extensions)$")
+    category: str = Field(
+        pattern=r"^(routing|files|browser|desktop|control|recovery|extensions|workflow)$"
+    )
     difficulty: str = Field(pattern=r"^(basic|intermediate)$")
     input: str = Field(min_length=1, max_length=1000)
-    environment: str = Field(pattern=r"^(studio|recovery|mcp)-fixture-v1$")
+    environment: str = Field(pattern=r"^(studio|recovery|mcp|workflow)-fixture-v1$")
     execution_mode: list[Mode] = Field(min_length=1, max_length=4)
     expected_outcome: dict[str, str | bool | int] = Field(max_length=15)
     grader: str = Field(
-        pattern=r"^(exact|structured|file|exit_code|browser_dom|desktop|permission|trace|recovery|extensions)$"
+        pattern=r"^(exact|structured|file|exit_code|browser_dom|desktop|permission|trace|recovery|extensions|workflow)$"
     )
     allowed_tools: list[str] = Field(max_length=8)
     allowed_paths: list[str] = Field(max_length=8)
@@ -64,7 +66,8 @@ class BenchmarkCase(StrictModel):
 
 class RunRequest(StrictModel):
     dataset_id: str = Field(
-        default="studio-core", pattern=r"^(studio-core|recovery-core|mcp-skills-core)$"
+        default="studio-core",
+        pattern=r"^(studio-core|recovery-core|mcp-skills-core|workflow-core)$",
     )
     case_ids: list[str] = Field(default_factory=list, max_length=20)
     mode: Mode = Mode.MOCK
@@ -84,14 +87,17 @@ class RunRequest(StrictModel):
     @classmethod
     def unique_ids(cls, values):
         if len(values) != len(set(values)) or any(
-            not re.fullmatch(r"(EVAL|REC|MCP)-\d{3}", v) for v in values
+            not re.fullmatch(r"(EVAL|REC|MCP|WF)-\d{3}", v) for v in values
         ):
             raise ValueError("测试项编号必须唯一且有效")
         return values
 
     @model_validator(mode="after")
     def budgets(self):
-        if self.dataset_id in {"recovery-core", "mcp-skills-core"} and self.mode == Mode.LIVE:
+        if (
+            self.dataset_id in {"recovery-core", "mcp-skills-core", "workflow-core"}
+            and self.mode == Mode.LIVE
+        ):
             raise ValueError("Recovery 故障集仅使用确定性模型，不启动真实模型请求")
         if self.mode == Mode.LIVE:
             if not self.live_consent or self.max_requests < 1 or self.token_budget < 1:

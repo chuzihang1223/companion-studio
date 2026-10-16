@@ -17,7 +17,7 @@ from app.database.session import SessionLocal
 from app.models.runtime_task import RuntimeTask
 
 TERMINAL = {"completed", "failed", "cancelled", "interrupted", "stalled", "stopped"}
-TaskKind = Literal["agent", "chat", "voice"]
+TaskKind = Literal["agent", "chat", "voice", "workflow"]
 
 
 class RuntimeTaskRegistry:
@@ -25,6 +25,7 @@ class RuntimeTaskRegistry:
 
     def __init__(self) -> None:
         self.gates = {
+            "workflow": asyncio.Semaphore(2),
             "agent": asyncio.Semaphore(3),
             "chat": asyncio.Semaphore(4),
             "voice": asyncio.Semaphore(2),

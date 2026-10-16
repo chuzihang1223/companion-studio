@@ -274,7 +274,9 @@ class AgentTaskRuntime:
             title,
             operation,
             handle,
-            max_attempts,
+            min(max_attempts, context.retry_max_attempts)
+            if getattr(context, "retry_max_attempts", None) is not None
+            else max_attempts,
             music_identity,
             operation_name,
             permitted,

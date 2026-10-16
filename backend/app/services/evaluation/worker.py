@@ -155,6 +155,20 @@ async def evaluate(payload):
     state.work_state.trace_recorder = state.trace_recorder
     state.runtime_registry.trace_recorder = state.trace_recorder
     store.start()
+    if case.case_id.startswith("WF-"):
+        from app.services.evaluation.workflow_cases import run_case
+
+        try:
+            return await run_case(app, store, case, payload, workspace)
+        finally:
+            if getattr(state, "workflows", None):
+                await state.workflows.close()
+            if getattr(state, "mcp_connections", None):
+                await state.mcp_connections.close()
+            await state.recovery.close()
+            await state.runtime_registry.close()
+            await store.stop()
+            engine.dispose()
     if case.case_id.startswith("MCP-"):
         from app.services.evaluation.mcp_cases import run_case
 

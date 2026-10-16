@@ -105,6 +105,8 @@ def test_resolver_conditions_and_transform():
 
 def test_strict_schema_and_secret_fields():
     with pytest.raises(ValidationError):
+        Node(node_id="toString", type="manual_trigger")
+    with pytest.raises(ValidationError):
         Definition.model_validate({"schema_version": 2})
     with pytest.raises(ValidationError):
         Node(node_id="a", type="tool", config={"shell": "anything"})
