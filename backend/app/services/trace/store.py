@@ -53,6 +53,7 @@ class TraceStore:
             "dropped": 0,
             "write_failures": 0,
             "write_retries": 0,
+            "last_write_failure_code": None,
             "batches": 0,
             "write_ms": 0.0,
             "max_write_ms": 0.0,
@@ -151,6 +152,9 @@ class TraceStore:
                         except Exception:
                             pass  # A closed UI subscription cannot affect execution.
             except Exception as error:
+                self.metrics["last_write_failure_code"] = getattr(
+                    getattr(error, "orig", None), "sqlite_errorcode", None
+                )
                 self.metrics["write_failures"] += 1
                 self.metrics["dropped"] += len(batch)
                 for _, data in batch:
@@ -170,19 +174,26 @@ class TraceStore:
         # SQLite may reject a read-to-write transaction upgrade while a business
         # checkpoint commits. Retry the rolled-back projection transaction only;
         # the queue stays bounded and no tool or business transaction is repeated.
-        for attempt in range(3):
+        deadline = time.perf_counter() + 2
+        for attempt in range(16):
             try:
                 return await asyncio.to_thread(self._write, batch)
             except OperationalError as error:
                 code = getattr(error.orig, "sqlite_errorcode", 0)
-                if code & 0xFF not in {5, 6} or attempt == 2:
+                if code & 0xFF not in {5, 6} or attempt == 15 or time.perf_counter() >= deadline:
                     raise
                 self.metrics["write_retries"] += 1
-                await asyncio.sleep(0.025 * (attempt + 1))
+                await asyncio.sleep(
+                    min(0.1, 0.025 * (attempt + 1), max(0, deadline - time.perf_counter()))
+                )
 
     def _write(self, batch):
         sessions = set()
         with self.factory() as db:
+            # Reserve the short SQLite write transaction before reading rows.
+            # Deferred read->write upgrades can fail immediately with BUSY_SNAPSHOT
+            # even when busy_timeout is set, losing an entire projection batch.
+            db.connection().exec_driver_sql("BEGIN IMMEDIATE")
             for command, data in batch:
                 row = db.get(AgentTrace, data["trace_id"])
                 if command == "create" and row is None:

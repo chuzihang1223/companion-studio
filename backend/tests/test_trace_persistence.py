@@ -208,3 +208,40 @@ def test_busy_projection_transaction_retries_without_duplicating_trace_events(
         await store.stop()
 
     asyncio.run(scenario())
+
+
+def test_real_sqlite_writer_contention_recovers_only_the_projection(trace_database):
+    from sqlalchemy import event
+
+    factory, conversation, _ = trace_database
+    engine = factory.kw["bind"]
+
+    @event.listens_for(engine, "checkout")
+    def short_wait(connection, *_):
+        connection.execute("PRAGMA busy_timeout=5")
+
+    async def scenario():
+        store = TraceStore(factory)
+        trace = str(uuid4())
+        with engine.connect() as blocker:
+            blocker.exec_driver_sql("BEGIN IMMEDIATE")
+            store.enqueue(
+                "create",
+                {"trace_id": trace, "task_id": str(uuid4()), "conversation_id": conversation},
+            )
+            store.start()
+            # Release after observing the real contention, not a timing guess.
+            deadline = asyncio.get_running_loop().time() + 2
+            while (
+                not store.metrics["write_retries"] and asyncio.get_running_loop().time() < deadline
+            ):
+                await asyncio.sleep(0.005)
+            blocker.commit()
+        assert await store.flush()
+        assert store.metrics["write_retries"] >= 1 and store.metrics["dropped"] == 0
+        with factory() as db:
+            assert db.get(AgentTrace, trace)
+            assert db.get(Conversation, conversation)
+        await store.stop()
+
+    asyncio.run(scenario())

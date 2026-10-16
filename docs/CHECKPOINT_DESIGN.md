@@ -23,7 +23,8 @@ flowchart TD
 不假定工具未执行；下一次必须核验真实状态。SQLite WAL/事务保障本地已提交记录，
 不承诺硬盘/文件系统灾难后恢复。
 
-Trace 写入使用独立的短等待连接。仅对 SQLite busy/locked 的已回滚投影事务最多尝试 3 次，
+Trace 写入使用独立的短等待连接，在读取前 BEGIN IMMEDIATE 预约短写事务，避免读后升级竞争。
+仅对 SQLite busy/locked 的已回滚投影事务在 2 秒预算内有限重试（最多 16 次短事务），
 有限异步退避，不增加业务连接等待，也不重复工具。最终失败仍计入 dropped/incomplete；
 Evaluation 缺失任何任务 Trace 时判失败，不把残存的其他片段当作完整证据。
 

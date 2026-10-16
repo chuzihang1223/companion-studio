@@ -264,6 +264,10 @@ async def evaluate(payload):
         selected = [call for plan in plans for call in plan["calls"]]
         first = results[0] if results else {}
         evidence.update(
+            trace_writer_failures=store.metrics["write_failures"],
+            trace_writer_dropped=store.metrics["dropped"],
+            trace_writer_retries=store.metrics["write_retries"],
+            trace_sqlite_error_code=store.metrics["last_write_failure_code"],
             desktop_calls=len(state.desktop_bridge.calls),
             tool_executions=sum(row["tools_executed"] for row in summaries),
             unauthorized_actions=sum(row["tools_executed"] for row in summaries)

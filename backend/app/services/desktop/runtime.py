@@ -23,6 +23,7 @@ from app.services.recovery.checkpoints import RecoveryError
 from app.services.recovery.execution import RecoveryExecution
 from app.services.recovery.events import emit as recovery_event
 from app.services.recovery.step_runner import run_step
+from app.services.recovery.policy import READ_ONLY
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -141,18 +142,7 @@ class AgentTaskRuntime:
                     metadata={
                         "requires_permission": call.get("requires_confirmation", False),
                         "executed": False,
-                        "side_effect": call["name"]
-                        not in {
-                            "app.detect",
-                            "app.status",
-                            "system.get_status",
-                            "workspace.list",
-                            "workspace.search",
-                            "workspace.read",
-                            "filesystem.read",
-                            "filesystem.list",
-                            "code.read_file",
-                        },
+                        "side_effect": call["name"] not in READ_ONLY,
                         "tool_call_id": call["id"],
                         "parameter_summary": trace_arguments(call["arguments"]),
                     },
