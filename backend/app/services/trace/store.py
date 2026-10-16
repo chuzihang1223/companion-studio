@@ -8,6 +8,7 @@ import queue
 import time
 
 from sqlalchemy import create_engine, delete, event, func, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 from app.core.file_logging import file_logger
@@ -51,6 +52,7 @@ class TraceStore:
         self.metrics = {
             "dropped": 0,
             "write_failures": 0,
+            "write_retries": 0,
             "batches": 0,
             "write_ms": 0.0,
             "max_write_ms": 0.0,
@@ -141,7 +143,7 @@ class TraceStore:
                 continue
             start = time.perf_counter()
             try:
-                sessions = await asyncio.to_thread(self._write, batch)
+                sessions = await self._write_bounded(batch)
                 if self.on_commit:
                     for session in sessions:
                         try:
@@ -163,6 +165,20 @@ class TraceStore:
                 self.metrics["batches"] += 1
                 for _ in batch:
                     self.queue.task_done()
+
+    async def _write_bounded(self, batch):
+        # SQLite may reject a read-to-write transaction upgrade while a business
+        # checkpoint commits. Retry the rolled-back projection transaction only;
+        # the queue stays bounded and no tool or business transaction is repeated.
+        for attempt in range(3):
+            try:
+                return await asyncio.to_thread(self._write, batch)
+            except OperationalError as error:
+                code = getattr(error.orig, "sqlite_errorcode", 0)
+                if code & 0xFF not in {5, 6} or attempt == 2:
+                    raise
+                self.metrics["write_retries"] += 1
+                await asyncio.sleep(0.025 * (attempt + 1))
 
     def _write(self, batch):
         sessions = set()

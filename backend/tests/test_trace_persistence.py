@@ -163,3 +163,48 @@ def test_restart_marks_interrupted_without_inventing_duration(trace_database):
         assert db.get(TraceSpan, span).duration_ms is None
         events = list(db.scalars(select(TraceEvent).where(TraceEvent.trace_id == trace)))
         assert len(events) == 1 and events[0].event_type == "TASK_INTERRUPTED"
+
+
+def test_busy_projection_transaction_retries_without_duplicating_trace_events(
+    trace_database, monkeypatch
+):
+    import sqlite3
+    from sqlalchemy.exc import OperationalError
+
+    factory, conversation, _ = trace_database
+
+    async def scenario():
+        store = TraceStore(factory)
+        original, attempts = store._write, []
+
+        def controlled_busy(batch):
+            attempts.append(True)
+            if len(attempts) < 3:
+                cause = sqlite3.OperationalError("controlled busy snapshot")
+                cause.sqlite_errorcode = sqlite3.SQLITE_BUSY
+                raise OperationalError("synthetic projection", {}, cause)
+            return original(batch)
+
+        monkeypatch.setattr(store, "_write", controlled_busy)
+        trace = str(uuid4())
+        store.enqueue(
+            "create",
+            {
+                "trace_id": trace,
+                "task_id": str(uuid4()),
+                "conversation_id": conversation,
+                "event_type": "TASK_CREATED",
+            },
+        )
+        store.enqueue("event", {"trace_id": trace, "event_type": "OBSERVATION_CREATED"})
+        store.start()
+        assert await store.flush()
+        assert store.metrics["write_retries"] == 2 and store.metrics["dropped"] == 0
+        with factory() as db:
+            assert db.get(AgentTrace, trace).event_count == 2
+            assert (
+                len(list(db.scalars(select(TraceEvent).where(TraceEvent.trace_id == trace)))) == 2
+            )
+        await store.stop()
+
+    asyncio.run(scenario())
