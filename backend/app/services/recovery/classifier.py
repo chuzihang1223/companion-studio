@@ -18,6 +18,9 @@ ALIASES = {
     "task_cancelled": "TASK_CANCELLED",
 }
 TRANSIENT = {
+    FailureCode.MCP_SERVER_UNAVAILABLE,
+    FailureCode.MCP_CONNECTION_TIMEOUT,
+    FailureCode.MCP_TOOL_TIMEOUT,
     FailureCode.NETWORK_TIMEOUT,
     FailureCode.TOOL_TIMEOUT,
     FailureCode.ELEMENT_NOT_FOUND,

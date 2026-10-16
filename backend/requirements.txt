@@ -7,3 +7,5 @@ pytest>=8,<10
 fish-audio-sdk==1.3.0
 pypdf>=5,<7
 Pillow>=11,<13
+mcp==2.3.0
+PyYAML==6.0.3

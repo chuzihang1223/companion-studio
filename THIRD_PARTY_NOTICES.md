@@ -10,6 +10,7 @@ This inventory records the actual dependency versions in the build environment. 
 | annotated-doc | 0.0.5 | runtime | MIT | [Files](licenses/python/annotated-doc-0.0.5/licenses/LICENSE) |
 | annotated-types | 0.8.0 | runtime | MIT | [Files](licenses/python/annotated-types-0.8.0/licenses/LICENSE) |
 | anyio | 4.15.1 | runtime | MIT | [Files](licenses/python/anyio-4.15.1/licenses/LICENSE) |
+| attrs | 26.1.0 | runtime | MIT | [Files](licenses/python/attrs-26.1.0/licenses/LICENSE) |
 | certifi | 2026.7.22 | runtime | MPL-2.0 | [Files](licenses/python/certifi-2026.7.22/licenses/LICENSE) |
 | click | 8.5.0 | runtime | BSD-3-Clause | [Files](licenses/python/click-8.5.0/licenses/LICENSE.txt) |
 | colorama | 0.4.6 | build/test | BSD-3-Clause | [Files](licenses/python/colorama-0.4.6/licenses/LICENSE.txt) |
@@ -18,10 +19,17 @@ This inventory records the actual dependency versions in the build environment. 
 | greenlet | 3.5.6 | runtime | MIT AND PSF-2.0 | [Files](licenses/python/greenlet-3.5.6/licenses/LICENSE) |
 | h11 | 0.16.0 | runtime | MIT | [Files](licenses/python/h11-0.16.0/licenses/LICENSE.txt) |
 | httpcore | 1.0.9 | runtime | BSD-3-Clause | [Files](licenses/python/httpcore-1.0.9/licenses/LICENSE.md) |
+| httpcore2 | 2.13.1 | runtime | BSD-3-Clause | [Files](licenses/python/httpcore2-2.13.1/licenses/LICENSE.md) |
 | httpx | 0.28.1 | runtime | BSD-3-Clause | [Files](licenses/python/httpx-0.28.1/licenses/LICENSE.md) |
 | httpx-ws | 0.9.0 | runtime | MIT | [Files](licenses/python/httpx-ws-0.9.0/licenses/LICENSE) |
+| httpx2 | 2.13.1 | runtime | BSD-3-Clause | [Files](licenses/python/httpx2-2.13.1/licenses/LICENSE.md) |
 | idna | 3.20 | runtime | BSD-3-Clause | [Files](licenses/python/idna-3.20/licenses/LICENSE.md) |
 | iniconfig | 2.3.0 | build/test | MIT | [Files](licenses/python/iniconfig-2.3.0/licenses/LICENSE) |
+| jsonschema | 4.26.0 | runtime | MIT | [Files](licenses/python/jsonschema-4.26.0/licenses/COPYING) |
+| jsonschema-specifications | 2025.9.1 | runtime | MIT | [Files](licenses/python/jsonschema-specifications-2025.9.1/licenses/COPYING) |
+| mcp | 2.3.0 | runtime | MIT | [Files](licenses/python/mcp-2.3.0/licenses/LICENSE) |
+| mcp-types | 2.3.0 | runtime | MIT | [Files](licenses/python/mcp-types-2.3.0/licenses/LICENSE) |
+| opentelemetry-api | 1.45.1 | runtime | Apache-2.0 | [Files](licenses/python/opentelemetry-api-1.45.1/licenses/LICENSE) |
 | ormsgpack | 1.12.2 | runtime | Apache-2.0 OR MIT | [Files](licenses/python/ormsgpack-1.12.2/licenses/LICENSE-APACHE) |
 | packaging | 26.3 | build/test | Apache-2.0 OR BSD-2-Clause | [Files](licenses/python/packaging-26.3/licenses/LICENSE) |
 | pefile | 2024.8.26 | build/test | MIT | [Files](licenses/python/pefile-2024.8.26/LICENSE) |
@@ -32,13 +40,21 @@ This inventory records the actual dependency versions in the build environment. 
 | Pygments | 2.21.0 | build/test | BSD-2-Clause | [Files](licenses/python/pygments-2.21.0/licenses/AUTHORS) |
 | pyinstaller | 6.22.3 | build/test | GPL-2.0-or-later WITH Bootloader-exception | [Files](licenses/python/pyinstaller-6.22.3/licenses/COPYING.txt) |
 | pyinstaller-hooks-contrib | 2026.7 | build/test | GPL-2.0-or-later AND Apache-2.0 | [Files](licenses/python/pyinstaller-hooks-contrib-2026.7/licenses/LICENSE) |
+| PyJWT | 2.15.1 | runtime | MIT | [Files](licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst) |
 | pypdf | 6.19.0 | runtime | BSD-3-Clause | [Files](licenses/python/pypdf-6.19.0/licenses/LICENSE) |
 | pytest | 9.1.1 | build/test | MIT | [Files](licenses/python/pytest-9.1.1/licenses/LICENSE) |
 | python-dotenv | 1.2.3 | runtime | BSD-3-Clause | [Files](licenses/python/python-dotenv-1.2.3/licenses/LICENSE) |
+| python-multipart | 0.0.32 | runtime | Apache-2.0 | [Files](licenses/python/python-multipart-0.0.32/licenses/LICENSE.txt) |
+| pywin32 | 312 | runtime | LicenseRef-PyWin32 AND PSF-2.0 AND MIT AND LGPL-2.1-or-later | [Files](licenses/python/pywin32-312/license.txt) |
 | pywin32-ctypes | 0.2.3 | build/test | BSD-3-Clause | [Files](licenses/python/pywin32-ctypes-0.2.3/LICENSE.txt) |
+| PyYAML | 6.0.3 | runtime | MIT | [Files](licenses/python/pyyaml-6.0.3/licenses/LICENSE) |
+| referencing | 0.37.0 | runtime | MIT | [Files](licenses/python/referencing-0.37.0/licenses/COPYING) |
+| rpds-py | 2026.9.1 | runtime | MIT | [Files](licenses/python/rpds-py-2026.9.1/licenses/LICENSE) |
 | setuptools | 84.0.0 | build/test | MIT | [Files](licenses/python/setuptools-84.0.0/licenses/LICENSE) |
 | SQLAlchemy | 2.0.54 | runtime | MIT | [Files](licenses/python/sqlalchemy-2.0.54/licenses/AUTHORS) |
+| sse-starlette | 3.5.0 | runtime | BSD-3-Clause | [Files](licenses/python/sse-starlette-3.5.0/licenses/AUTHORS) |
 | starlette | 1.7.0 | runtime | BSD-3-Clause | [Files](licenses/python/starlette-1.7.0/licenses/LICENSE.md) |
+| truststore | 0.10.5 | runtime | MIT | [Files](licenses/python/truststore-0.10.5/licenses/LICENSE) |
 | typing_extensions | 4.16.0 | runtime | PSF-2.0 | [Files](licenses/python/typing-extensions-4.16.0/licenses/LICENSE) |
 | typing-inspection | 0.4.4 | runtime | MIT | [Files](licenses/python/typing-inspection-0.4.4/licenses/LICENSE) |
 | uvicorn | 0.53.0 | runtime | BSD-3-Clause | [Files](licenses/python/uvicorn-0.53.0/licenses/LICENSE.md) |

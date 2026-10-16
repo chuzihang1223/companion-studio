@@ -24,6 +24,12 @@ from packaging.requirements import Requirement
 
 LICENSE_NAMES = ("license", "licence", "copying", "notice", "authors")
 SPDX_FALLBACK = {
+    "mcp": "MIT",
+    "mcp-types": "MIT",
+    "pyyaml": "MIT",
+    # Inventory the complete wheel's notices. The MCP runtime uses win32 APIs;
+    # adodbapi and Pythonwin are not deliberately imported by Studio.
+    "pywin32": "LicenseRef-PyWin32 AND PSF-2.0 AND MIT AND LGPL-2.1-or-later",
     "altgraph": "MIT",
     "certifi": "MPL-2.0",
     "colorama": "BSD-3-Clause",

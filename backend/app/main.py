@@ -48,6 +48,12 @@ from app.services.evaluation.engine import AgentEvaluationEngine
 from app.services.recovery.checkpoints import CheckpointManager
 from app.services.recovery.coordinator import ResumeCoordinator
 from app.api.agent_recovery import router as recovery_router
+from app.services.mcp_ext.store import ExtensionStore
+from app.services.mcp_ext.connection import MCPConnectionManager
+from app.services.mcp_ext.registry import ExternalToolRegistry
+from app.services.mcp_ext.adapter import MCPToolAdapter
+from app.services.skills.manager import AgentSkillManager
+from app.api.extensions import router as extensions_router
 
 
 @asynccontextmanager
@@ -99,6 +105,20 @@ async def lifespan(app: FastAPI):
     app.state.work_state.registry = app.state.runtime_registry
     app.state.desktop_bridge = DesktopBridge()
     app.state.task_runtime = AgentTaskRuntime(app)
+    app.state.mcp_connections = app.state.external_tools = app.state.mcp_adapter = (
+        app.state.agent_skills
+    ) = None
+    try:
+        app.state.extension_store = ExtensionStore()
+        manager = MCPConnectionManager(app.state.extension_store)
+        app.state.external_tools = ExternalToolRegistry(app.state.extension_store, manager)
+        app.state.mcp_adapter = MCPToolAdapter(manager, app.state.external_tools)
+        app.state.agent_skills = AgentSkillManager(app.state.extension_store)
+        app.state.mcp_connections = manager
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("extensions_initialization_unavailable")
     app.state.work_state.recover_interrupted()
     app.state.trace_repository = None
     app.state.trace_recorder = None
@@ -133,6 +153,8 @@ async def lifespan(app: FastAPI):
         runtime_watchdog.cancel()
         await asyncio.gather(runtime_watchdog, return_exceptions=True)
         await app.state.runtime_registry.close()
+        if app.state.mcp_connections:
+            await app.state.mcp_connections.close()
         tasks = list(getattr(app.state, "live_voice_tasks", set()))
         for task in tasks:
             task.cancel()
@@ -172,6 +194,7 @@ app.include_router(agent_router)
 app.include_router(agent_traces_router)
 app.include_router(evaluation_router)
 app.include_router(recovery_router)
+app.include_router(extensions_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

@@ -306,14 +306,23 @@ TOOLS = [
         )
         for operation in ("current", "sessions", "play", "pause", "next", "previous")
     ],
+    Tool(
+        "skill.read_reference",
+        "Read a references/ text file from a Skill selected for this task. Never executes scripts.",
+        {"skill_id": STRING, "path": STRING},
+        ["skill_id", "path"],
+        "low",
+    ),
 ]
 
 
 class ToolRegistry:
     """统一管理工具描述与模型返回值，确定性本地调用也走相同解析入口。"""
 
-    def __init__(self) -> None:
+    def __init__(self, external=None) -> None:
         self.by_api_name = {tool.name.replace(".", "_"): tool for tool in TOOLS}
+        self.external = external
+        self.skill_ids = []
 
     def schemas(self) -> list[ToolSchema]:
         """返回完整公开工具描述，不授予任何本地执行权限。"""
@@ -418,7 +427,17 @@ class ToolRegistry:
                 schema["function"]["description"] += " Known custom applications: " + json.dumps(
                     {key: item["name"] for key, item in custom.items()}, ensure_ascii=False
                 )
-        return schemas
+        schemas = [
+            schema for schema in schemas if schema["function"]["name"] != "skill_read_reference"
+        ]
+        if self.skill_ids:
+            schema = self.by_api_name["skill_read_reference"].schema()
+            schema["function"]["parameters"]["properties"]["skill_id"] = {
+                "type": "string",
+                "enum": self.skill_ids,
+            }
+            schemas.append(schema)
+        return schemas + (self.external.candidates(user_text) if self.external else [])
 
     def parse_calls(self, message: dict[str, Any]) -> list[ToolCall]:
         """解析最多五个调用，检查名称、JSON 参数、必填项、类型与编号。
@@ -431,7 +450,23 @@ class ToolRegistry:
             raise ValueError("工具调用数量异常")
         calls = []
         for item in raw:
+            if not isinstance(item, dict) or not isinstance(item.get("function"), dict):
+                raise ValueError("工具调用格式无效")
             function = item.get("function") or {}
+            call_id = item.get("id")
+            if (
+                not isinstance(call_id, str)
+                or not call_id
+                or len(call_id) > 100
+                or any(row["id"] == call_id for row in calls)
+            ):
+                raise ValueError("工具调用编号无效")
+            if self.external and str(function.get("name", "")).startswith("mcp_"):
+                arguments = json.loads(function.get("arguments") or "{}")
+                if not isinstance(arguments, dict):
+                    raise ValueError("工具参数无效")
+                calls.append(self.external.parse(function["name"], call_id, arguments))
+                continue
             tool = self.by_api_name.get(function.get("name"))
             if not tool:
                 raise ValueError("模型请求了未授权工具")

@@ -144,7 +144,9 @@ class AgentEvaluationEngine:
                     "python": platform.python_version(),
                     "fixture": "studio-fixture-v1"
                     if self.registry.dataset_id == "studio-core"
-                    else "recovery-fixture-v1",
+                    else "recovery-fixture-v1"
+                    if self.registry.dataset_id == "recovery-core"
+                    else "mcp-fixture-v1",
                     "desktop_bridge": "simulated",
                     "process_isolation": True,
                 },

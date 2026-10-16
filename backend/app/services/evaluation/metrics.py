@@ -56,6 +56,7 @@ class MetricsCollector:
             "model_requests": sum(row.get("model_requests", 0) for row in results),
             "retry_count": sum(row.get("retry_count", 0) for row in results),
             "recovery": recovery,
+            "mcp": aggregate_mcp(valid),
             "recovery_attempts": recovery["attempt_count"] if recovery else len(recovering),
             "recovery_success_rate": recovery_rate,
             "model_usage": {
@@ -83,6 +84,35 @@ class MetricsCollector:
                 key: value for key, value in counts.items() if key not in {"PASS", "FAIL"}
             },
         }
+
+
+def aggregate_mcp(results):
+    rows = [row["mcp_metrics"] for row in results if isinstance(row.get("mcp_metrics"), dict)]
+    if not rows:
+        return None
+
+    def total(key):
+        return sum(row.get(key, 0) for row in rows)
+
+    def rate(successes, attempts):
+        return total(successes) / total(attempts) if total(attempts) else None
+
+    latencies = [v for row in rows for v in row.get("tool_latency_ms", [])]
+    load = [row["skill_load_ms"] for row in rows if row.get("skill_load_ms") is not None]
+    return {
+        "source": "owned_synthetic_mcp_servers",
+        "connection_success_rate": rate("connection_successes", "connection_attempts"),
+        "discovery_success_rate": rate("discovery_successes", "discovery_attempts"),
+        "tool_success_rate": rate("tool_successes", "tool_attempts"),
+        "schema_failures": total("schema_failures"),
+        "reconnections": total("reconnections"),
+        "permission_denials": total("permission_denials"),
+        "tool_latency_p50_ms": percentile(latencies, 0.5),
+        "tool_latency_p95_ms": percentile(latencies, 0.95),
+        "average_skill_load_ms": sum(load) / len(load) if load else None,
+        "skill_match_accuracy": rate("skill_matches", "skill_match_attempts"),
+        "real_third_party_reliability": None,
+    }
 
 
 def aggregate_recovery(results, mode):

@@ -1,2 +1,4 @@
 # Preserve audited source and third-party license bytes on every platform.
 * -text
+# Preserve the upstream RST heading bytes; it is not a Git conflict marker.
+licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst conflict-marker-size=32

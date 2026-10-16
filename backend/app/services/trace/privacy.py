@@ -83,6 +83,8 @@ ENUMS = {
         "选择匹配歌曲",
         "验证歌名与播放状态",
         "媒体操作",
+        "MCP 工具调用",
+        "读取 Skill 参考",
     },
     "operation": {"chat", "stream_chat", "plan_tools", "execute", "observe", "verify"},
     "decision": {"submitted", "allowed", "denied"},
@@ -150,9 +152,16 @@ def metadata(value: object) -> dict:
             result[key] = item
         elif key == "tool_call_id" and identifier(item, 100):
             result[key] = item
-        elif key in {"step_id", "checkpoint_id", "recovery_id", "origin_task_id"} and uuid_value(
-            item
-        ):
+        elif key == "external_tool_id" and identifier(item):
+            result[key] = item
+        elif key in {
+            "step_id",
+            "checkpoint_id",
+            "recovery_id",
+            "origin_task_id",
+            "server_id",
+            "skill_id",
+        } and uuid_value(item):
             result[key] = uuid_value(item)
         elif key == "parameter_summary" and isinstance(item, dict):
             result[key] = {

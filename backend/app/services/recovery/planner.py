@@ -17,7 +17,12 @@ from app.services.recovery.types import RecoveryBudget, RecoveryDecision
 KNOWN_SEARCH_HOSTS = {"github": "github.com", "baidu": "baidu.com", "bilibili": "bilibili.com"}
 
 
-def validate_call(call):
+def validate_call(call, external=None):
+    if call["name"].startswith("mcp."):
+        if external is None:
+            raise ValueError("MCP_SERVER_UNAVAILABLE")
+        external.validate_call(call)
+        return call
     parsed = ToolRegistry().parse_calls(
         {
             "tool_calls": [
@@ -36,6 +41,7 @@ def validate_call(call):
 
 @dataclass
 class RecoveryPlanner:
+    external: object = None
     budget: RecoveryBudget = field(default_factory=RecoveryBudget)
     started: float = field(default_factory=time.monotonic)
     cycles: int = 0
@@ -48,7 +54,14 @@ class RecoveryPlanner:
         The selected strategy only changes observation/locator acquisition, never
         tool arguments, workspace, goal or risk. Every execution checks grants again.
         """
-        validate_call(call)
+        try:
+            validate_call(call, self.external)
+        except ValueError:
+            if call["name"].startswith("mcp."):
+                return RecoveryDecision(
+                    level=3, strategy="inspect_side_effect", approval=True, stop=True
+                )
+            raise
         if (
             not permission
             or self.steps >= self.budget.max_total_steps
@@ -61,6 +74,7 @@ class RecoveryPlanner:
             retry_count=retry_count,
             recovery_count=self.cycles,
             budget=self.budget,
+            call=call,
         )
         observation = observation or {}
         if decision.strategy == "observe_page":

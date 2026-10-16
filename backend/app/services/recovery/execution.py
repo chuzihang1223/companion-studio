@@ -17,7 +17,7 @@ class RecoveryExecution:
     def __init__(self, app, context, manager=None, root=None):
         self.app, self.context, self.manager = app, context, manager
         self.root = root or context.task_id
-        self.planner = RecoveryPlanner()
+        self.planner = RecoveryPlanner(external=getattr(app.state, "external_tools", None))
         self.call = None
         self.step_id = None
         self.failure = None

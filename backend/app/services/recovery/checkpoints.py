@@ -186,7 +186,7 @@ class CheckpointManager:
                     tool_call_id=call["id"],
                     tool_name=call["name"],
                     step_index=index,
-                    side_effect_class=side_effect_class(call["name"]),
+                    side_effect_class=side_effect_class(call["name"], call),
                     idempotency_key=key,
                     intent_json=encoded(intent),
                 )

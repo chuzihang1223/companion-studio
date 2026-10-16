@@ -18,6 +18,17 @@ def file_hash(target):
 def resource_snapshot(context, call):
     """Read only the exact scoped file/draft. No project walk, no raw file bodies."""
     name, args = call["name"], call["arguments"]
+    if name.startswith("mcp."):
+        return {
+            "kind": "mcp",
+            "server_id": call.get("server_id"),
+            "tool_identity": name,
+            "tool_schema_version": call.get("schema_fingerprint"),
+            "tool_call_id": call["id"],
+            "request_status": "prepared",
+            "side_effect_class": call.get("side_effect_class"),
+            "evidence_refs": [],
+        }
     if name not in FILE_READS | FILE_WRITES:
         return {"kind": "external" if name not in READ_ONLY else "read_only"}
     path = args.get("path")
@@ -63,6 +74,11 @@ class StateReconciler:
             step = by_call.get(call["id"])
             decision, code = "EXECUTE", None
             snapshot = await asyncio.to_thread(resource_snapshot, context, call)
+            if call["name"].startswith("mcp."):
+                try:
+                    self.app.state.external_tools.validate_call(call)
+                except (ValueError, AttributeError):
+                    raise RecoveryError("MCP_SCHEMA_CHANGED") from None
             if step:
                 if step["tool_name"] != call["name"] or step["step_index"] != index:
                     raise RecoveryError("CHECKPOINT_CONFLICT")
@@ -94,6 +110,11 @@ class StateReconciler:
                         decision = "EXECUTE"
                     else:
                         decision, code = "REVIEW", "FILE_STATE_CHANGED"
+                elif (
+                    call["name"].startswith("mcp.") and call.get("side_effect_class") == "READ_ONLY"
+                ):
+                    # Re-read only under a fresh user approval; never reuse stale output.
+                    decision = "EXECUTE"
                 elif call["name"] in READ_ONLY:
                     # Fresh observations are safe; committed reads are checked by a
                     # read-only probe below, never replayed as side-effectful calls.

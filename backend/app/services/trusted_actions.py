@@ -31,6 +31,11 @@ DEFAULTS = {
 
 def action_for(call: dict, workspace: Path | None = None) -> str:
     name, args = call["name"], call.get("arguments", {})
+    if name.startswith("mcp."):
+        from app.services.mcp_ext.contracts import digest
+
+        # Identity AND schema AND full parameter digest, never a name-only grant.
+        return f"mcp.execute:{call.get('server_id')}:{name}:{call.get('schema_fingerprint')}:{digest(args)}"
     if call.get("coding_mode") in {"virtual_only", "preview_patch"} and name in {
         "coding.task",
         "code.create_file",
@@ -62,6 +67,10 @@ def action_for(call: dict, workspace: Path | None = None) -> str:
 
 
 def risk_for(action: str) -> str:
+    if action == "skill.read_reference":
+        return "low"
+    if action.startswith("mcp.execute:"):
+        return "high"
     if action.startswith(("app.launch:", "app.focus:", "app.detect:", "app.status:", "app.close:")):
         app = action.split(":", 1)[1]
         if app not in KNOWN_APPS and app not in application_ids():
@@ -109,6 +118,8 @@ class TrustedActionStore:
         self.path = path or settings.data_root / "trusted-actions.json"
         self.lock = RLock()
         self.tasks: dict[str, set[str]] = {}
+        self.extension_grants: dict[tuple[str, str], set[str]] = {}
+        self.extension_conversations: dict[str, str] = {}
         self.logger = file_logger("app.permissions", "permissions.log")
 
     def _read(self) -> dict:
@@ -153,11 +164,62 @@ class TrustedActionStore:
         self, action: str, call_id: str, approved_ids: set[str], task_id: str | None = None
     ) -> bool:
         decision = self.decision(action, task_id)
+        if action.startswith("mcp.execute:"):
+            with self.lock:
+                conversation = self.extension_conversations.get(task_id or "", "")
+                scoped = self.extension_grants.get(
+                    ("task", task_id or ""), set()
+                ) | self.extension_grants.get(("session", conversation), set())
+                scoped |= self.extension_grants.get(
+                    ("once", (task_id or "") + ":" + call_id), set()
+                )
+                if action in scoped:
+                    return True
+                return False  # Ordinary HTTP approved_ids are not MCP consent.
         return decision == "allow" or (decision == "ask" and call_id in approved_ids)
+
+    def bind_extension_task(self, session_id, conversation_id):
+        with self.lock:
+            self.extension_conversations[session_id] = conversation_id
+
+    def revoke_extensions(self, session_id, conversation_id):
+        with self.lock:
+            self.extension_grants.pop(("task", session_id), None)
+            self.extension_grants.pop(("session", conversation_id), None)
+            for key in list(self.extension_grants):
+                if key[0] == "once" and key[1].startswith(session_id + ":"):
+                    self.extension_grants.pop(key, None)
+
+    def grant_extension(self, action, scope, owner, *, readonly):
+        if not action.startswith("mcp.execute:") or scope not in {
+            "once",
+            "task",
+            "session",
+            "revoke",
+        }:
+            raise ValueError("MCP_PERMISSION_DENIED")
+        with self.lock:
+            if scope == "revoke":
+                for actions in self.extension_grants.values():
+                    actions.discard(action)
+            elif not readonly and scope != "once":
+                raise ValueError("高风险工具仅支持单次操作确认")
+            else:
+                if (
+                    len(self.extension_grants) >= 1024
+                    or len(self.extension_grants.get((scope, owner), set())) >= 64
+                ):
+                    raise ValueError("MCP_PERMISSION_LIMIT")
+                self.extension_grants.setdefault((scope, owner), set()).add(action)
 
     def finish_task(self, task_id: str | None) -> None:
         with self.lock:
             self.tasks.pop(task_id or "", None)
+            self.extension_grants.pop(("task", task_id or ""), None)
+            self.extension_conversations.pop(task_id or "", None)
+            for key in list(self.extension_grants):
+                if key[0] == "once" and key[1].startswith((task_id or "") + ":"):
+                    self.extension_grants.pop(key, None)
 
     def set(self, action: str, scope: str, task_id: str | None = None) -> None:
         if len(action) > 600 or scope not in {"always", "task", "deny", "revoke"}:

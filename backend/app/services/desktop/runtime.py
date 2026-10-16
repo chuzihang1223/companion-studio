@@ -115,6 +115,7 @@ class AgentTaskRuntime:
         session = context.work_session_id
         work = self.app.state.work_state
         handle = self.handles.setdefault(session, TaskHandle())
+        trusted_actions.bind_extension_task(session, context.conversation_id)
         observations, details = [], []
         handle.position = 0
         manager = getattr(self.app.state, "checkpoint_manager", None)
@@ -132,6 +133,8 @@ class AgentTaskRuntime:
         try:
             for index, call in enumerate(context.calls):
                 await handle.checkpoint()
+                if context.selected_skills:
+                    self.app.state.agent_skills.validate_selection(context.selected_skills)
                 if work.is_stopped(session):
                     raise TaskCancelled("任务已停止")
                 with span_scope(
@@ -142,7 +145,8 @@ class AgentTaskRuntime:
                     metadata={
                         "requires_permission": call.get("requires_confirmation", False),
                         "executed": False,
-                        "side_effect": call["name"] not in READ_ONLY,
+                        "side_effect": call["name"] not in READ_ONLY
+                        and call.get("side_effect_class") != "READ_ONLY",
                         "tool_call_id": call["id"],
                         "parameter_summary": trace_arguments(call["arguments"]),
                     },
@@ -286,6 +290,35 @@ class AgentTaskRuntime:
         """
         name, args = call["name"], call["arguments"]
         session, work = context.work_session_id, self.app.state.work_state
+        if name == "skill.read_reference":
+            if args["skill_id"] not in {
+                s["skill_id"] for s in context.selected_skills or []
+            } or not args["path"].startswith("references/"):
+                return {
+                    "verified": False,
+                    "error": "SKILL_PERMISSION_DENIED",
+                    "code": "SKILL_PERMISSION_DENIED",
+                }
+
+            async def read_reference():
+                text = self.app.state.agent_skills.read_file(args["skill_id"], args["path"])
+                return {"verified": True, "content": text, "trust": "untrusted_skill_reference"}
+
+            return await self.step(context, "读取 Skill 参考", read_reference, handle)
+        if name.startswith("mcp."):
+            adapter = getattr(self.app.state, "mcp_adapter", None)
+            if adapter is None:
+                return {
+                    "error": "MCP_SERVER_UNAVAILABLE",
+                    "code": "MCP_SERVER_UNAVAILABLE",
+                    "verified": False,
+                }
+            work.emit(
+                session,
+                "tool_started",
+                {"name": name, "server_id": call.get("server_id"), "summary": "调用外部 MCP 工具"},
+            )
+            return await self.step(context, "MCP 工具调用", lambda: adapter.execute(call), handle)
         desktop = self.app.state.desktop_bridge
         if name.startswith(("app.", "media.", "music.", "browser.")) or name == "system.get_status":
             if not read_preferences()["automation_enabled"]:

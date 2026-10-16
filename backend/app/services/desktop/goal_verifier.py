@@ -21,6 +21,12 @@ class GoalVerifier:
         """
         if not details or any(item["status"] != "done" for item in details):
             return False
+        if any(
+            item["name"].startswith("mcp.") and item["result"].get("goal_verified") is not True
+            for item in details
+        ):
+            # A valid external protocol reply alone cannot prove the user's goal.
+            return False
         # EVAL-014 exposed that an acknowledgement without ready-state evidence
         # could be promoted to success. Existing verified launchers are unchanged.
         if any(

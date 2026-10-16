@@ -8,6 +8,20 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class FailureCode(StrEnum):
+    MCP_SERVER_UNAVAILABLE = "MCP_SERVER_UNAVAILABLE"
+    MCP_CONNECTION_TIMEOUT = "MCP_CONNECTION_TIMEOUT"
+    MCP_AUTH_REQUIRED = "MCP_AUTH_REQUIRED"
+    MCP_PROTOCOL_MISMATCH = "MCP_PROTOCOL_MISMATCH"
+    MCP_TOOL_NOT_FOUND = "MCP_TOOL_NOT_FOUND"
+    MCP_SCHEMA_CHANGED = "MCP_SCHEMA_CHANGED"
+    MCP_TOOL_TIMEOUT = "MCP_TOOL_TIMEOUT"
+    MCP_RESULT_INVALID = "MCP_RESULT_INVALID"
+    MCP_PERMISSION_DENIED = "MCP_PERMISSION_DENIED"
+    MCP_SIDE_EFFECT_UNKNOWN = "MCP_SIDE_EFFECT_UNKNOWN"
+    MCP_ARGUMENT_INVALID = "MCP_ARGUMENT_INVALID"
+    SKILL_INVALID = "SKILL_INVALID"
+    SKILL_DEPENDENCY_MISSING = "SKILL_DEPENDENCY_MISSING"
+    SKILL_PERMISSION_DENIED = "SKILL_PERMISSION_DENIED"
     ELEMENT_NOT_FOUND = "ELEMENT_NOT_FOUND"
     WINDOW_NOT_FOUND = "WINDOW_NOT_FOUND"
     APP_EXITED = "APP_EXITED"
@@ -34,6 +48,20 @@ class FailureCode(StrEnum):
 
 
 MESSAGES = {
+    FailureCode.MCP_SERVER_UNAVAILABLE: "MCP 服务器不可用；其他工具可继续使用。",
+    FailureCode.MCP_CONNECTION_TIMEOUT: "MCP 连接超时，未重放工具调用。",
+    FailureCode.MCP_AUTH_REQUIRED: "MCP 服务器需要重新授权。",
+    FailureCode.MCP_PROTOCOL_MISMATCH: "MCP 协议版本或消息格式不兼容。",
+    FailureCode.MCP_TOOL_NOT_FOUND: "MCP 工具已移除或未连接。",
+    FailureCode.MCP_SCHEMA_CHANGED: "MCP 工具定义已变化，请刷新并重新审批。",
+    FailureCode.MCP_TOOL_TIMEOUT: "MCP 工具等待超时，完成状态需核验。",
+    FailureCode.MCP_RESULT_INVALID: "MCP 返回无效或超过限额。",
+    FailureCode.MCP_PERMISSION_DENIED: "当前没有 MCP 工具授权。",
+    FailureCode.MCP_SIDE_EFFECT_UNKNOWN: "外部操作可能已生效，禁止自动重放。",
+    FailureCode.MCP_ARGUMENT_INVALID: "MCP 参数未通过本地 Schema 校验。",
+    FailureCode.SKILL_INVALID: "Skill 格式无效或内容已变化。",
+    FailureCode.SKILL_DEPENDENCY_MISSING: "Skill 所需工具或能力不可用。",
+    FailureCode.SKILL_PERMISSION_DENIED: "Skill 未获授权。",
     FailureCode.ELEMENT_NOT_FOUND: "未找到目标控件，需要重新观察。",
     FailureCode.WINDOW_NOT_FOUND: "未找到目标窗口。",
     FailureCode.APP_EXITED: "目标应用已退出，未自动重新启动。",

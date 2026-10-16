@@ -77,6 +77,23 @@
       ]
     },
     {
+      "name": "attrs",
+      "version": "26.1.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://www.attrs.org/"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/attrs-26.1.0/licenses/LICENSE",
+          "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+          "bytes": 1109
+        }
+      ]
+    },
+    {
       "name": "certifi",
       "version": "2026.7.22",
       "ecosystem": "PyPI",
@@ -227,6 +244,24 @@
       ]
     },
     {
+      "name": "httpcore2",
+      "version": "2.13.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "upstream": [
+        "https://github.com/pydantic/httpx2",
+        "https://github.com/pydantic/httpx2/blob/main/src/httpcore2"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/httpcore2-2.13.1/licenses/LICENSE.md",
+          "sha256": "c4df125c807b0613501e943a5c92496dd11d2c16604ce396097a8dde396304d9",
+          "bytes": 1599
+        }
+      ]
+    },
+    {
       "name": "httpx",
       "version": "0.28.1",
       "ecosystem": "PyPI",
@@ -264,6 +299,24 @@
       ]
     },
     {
+      "name": "httpx2",
+      "version": "2.13.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "upstream": [
+        "https://github.com/pydantic/httpx2",
+        "https://github.com/pydantic/httpx2"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/httpx2-2.13.1/licenses/LICENSE.md",
+          "sha256": "7e7d6dbaf7fe160d39fd6e84fd02c33cab96bcbea34d36998d545bceb4a19c30",
+          "bytes": 1589
+        }
+      ]
+    },
+    {
       "name": "idna",
       "version": "3.20",
       "ecosystem": "PyPI",
@@ -294,6 +347,100 @@
           "path": "licenses/python/iniconfig-2.3.0/licenses/LICENSE",
           "sha256": "3409fa91f7ace557894632676656e32264fe5ef7581535725dc9a23774551bd4",
           "bytes": 1098
+        }
+      ]
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://github.com/python-jsonschema/jsonschema",
+        "https://python-jsonschema.readthedocs.io/",
+        "https://github.com/python-jsonschema/jsonschema"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/jsonschema-4.26.0/licenses/COPYING",
+          "sha256": "4f92a015a13c4d1a040bef018aa13430b4f1bc73b41b16bb846c346766de7439",
+          "bytes": 1057
+        }
+      ]
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://jsonschema-specifications.readthedocs.io/",
+        "https://github.com/python-jsonschema/jsonschema-specifications",
+        "https://github.com/python-jsonschema/jsonschema-specifications"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/jsonschema-specifications-2025.9.1/licenses/COPYING",
+          "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c",
+          "bytes": 1057
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "version": "2.3.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://modelcontextprotocol.io",
+        "https://py.sdk.modelcontextprotocol.io/",
+        "https://github.com/modelcontextprotocol/python-sdk"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/mcp-2.3.0/licenses/LICENSE",
+          "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+          "bytes": 1071
+        }
+      ]
+    },
+    {
+      "name": "mcp-types",
+      "version": "2.3.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://modelcontextprotocol.io",
+        "https://py.sdk.modelcontextprotocol.io/",
+        "https://github.com/modelcontextprotocol/python-sdk"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/mcp-types-2.3.0/licenses/LICENSE",
+          "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+          "bytes": 1071
+        }
+      ]
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "Apache-2.0",
+      "upstream": [
+        "https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api",
+        "https://github.com/open-telemetry/opentelemetry-python"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/opentelemetry-api-1.45.1/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
         }
       ]
     },
@@ -497,6 +644,28 @@
       ]
     },
     {
+      "name": "PyJWT",
+      "version": "2.15.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://github.com/jpadilla/pyjwt"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst",
+          "sha256": "925ce43461029eedbf558ec0b7cf7fc4b045def5120ebb97937c70814071cf07",
+          "bytes": 322
+        },
+        {
+          "path": "licenses/python/pyjwt-2.15.1/licenses/LICENSE",
+          "sha256": "797a7a20231d4c433e9f1911db1731d06b5828b98f499819a034f7c0f56f5ce5",
+          "bytes": 1085
+        }
+      ]
+    },
+    {
       "name": "pypdf",
       "version": "6.19.0",
       "ecosystem": "PyPI",
@@ -550,6 +719,117 @@
       ]
     },
     {
+      "name": "python-multipart",
+      "version": "0.0.32",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "Apache-2.0",
+      "upstream": [
+        "https://github.com/Kludex/python-multipart",
+        "https://kludex.github.io/python-multipart/",
+        "https://github.com/Kludex/python-multipart"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/python-multipart-0.0.32/licenses/LICENSE.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        }
+      ]
+    },
+    {
+      "name": "pywin32",
+      "version": "312",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "LicenseRef-PyWin32 AND PSF-2.0 AND MIT AND LGPL-2.1-or-later",
+      "upstream": [
+        "https://github.com/mhammond/pywin32"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/pywin32-312/license.txt",
+          "sha256": "5ea2f23c7f00c3006bacf267183e816d8d4b6dc95ea57a4ddb0ff81de6d8719e",
+          "bytes": 26925
+        },
+        {
+          "path": "licenses/python/pywin32-312/License.txt",
+          "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+          "bytes": 1541
+        },
+        {
+          "path": "licenses/python/pywin32-312/Scintilla-License.txt",
+          "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
+          "bytes": 873
+        },
+        {
+          "path": "licenses/python/pywin32-312/pywin/idle/LICENSE.txt",
+          "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
+          "bytes": 12540
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/adodbapi/license.txt",
+          "sha256": "5ea2f23c7f00c3006bacf267183e816d8d4b6dc95ea57a4ddb0ff81de6d8719e",
+          "bytes": 26925
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/com/License.txt",
+          "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
+          "bytes": 1570
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/com/win32comext/mapi/src/MAPIStubLibrary/LICENSE",
+          "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
+          "bytes": 1087
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/pythonwin/License.txt",
+          "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+          "bytes": 1541
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/pythonwin/Scintilla/License.txt",
+          "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
+          "bytes": 873
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/pythonwin/pywin/idle/LICENSE.txt",
+          "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
+          "bytes": 12540
+        },
+        {
+          "path": "licenses/python/pywin32-312/licenses/win32/License.txt",
+          "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+          "bytes": 1541
+        },
+        {
+          "path": "licenses/python/pywin32-312/License.txt",
+          "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+          "bytes": 1541
+        },
+        {
+          "path": "licenses/python/pywin32-312/License.txt",
+          "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
+          "bytes": 1570
+        },
+        {
+          "path": "licenses/python/pywin32-312/License.txt",
+          "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
+          "bytes": 1570
+        },
+        {
+          "path": "licenses/python/pywin32-312/mapi/MAPIStubLibrary-License.txt",
+          "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
+          "bytes": 1087
+        },
+        {
+          "path": "licenses/python/pywin32-312/mapi/NOTICE.md",
+          "sha256": "dedf997c8f5568a0e0aff57d009f501226ea30c401323d67912b6a8f8735a825",
+          "bytes": 476
+        }
+      ]
+    },
+    {
       "name": "pywin32-ctypes",
       "version": "0.2.3",
       "ecosystem": "PyPI",
@@ -563,6 +843,63 @@
           "path": "licenses/python/pywin32-ctypes-0.2.3/LICENSE.txt",
           "sha256": "dfa83b3e2709adfcdb838d9ad55823ca674abb780e60563d9dd9544ccbf785e9",
           "bytes": 1644
+        }
+      ]
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "https://github.com/yaml/pyyaml",
+        "https://pyyaml.org/"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/pyyaml-6.0.3/licenses/LICENSE",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4",
+          "bytes": 1101
+        }
+      ]
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://referencing.readthedocs.io/",
+        "https://github.com/python-jsonschema/referencing",
+        "https://github.com/python-jsonschema/referencing"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/referencing-0.37.0/licenses/COPYING",
+          "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c",
+          "bytes": 1057
+        }
+      ]
+    },
+    {
+      "name": "rpds-py",
+      "version": "2026.9.1",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://rpds.readthedocs.io/",
+        "https://github.com/crate-py/rpds",
+        "https://github.com/crate-py/rpds"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/rpds-py-2026.9.1/licenses/LICENSE",
+          "sha256": "8bcb72c82ea8ae74802293c41d93ad7d51434001b0ae45a603a5af0f507aee0a",
+          "bytes": 1076
         }
       ]
     },
@@ -688,6 +1025,30 @@
       ]
     },
     {
+      "name": "sse-starlette",
+      "version": "3.5.0",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "upstream": [
+        "https://github.com/sysid/sse-starlette",
+        "https://github.com/sysid/sse-starlette",
+        "https://github.com/sysid/sse-starlette"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/sse-starlette-3.5.0/licenses/AUTHORS",
+          "sha256": "c2ff63d2ecf128bbda8ab1b2016830a5da124202fbb97168685bb9946aed3f1a",
+          "bytes": 395
+        },
+        {
+          "path": "licenses/python/sse-starlette-3.5.0/licenses/LICENSE",
+          "sha256": "80af6bfccbebd2c14d4aab96695cab9950e177190cc80f5ef819e99996883e8e",
+          "bytes": 1511
+        }
+      ]
+    },
+    {
       "name": "starlette",
       "version": "1.7.0",
       "ecosystem": "PyPI",
@@ -703,6 +1064,24 @@
           "path": "licenses/python/starlette-1.7.0/licenses/LICENSE.md",
           "sha256": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
           "bytes": 1518
+        }
+      ]
+    },
+    {
+      "name": "truststore",
+      "version": "0.10.5",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "MIT",
+      "upstream": [
+        "https://truststore.readthedocs.io",
+        "https://github.com/sethmlarson/truststore"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/truststore-0.10.5/licenses/LICENSE",
+          "sha256": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+          "bytes": 1086
         }
       ]
     },

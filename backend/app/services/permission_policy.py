@@ -14,12 +14,16 @@ class PermissionPolicyEngine:
         """
         mode = read_preferences()["permission_mode"]
         category = action.split(":", 1)[0]
+        if category == "mcp.execute":
+            # External tools never inherit built-in readonly or automatic trust.
+            return "ask"
         # Critical includes unknown executables and attempts at security/admin access.
         if risk not in {"low", "medium", "high"}:
             return "deny"
         if risk == "high":
             return "ask"
         readonly = category in {
+            "skill.read_reference",
             "app.detect",
             "app.status",
             "system.get_status",

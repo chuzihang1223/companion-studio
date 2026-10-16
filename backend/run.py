@@ -30,6 +30,11 @@ def watch_parent(parent_pid: int) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:2] == ["--mcp-demo"]:
+        from app.services.mcp_ext.demo_server import main as mcp_demo_main
+
+        mcp_demo_main(sys.argv[2:])
+        return
     if sys.argv[1:] == ["--evaluation-worker"]:
         from app.services.evaluation.worker import main as evaluation_main
 

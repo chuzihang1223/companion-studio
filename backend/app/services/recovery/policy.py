@@ -3,6 +3,7 @@
 from app.services.recovery.types import RecoveryDecision
 
 READ_ONLY = {
+    "skill.read_reference",
     "app.detect",
     "app.status",
     "system.get_status",
@@ -26,7 +27,13 @@ FILE_WRITES = {
 FILE_READS = {"workspace.read", "filesystem.read", "code.read_file"}
 
 
-def side_effect_class(name):
+def side_effect_class(name, call=None):
+    if name.startswith("mcp."):
+        return (
+            "READ_ONLY"
+            if call and call.get("side_effect_class") == "READ_ONLY"
+            else "NON_IDEMPOTENT"
+        )
     return (
         "READ_ONLY"
         if name in READ_ONLY
@@ -37,7 +44,7 @@ def side_effect_class(name):
 
 
 class RecoveryPolicyEngine:
-    def decide(self, failure, tool_name, *, retry_count=0, recovery_count=0, budget):
+    def decide(self, failure, tool_name, *, retry_count=0, recovery_count=0, budget, call=None):
         code = failure.error_code
         if code == "TASK_CANCELLED":
             return RecoveryDecision(level=3, strategy="cancel", stop=True)
@@ -50,7 +57,11 @@ class RecoveryPolicyEngine:
             return RecoveryDecision(level=3, strategy="stop", stop=True, approval=True)
         if retry_count >= budget.max_retry_per_step or recovery_count >= budget.max_recovery_cycles:
             return RecoveryDecision(level=3, strategy="budget_exhausted", stop=True)
-        if tool_name in READ_ONLY and failure.retryable:
+        if (
+            tool_name in READ_ONLY
+            or tool_name.startswith("mcp.")
+            and side_effect_class(tool_name, call) == "READ_ONLY"
+        ) and failure.retryable:
             return RecoveryDecision(level=1, strategy="retry_read", retry=True, observe=True)
         if code in {"DOM_CHANGED", "ELEMENT_NOT_FOUND", "PAGE_CHANGED"} and tool_name.startswith(
             "browser."

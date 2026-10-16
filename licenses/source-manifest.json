@@ -12,8 +12,8 @@
     },
     {
       "path": "licenses/inventory.json",
-      "sha256": "b09f4230f5bd0c2652b1bf4ba751190fdacd70b02af11a8f621c4d9be5184a9a",
-      "bytes": 44904
+      "sha256": "4a5ba13e8aef7cf8c1ce8d7f6aae90d736c64cc6c124eed9ae326e866aa71b52",
+      "bytes": 56987
     },
     {
       "path": "licenses/MPL-2.0.txt",
@@ -81,6 +81,11 @@
       "bytes": 1081
     },
     {
+      "path": "licenses/python/attrs-26.1.0/licenses/LICENSE",
+      "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+      "bytes": 1109
+    },
+    {
       "path": "licenses/python/certifi-2026.7.22/licenses/LICENSE",
       "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
       "bytes": 989
@@ -126,6 +131,11 @@
       "bytes": 1518
     },
     {
+      "path": "licenses/python/httpcore2-2.13.1/licenses/LICENSE.md",
+      "sha256": "c4df125c807b0613501e943a5c92496dd11d2c16604ce396097a8dde396304d9",
+      "bytes": 1599
+    },
+    {
       "path": "licenses/python/httpx-0.28.1/licenses/LICENSE.md",
       "sha256": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d",
       "bytes": 1508
@@ -136,6 +146,11 @@
       "bytes": 1072
     },
     {
+      "path": "licenses/python/httpx2-2.13.1/licenses/LICENSE.md",
+      "sha256": "7e7d6dbaf7fe160d39fd6e84fd02c33cab96bcbea34d36998d545bceb4a19c30",
+      "bytes": 1589
+    },
+    {
       "path": "licenses/python/idna-3.20/licenses/LICENSE.md",
       "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
       "bytes": 1541
@@ -144,6 +159,31 @@
       "path": "licenses/python/iniconfig-2.3.0/licenses/LICENSE",
       "sha256": "3409fa91f7ace557894632676656e32264fe5ef7581535725dc9a23774551bd4",
       "bytes": 1098
+    },
+    {
+      "path": "licenses/python/jsonschema-4.26.0/licenses/COPYING",
+      "sha256": "4f92a015a13c4d1a040bef018aa13430b4f1bc73b41b16bb846c346766de7439",
+      "bytes": 1057
+    },
+    {
+      "path": "licenses/python/jsonschema-specifications-2025.9.1/licenses/COPYING",
+      "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c",
+      "bytes": 1057
+    },
+    {
+      "path": "licenses/python/mcp-2.3.0/licenses/LICENSE",
+      "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+      "bytes": 1071
+    },
+    {
+      "path": "licenses/python/mcp-types-2.3.0/licenses/LICENSE",
+      "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+      "bytes": 1071
+    },
+    {
+      "path": "licenses/python/opentelemetry-api-1.45.1/licenses/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
     },
     {
       "path": "licenses/python/ormsgpack-1.12.2/licenses/LICENSE-APACHE",
@@ -216,6 +256,16 @@
       "bytes": 27666
     },
     {
+      "path": "licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst",
+      "sha256": "925ce43461029eedbf558ec0b7cf7fc4b045def5120ebb97937c70814071cf07",
+      "bytes": 322
+    },
+    {
+      "path": "licenses/python/pyjwt-2.15.1/licenses/LICENSE",
+      "sha256": "797a7a20231d4c433e9f1911db1731d06b5828b98f499819a034f7c0f56f5ce5",
+      "bytes": 1085
+    },
+    {
       "path": "licenses/python/pypdf-6.19.0/licenses/LICENSE",
       "sha256": "a97ac230e5f33ef10a5367a850eb01f91f1a0b064e34742c7794d2294557f524",
       "bytes": 1605
@@ -231,9 +281,89 @@
       "bytes": 1556
     },
     {
+      "path": "licenses/python/python-multipart-0.0.32/licenses/LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    {
+      "path": "licenses/python/pywin32-312/license.txt",
+      "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
+      "bytes": 1570
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/adodbapi/license.txt",
+      "sha256": "5ea2f23c7f00c3006bacf267183e816d8d4b6dc95ea57a4ddb0ff81de6d8719e",
+      "bytes": 26925
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/com/License.txt",
+      "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
+      "bytes": 1570
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/com/win32comext/mapi/src/MAPIStubLibrary/LICENSE",
+      "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
+      "bytes": 1087
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/pythonwin/License.txt",
+      "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+      "bytes": 1541
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/pythonwin/pywin/idle/LICENSE.txt",
+      "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
+      "bytes": 12540
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/pythonwin/Scintilla/License.txt",
+      "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
+      "bytes": 873
+    },
+    {
+      "path": "licenses/python/pywin32-312/licenses/win32/License.txt",
+      "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
+      "bytes": 1541
+    },
+    {
+      "path": "licenses/python/pywin32-312/mapi/MAPIStubLibrary-License.txt",
+      "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
+      "bytes": 1087
+    },
+    {
+      "path": "licenses/python/pywin32-312/mapi/NOTICE.md",
+      "sha256": "dedf997c8f5568a0e0aff57d009f501226ea30c401323d67912b6a8f8735a825",
+      "bytes": 476
+    },
+    {
+      "path": "licenses/python/pywin32-312/pywin/idle/LICENSE.txt",
+      "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
+      "bytes": 12540
+    },
+    {
+      "path": "licenses/python/pywin32-312/Scintilla-License.txt",
+      "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
+      "bytes": 873
+    },
+    {
       "path": "licenses/python/pywin32-ctypes-0.2.3/LICENSE.txt",
       "sha256": "dfa83b3e2709adfcdb838d9ad55823ca674abb780e60563d9dd9544ccbf785e9",
       "bytes": 1644
+    },
+    {
+      "path": "licenses/python/pyyaml-6.0.3/licenses/LICENSE",
+      "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4",
+      "bytes": 1101
+    },
+    {
+      "path": "licenses/python/referencing-0.37.0/licenses/COPYING",
+      "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c",
+      "bytes": 1057
+    },
+    {
+      "path": "licenses/python/rpds-py-2026.9.1/licenses/LICENSE",
+      "sha256": "8bcb72c82ea8ae74802293c41d93ad7d51434001b0ae45a603a5af0f507aee0a",
+      "bytes": 1076
     },
     {
       "path": "licenses/python/setuptools-84.0.0/_vendor/autocommand-2.2.2.dist-info/LICENSE",
@@ -331,9 +461,24 @@
       "bytes": 1119
     },
     {
+      "path": "licenses/python/sse-starlette-3.5.0/licenses/AUTHORS",
+      "sha256": "c2ff63d2ecf128bbda8ab1b2016830a5da124202fbb97168685bb9946aed3f1a",
+      "bytes": 395
+    },
+    {
+      "path": "licenses/python/sse-starlette-3.5.0/licenses/LICENSE",
+      "sha256": "80af6bfccbebd2c14d4aab96695cab9950e177190cc80f5ef819e99996883e8e",
+      "bytes": 1511
+    },
+    {
       "path": "licenses/python/starlette-1.7.0/licenses/LICENSE.md",
       "sha256": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
       "bytes": 1518
+    },
+    {
+      "path": "licenses/python/truststore-0.10.5/licenses/LICENSE",
+      "sha256": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+      "bytes": 1086
     },
     {
       "path": "licenses/python/typing-extensions-4.16.0/licenses/LICENSE",
