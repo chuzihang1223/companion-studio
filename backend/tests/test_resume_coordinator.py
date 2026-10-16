@@ -34,10 +34,15 @@ def recovery_app(runtime_app, monkeypatch):
     return app, store, conversation, session
 
 
-async def crashed_write(app, conversation=None):
+async def crashed_write(app, conversation=None, *, read_only=False):
+    if read_only:
+        app.state.llm_service.provider.tool = "code_read_file"
     plan = await app.state.agent_service.plan(
         app, "assistant", conversation, "帮我写一个 Python 示例"
     )
+    if read_only:
+        context = app.state.agent_service.pending[plan["plan_id"]]
+        context.executor._path("fixture.txt").write_text("controlled read\n", encoding="utf-8")
     original = app.state.task_runtime.execute_call
     calls = []
 
@@ -331,6 +336,79 @@ def test_interrupted_resume_can_resume_again_without_rewriting_or_duplicate_user
                 == 1
             )
         await app.state.recovery.close()
+        await store.stop()
+
+    asyncio.run(run())
+
+
+def test_inflight_readonly_checkpoint_reexecutes_only_under_fresh_resume_lease(recovery_app):
+    app, store, _, _ = recovery_app
+
+    async def run():
+        store.start()
+        plan, _ = await crashed_write(app, read_only=True)
+        root, conversation, session = (
+            plan["plan_id"],
+            plan["conversation_id"],
+            plan["work_session_id"],
+        )
+        manager, coordinator = app.state.checkpoint_manager, app.state.recovery
+        detail = manager.detail(root, conversation)
+        assert detail["checkpoints"][0]["step_state"] == "EXECUTING"
+        preview = await coordinator.preview(root, conversation, session)
+        assert preview["can_resume"] and preview["items"][0]["action"] == "EXECUTE"
+        model_calls = app.state.llm_service.provider.calls
+        await coordinator.resume(
+            root, conversation, session, "fixture", str(uuid4()), detail["revision"], []
+        )
+        await asyncio.gather(*list(coordinator.tasks.values()))
+        final = manager.detail(root, conversation)
+        assert final["state"] == "COMPLETED"
+        assert final["checkpoints"][0]["step_state"] == "COMMITTED"
+        assert final["counters"]["total_steps"] == 2
+        assert app.state.llm_service.provider.calls == model_calls
+        assert not coordinator.leases and not app.state.runtime_registry.active
+        await coordinator.close()
+        await store.stop()
+
+    asyncio.run(run())
+
+
+def test_resume_storage_guard_retains_fixed_failure_code(recovery_app, monkeypatch):
+    app, store, _, _ = recovery_app
+
+    async def run():
+        store.start()
+        plan, _ = await crashed_write(app)
+        root, conversation, session = (
+            plan["plan_id"],
+            plan["conversation_id"],
+            plan["work_session_id"],
+        )
+        manager, coordinator = app.state.checkpoint_manager, app.state.recovery
+
+        def fail(*args):
+            raise RecoveryError("SIDE_EFFECT_UNCERTAIN")
+
+        monkeypatch.setattr(manager, "reuse", fail)
+        detail = manager.detail(root, conversation)
+        await coordinator.resume(
+            root, conversation, session, "fixture", str(uuid4()), detail["revision"], []
+        )
+        await asyncio.gather(*list(coordinator.tasks.values()))
+        final = manager.detail(root, conversation)
+        assert final["state"] == "NEEDS_REVIEW"
+        assert final["failure"]["error_code"] == "SIDE_EFFECT_UNCERTAIN"
+        assert not coordinator.leases and not app.state.runtime_registry.active
+        assert await store.flush()
+        traces = app.state.trace_repository.listing(conversation)["items"]
+        resumed = next(row for row in traces if row["task_id"] == final["execution_id"])
+        events = app.state.trace_repository.events(resumed["trace_id"], conversation)["items"]
+        assert any(
+            row["event_type"] == "RESUME_BLOCKED" and row["error_code"] == "SIDE_EFFECT_UNCERTAIN"
+            for row in events
+        )
+        await coordinator.close()
         await store.stop()
 
     asyncio.run(run())

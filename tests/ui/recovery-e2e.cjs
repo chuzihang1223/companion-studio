@@ -58,7 +58,10 @@ async function run() {
     'Intent is durable before a pending read-only desktop probe',
   );
   const options = { ...scope, task_id: before.task_id, work_session_id: before.work_session_id };
-  await sleep(500); // allow the bounded asynchronous Trace writer to commit
+  await driver.c.until(
+    `window.desktopAPI.readAgentTraces('list',${q(scope)}).then(p=>p.items.some(t=>t.task_id===${q(before.task_id)} && t.event_count>0))`,
+    10000,
+  );
   const ownedPid = driver.child.pid;
   driver.c.close();
   driver.m.close();
@@ -66,24 +69,25 @@ async function run() {
   driver.child.kill(); // Only this driver's Electron parent. Its backend has a parent watcher.
   const deadline = Date.now() + 40000;
   let healthy = true;
-  while (healthy && Date.now() < deadline) {
+  const exited = () => driver.child.exitCode !== null || driver.child.signalCode !== null;
+  while ((healthy || !exited()) && Date.now() < deadline) {
     try {
       healthy = (await fetch(driver.base + '/health', { signal: AbortSignal.timeout(500) })).ok;
     } catch {
       healthy = false;
     }
-    if (healthy) await sleep(200);
+    if (healthy || !exited()) await sleep(200);
   }
   driver.child.stdout?.unpipe(driver.log);
   driver.child.stderr?.unpipe(driver.log);
   for (const stream of [driver.child.stdin, driver.child.stdout, driver.child.stderr])
     stream?.destroy();
   driver.log.end();
-  driver.check(
-    !healthy && driver.child.exitCode !== null,
-    'Only the owned Electron was interrupted; its backend stops',
-    { pid: ownedPid },
-  );
+  driver.check(!healthy && exited(), 'Only the owned Electron was interrupted; its backend stops', {
+    pid: ownedPid,
+    exit_code: driver.child.exitCode,
+    signal: driver.child.signalCode,
+  });
   await driver.launch();
   const interrupted = await read('detail', options);
   driver.check(
@@ -215,6 +219,9 @@ async function run() {
   fs.writeFileSync(
     path.join(driver.home, 'recovery-evaluation-result.json'),
     JSON.stringify({ run: result, results: rows }, null, 2),
+  );
+  await driver.c.until(
+    "document.querySelector('.evaluation-progress')?.innerText.includes('COMPLETED') && document.querySelectorAll('[aria-label=评测结果] tbody tr').length===16",
   );
   for (const format of ['JSON', 'CSV', 'MARKDOWN'])
     await driver.click('导出 ' + format, "document.querySelector('.evaluation-dashboard')");

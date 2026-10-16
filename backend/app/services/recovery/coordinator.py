@@ -115,6 +115,7 @@ class ResumeCoordinator:
     async def _resume(self, root, lease, context, approved_ids):
         session = context.work_session_id
         attempt_id, started, successful = None, time.perf_counter(), False
+        step = None
         try:
             tracing = await self.tracing(root, context)
             with tracing:
@@ -196,8 +197,28 @@ class ResumeCoordinator:
                 "interrupted" if self.closing else "cancelled",
             )
             raise
-        except Exception:
-            await self.settle(root, "NEEDS_REVIEW")
+        except Exception as error:
+            failure = FailureClassifier().classify(
+                error,
+                tool_name=step["tool_name"] if step else "unknown",
+                task_id=context.task_id,
+                step_id=step["step_id"] if step else root,
+            )
+            await self.settle(root, "NEEDS_REVIEW", failure)
+            recorder = getattr(self.app.state, "trace_recorder", None)
+            segment = recorder.contexts.get(context.task_id) if recorder else None
+            if segment:
+                # The execution scope has already recorded TASK_FAILED and reset
+                # its ContextVar. Append the fixed recovery diagnosis to this new
+                # execution segment explicitly, never to the old interrupted Trace.
+                segment.send(
+                    "event",
+                    event_type="RESUME_BLOCKED",
+                    phase="recovery",
+                    status="failed",
+                    error_code=failure.error_code,
+                    metadata={"origin_task_id": root},
+                )
             self.notify(session, "task_failed", "failed")
         finally:
             from app.services.trusted_actions import trusted_actions
@@ -241,14 +262,14 @@ class ResumeCoordinator:
             session, kind, {"summary": "恢复状态已更新，请查看恢复预览。"}, status=status
         )
 
-    async def settle(self, root, state):
+    async def settle(self, root, state, failure=None):
         with self.manager.factory() as db:
             row = db.get(RecoveryTask, root)
             current = row.state if row else None
         if current in {"REVALIDATING", "RECOVERING", "RESUMING", "WAITING_USER"}:
             if current == "REVALIDATING" and state == "INTERRUPTED":
                 state = "NEEDS_REVIEW"
-            await asyncio.to_thread(self.manager.state, root, state)
+            await asyncio.to_thread(self.manager.state, root, state, failure)
 
     async def cancel(self, root, conversation_id, session_id):
         await asyncio.to_thread(self.manager.detail, root, conversation_id, session_id)

@@ -157,7 +157,15 @@ class CheckpointManager:
             row = db.get(AgentCheckpoint, step_id)
             key = digest({"task_id": root, "call": call})
             if row:
-                if row.idempotency_key != key or row.state not in {"PREPARED", "FAILED", "DENIED"}:
+                readonly_resume = (
+                    row.side_effect_class == "READ_ONLY"
+                    and row.state in {"EXECUTING", "OBSERVED", "VERIFIED"}
+                    and task.state == "RESUMING"
+                    and task.lease is not None
+                )
+                if row.idempotency_key != key or (
+                    row.state not in {"PREPARED", "FAILED", "DENIED"} and not readonly_resume
+                ):
                     raise RecoveryError("SIDE_EFFECT_UNCERTAIN")
                 previous = decoded(row.intent_json)
                 # Reconciliation and execution are separate transactions. Reject
