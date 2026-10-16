@@ -26,8 +26,8 @@ def next_node(compiled, records):
                 )
         node = next(n for n in compiled.definition.nodes if n.node_id == key)
         active.sort(key=lambda item: compiled.order.index(item["node_id"]))
-        # Merge waits for terminal activated parents, never for a skipped branch.
-        # Other multi-input nodes require all incoming dependencies to activate.
+        # 先等父节点终结，SKIPPED 也算终态；因此 Merge 不会死等未选择的条件分支。
+        # 普通多输入节点要求所有入口激活，只有 Merge 接受部分激活的入口。
         skip = bool(edges) and (not active or node.type != "merge" and len(active) != len(edges))
         return node, active, skip
     return None

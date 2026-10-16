@@ -50,8 +50,8 @@ class WorkflowCheckpointAdapter:
                     elif state == "COMPLETED" or any(
                         side_effect_class(c["name"], c) != "READ_ONLY" for c in context.calls
                     ):
-                        # Even committed non-file reads may be stale. Never rebuild downstream
-                        # state by replaying tools. A new run is the explicit alternative.
+                        # 已提交的外部读也可能过期；不能重放工具来重建下游数据。
+                        # 无法用文件摘要重新核验的结果交给人工，新运行需重新确认。
                         action, code = "REVIEW", "SIDE_EFFECT_UNCERTAIN"
                     else:
                         # Existing policy decides whether an interrupted attempt is retryable.
@@ -102,7 +102,7 @@ class WorkflowCheckpointAdapter:
         preview = await self.preview(run_id, conversation_id)
         if revision != preview["revision"] or not preview["can_resume"]:
             raise WorkflowError("WORKFLOW_RESUME_BLOCKED", status=409)
-        # Fresh observation is followed by CAS; a second owner cannot resume the same revision.
+        # 核验后再以修订号抢占，第二个恢复请求不能重复执行同一份历史。
         run = self.repository.run(run_id, conversation_id)
         self.repository.change(
             run_id,

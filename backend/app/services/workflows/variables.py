@@ -46,6 +46,7 @@ def resolve(value, context, depth=0):
         raise WorkflowError("WORKFLOW_DEPTH_LIMIT")
     if isinstance(value, dict):
         if set(value) == {"$ref"}:
+            # 引用只取出原始数据，不对外部返回的字符串再次插值，防止二次注入。
             return lookup(value["$ref"], context)
         return {key: resolve(item, context, depth + 1) for key, item in value.items()}
     if isinstance(value, list):

@@ -136,6 +136,7 @@ class WorkflowNodeRunner:
                         "active_port": port,
                         "pending": None,
                         "duration_ms": (time.perf_counter() - started) * 1000,
+                        "observed_model": context.get("observed_model"),
                     },
                     event="WORKFLOW_NODE_COMPLETED",
                 )
@@ -171,6 +172,7 @@ class WorkflowNodeRunner:
                     "output": {"error_code": code},
                     "pending": None,
                     "duration_ms": (time.perf_counter() - started) * 1000,
+                    "observed_model": context.get("observed_model"),
                 },
                 event="WORKFLOW_NODE_FAILED",
             )

@@ -152,6 +152,8 @@ class AgentEvaluationEngine:
                     if self.registry.dataset_id == "studio-core"
                     else "recovery-fixture-v1"
                     if self.registry.dataset_id == "recovery-core"
+                    else "workflow-fixture-v1"
+                    if self.registry.dataset_id == "workflow-core"
                     else "mcp-fixture-v1",
                     "desktop_bridge": "simulated",
                     "process_isolation": True,

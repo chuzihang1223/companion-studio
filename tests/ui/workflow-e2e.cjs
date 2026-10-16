@@ -10,6 +10,7 @@ const exerciseTemplates = require('./workflow-templates.cjs');
 const exercisePerformance = require('./workflow-performance.cjs');
 const exerciseRestart = require('./workflow-restart.cjs');
 const exerciseEvaluation = require('./workflow-evaluation.cjs');
+const exerciseComparison = require('./workflow-comparison.cjs');
 let driver;
 const read = (op, options = {}) =>
   driver.c.evaluate(`window.desktopAPI.readWorkflows(${q(op)},${q(options)})`);
@@ -291,6 +292,7 @@ async function run() {
     (await extRead('servers')).items.every((s) => s.connection_status === 'DISCONNECTED'),
     'Restart never auto-connects extension servers',
   );
+  await exerciseComparison(driver, owner, before.workflow_id, first.run_id);
   await exerciseEvaluation(driver);
   await driver.close();
   driver.report.result = 'pass';

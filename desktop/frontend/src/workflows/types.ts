@@ -79,6 +79,8 @@ export type NodeRun = {
   };
   recovery_task_id?: string;
   goal_verified?: boolean;
+  scheduling_ms?: number;
+  observed_model?: Record<string, unknown> | null;
 };
 export type WorkflowRun = {
   run_id: string;
@@ -100,6 +102,12 @@ export type WorkflowRun = {
   tool_calls: number;
   active_ms: number;
   attempt: number;
+  validation_ms?: number;
+  compile_ms?: number;
+  queue_wait_ms?: number;
+  model_usage?: { total_tokens?: number | null };
+  estimated_cost?: number | null;
+  execution_snapshot?: Record<string, unknown>;
 };
 export type WorkflowEvent = {
   cursor: number;

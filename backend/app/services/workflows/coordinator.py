@@ -26,6 +26,7 @@ from app.services.workflows.trace_adapter import emit, execution_trace
 from app.services.workflows.node_runner import WorkflowNodeRunner
 from app.services.workflows.controls import WorkflowControls
 from app.services.workflows.metrics import combine_usage
+from app.services.workflows.metadata import execution_snapshot
 from app.services.llm.usage import UsageBudget, usage_scope, current_usage_budget
 
 
@@ -39,6 +40,9 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
         self.recovery = WorkflowCheckpointAdapter(app, self.repository)
         self.tasks, self.approvals, self.pauses = {}, {}, {}
         self.closing = False
+        from app.services.evaluation.engine import build_identity
+
+        self.build_identity = build_identity()
         self.repository.recover()
 
     def scope(self, conversation_id):
@@ -70,6 +74,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             raise WorkflowError("WORKFLOW_INPUT_INVALID") from None
         if sum(not task.done() for task in self.tasks.values()) >= 8:
             raise WorkflowError("WORKFLOW_QUEUE_FULL", status=409)
+        snapshot = execution_snapshot(self.app, definition, self.build_identity)
         run_id = self.repository.create_run(
             definition, version_id, conversation_id, inputs, renderer_id
         )
@@ -77,7 +82,13 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             "Workflow · " + definition.name, conversation_id, [], workspace
         )
         self.repository.change(
-            run_id, conversation_id, {"work_session_id": session, "workspace": workspace}
+            run_id,
+            conversation_id,
+            {
+                "work_session_id": session,
+                "workspace": workspace,
+                "execution_snapshot": snapshot,
+            },
         )
         self.launch(run_id, conversation_id)
         return self.repository.run(run_id, conversation_id)
@@ -234,6 +245,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
     async def schedule(self, compiled, run_id, owner):
         while True:
             await self.pauses[run_id].wait()
+            scheduling_started = time.perf_counter()
             run = self.repository.run(run_id, owner)
             records = {row["node_id"]: row for row in run["nodes"]}
             selected = next_node(compiled, records)
@@ -257,6 +269,13 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
                 return
             node, active_inputs, skipped = selected
             row = records[node.node_id]
+            self.repository.change(
+                run_id,
+                owner,
+                {},
+                node_id=node.node_id,
+                node_changes={"scheduling_ms": (time.perf_counter() - scheduling_started) * 1000},
+            )
             if skipped:
                 self.repository.change(
                     run_id,

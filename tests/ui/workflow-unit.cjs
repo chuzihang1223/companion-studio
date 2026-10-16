@@ -48,6 +48,34 @@ assert.equal(removeNodes(graph, [b.node_id]).edges.length, 0);
 const view = fitView(graph.nodes, 600, 400);
 assert(Number.isFinite(view.scale) && view.scale > 0);
 const { nodeTraceEvents } = require('../../desktop/frontend/src/workflows/trace-links.ts');
+const { compareRuns } = require('../../desktop/frontend/src/workflows/comparison.ts');
+const compared = {
+  workflow_id: 'workflow-a',
+  conversation_id: 'owner-a',
+  inputs: {},
+  nodes: [],
+  execution_snapshot: { models: { planning_model: 'fixture' }, budget: { max_steps: 5 } },
+};
+assert.deepEqual(compareRuns(compared, { ...compared }), {
+  differences: [],
+  conditionsKnown: true,
+});
+assert(
+  compareRuns(compared, { ...compared, execution_snapshot: undefined }).conditionsKnown === false,
+);
+assert(
+  compareRuns(compared, { ...compared, inputs: { message: 'changed' } }).differences.includes(
+    'inputs',
+  ),
+);
+assert(
+  compareRuns(compared, {
+    ...compared,
+    execution_snapshot: { models: 'different' },
+  }).differences.includes('models'),
+);
+assert.throws(() => compareRuns(compared, { ...compared, conversation_id: 'owner-b' }));
+assert.throws(() => compareRuns(compared, { ...compared, workflow_id: 'workflow-b' }));
 const eventRows = [
   {
     sequence: 1,

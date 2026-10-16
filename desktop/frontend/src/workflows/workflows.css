@@ -399,3 +399,13 @@
 .wf-input-form label {
   min-width: 180px;
 }
+.wf-comparison table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+.wf-comparison th,
+.wf-comparison td {
+  padding: 0.35rem;
+  border-bottom: 1px solid var(--line);
+}

@@ -34,6 +34,7 @@ def test_twenty_workflow_cases_original_evaluation_workers(tmp_path):
         created = await runner.start(
             RunRequest(dataset_id="workflow-core", concurrency=2, timeout_seconds=35), FastAPI()
         )
+        assert created["snapshot"]["environment"]["fixture"] == "workflow-fixture-v1"
         await asyncio.gather(*list(runner.tasks.values()))
         rows = repository.results(created["run_id"], 0, 100)["items"]
         report = EvaluationReportService(repository).export(created["run_id"], "json")

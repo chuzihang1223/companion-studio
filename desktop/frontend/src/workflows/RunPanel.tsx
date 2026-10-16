@@ -1,5 +1,6 @@
 import type { WorkflowRun, WorkflowEvent, ResumePreview } from './types';
 import { stateLabels } from './model';
+import RunComparison from './RunComparison';
 
 export default function RunPanel({
   run,
@@ -83,6 +84,7 @@ export default function RunPanel({
             </button>
           </div>
           {run.error_code && <p role="alert">{run.error_code} · 可在节点详情查看失败位置。</p>}
+          <RunComparison run={run} history={history} />
           {pending && (
             <div className="wf-approval">
               <strong>等待你确认这个节点</strong>

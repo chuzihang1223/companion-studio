@@ -7,6 +7,7 @@ from jsonschema.exceptions import ValidationError
 from app.services.workflows.contracts import WorkflowError, bounded
 from app.services.workflows.variables import condition, resolve, transform
 from app.services.workflows.output import workflow_output
+from app.services.workflows.metadata import model_metadata
 
 
 class NodeExecutor:
@@ -122,7 +123,10 @@ class NodeExecutor:
         }:
             raise WorkflowError("WORKFLOW_MODEL_ROLE_INVALID", node.node_id)
         # Original LLMService supplies provider isolation, usage accounting and Trace spans.
-        result = await self.app.state.model_roles.service(role).chat(prompt)
+        service = self.app.state.model_roles.service(role)
+        # 热切换可能改变后续节点的实际模型；同时记录实际服务，不能只看运行起点的快照。
+        context["observed_model"] = model_metadata(service)
+        result = await service.chat(prompt)
         if not isinstance(result, str) or len(result) > min(
             config.get("max_characters", 16000), 32000
         ):
