@@ -8,22 +8,27 @@ from app.schemas.evaluation import BenchmarkCase
 
 
 class BenchmarkRegistry:
-    def __init__(self):
-        raw = (Path(__file__).parent / "datasets" / "studio-core.json").read_bytes()
+    def __init__(self, dataset_id="studio-core"):
+        if dataset_id not in {"studio-core", "recovery-core"}:
+            raise ValueError("未知内置数据集")
+        raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
         self.digest = hashlib.sha256(raw).hexdigest()
         data = json.loads(raw)
         self.cases = [BenchmarkCase.model_validate(row) for row in data["cases"]]
         self.by_id = {row.case_id: row for row in self.cases}
-        if len(self.by_id) != len(self.cases) or len(self.cases) != 20:
-            raise ValueError("内置数据集应包含 20 个唯一测试项")
-        self.dataset_id = "studio-core"
+        expected = 20 if dataset_id == "studio-core" else 16
+        if len(self.by_id) != len(self.cases) or len(self.cases) != expected:
+            raise ValueError("内置数据集测试项数量不符")
+        self.dataset_id = dataset_id
         self.version = "1.0.0"
 
     def public(self, detail=False):
         result = {
             "dataset_id": self.dataset_id,
             "dataset_version": self.version,
-            "title": "Studio Core · 20 项",
+            "title": "Studio Core · 20 项"
+            if self.dataset_id == "studio-core"
+            else "Recovery Core · 16 项",
             "case_count": len(self.cases),
             "sha256": self.digest,
         }

@@ -22,6 +22,16 @@ class MetricsCollector:
         recovering = [row for row in valid if row.get("retry_count", 0) > 0]
         usage = [row.get("model_usage", {}) for row in results]
         observed = [row for row in usage if row.get("status") == "Observed"]
+        recovery = aggregate_recovery(valid, mode)
+        recovery_rate = (
+            recovery["success_rate"]
+            if recovery
+            else (
+                sum(bool(row.get("recovery_succeeded")) for row in recovering) / len(recovering)
+                if recovering
+                else None
+            )
+        )
         return {
             "source": "Mock Evaluation"
             if mode == "mock"
@@ -45,11 +55,9 @@ class MetricsCollector:
             "tool_calls": sum(row.get("tool_calls", 0) for row in results),
             "model_requests": sum(row.get("model_requests", 0) for row in results),
             "retry_count": sum(row.get("retry_count", 0) for row in results),
-            "recovery_attempts": len(recovering),
-            "recovery_success_rate": sum(bool(row.get("recovery_succeeded")) for row in recovering)
-            / len(recovering)
-            if recovering
-            else None,
+            "recovery": recovery,
+            "recovery_attempts": recovery["attempt_count"] if recovery else len(recovering),
+            "recovery_success_rate": recovery_rate,
             "model_usage": {
                 "status": "Not applicable (simulated)"
                 if mode in {"mock", "sandbox"}
@@ -75,6 +83,43 @@ class MetricsCollector:
                 key: value for key, value in counts.items() if key not in {"PASS", "FAIL"}
             },
         }
+
+
+def aggregate_recovery(results, mode):
+    rows = [
+        row["recovery_metrics"] for row in results if isinstance(row.get("recovery_metrics"), dict)
+    ]
+    if not rows:
+        return None
+    fields = (
+        "attempt_count",
+        "successful_attempts",
+        "duration_ms",
+        "replanning_count",
+        "duplicate_execution_count",
+        "checkpoint_checks",
+        "validated_checkpoints",
+        "unresolved_side_effects",
+        "human_interventions",
+    )
+    totals = {field: sum(row.get(field, 0) for row in rows) for field in fields}
+    return {
+        **totals,
+        "success_rate": totals["successful_attempts"] / totals["attempt_count"]
+        if totals["attempt_count"]
+        else None,
+        "checkpoint_validation_rate": totals["validated_checkpoints"] / totals["checkpoint_checks"]
+        if totals["checkpoint_checks"]
+        else None,
+        "goal_completed_count": sum(row.get("goal_completed") is True for row in rows),
+        "goal_completion_rate": sum(row.get("goal_completed") is True for row in rows) / len(rows),
+        "cost": {
+            "value": None,
+            "status": "Not applicable (simulated)"
+            if mode in {"mock", "sandbox"}
+            else "Unavailable",
+        },
+    }
 
 
 def compare_conditions(left, right):

@@ -81,6 +81,7 @@ class AgentEvaluationEngine:
 
     async def start(self, options, app):
         async with self.lock:
+            self.registry = BenchmarkRegistry(options.dataset_id)
             cases = self.registry.select(options.case_ids)
             model_config = None
             if options.mode == Mode.LIVE:
@@ -141,7 +142,9 @@ class AgentEvaluationEngine:
                     "os": platform.system(),
                     "os_version": platform.version(),
                     "python": platform.python_version(),
-                    "fixture": "studio-fixture-v1",
+                    "fixture": "studio-fixture-v1"
+                    if self.registry.dataset_id == "studio-core"
+                    else "recovery-fixture-v1",
                     "desktop_bridge": "simulated",
                     "process_isolation": True,
                 },
@@ -196,6 +199,7 @@ class AgentEvaluationEngine:
                             result = empty_result("BLOCKED", "MODEL_BUDGET_EXHAUSTED")
                         else:
                             payload = {
+                                "dataset_id": self.registry.dataset_id,
                                 "case_id": case_id,
                                 "mode": options.mode.value,
                                 "max_requests": remaining_requests,

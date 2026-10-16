@@ -1,6 +1,7 @@
 import type { Dataset, EvaluationMode, ModelChoice } from './types';
 
 export type EvaluationForm = {
+  datasetId: 'studio-core' | 'recovery-core';
   mode: EvaluationMode;
   role: string;
   caseId: string;
@@ -13,6 +14,7 @@ export type EvaluationForm = {
   consent: boolean;
 };
 export const initialForm: EvaluationForm = {
+  datasetId: 'studio-core',
   mode: 'mock',
   role: 'planning_model',
   caseId: '',
@@ -44,10 +46,20 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
       <div className="evaluation-controls">
         <label>
           测试集
-          <select aria-label="评测测试集">
-            <option>
-              {dataset?.title || 'Studio Core · 20 项'} · {dataset?.dataset_version || '加载中'}
-            </option>
+          <select
+            aria-label="评测测试集"
+            value={form.datasetId}
+            onChange={(e) =>
+              change({
+                datasetId: e.target.value as EvaluationForm['datasetId'],
+                caseId: '',
+                mode: 'mock',
+                consent: false,
+              })
+            }
+          >
+            <option value="studio-core">Studio Core · 20 项</option>
+            <option value="recovery-core">Recovery Core · 16 项</option>
           </select>
         </label>
         <label>
@@ -60,7 +72,9 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             <option value="mock">Mock · 模拟模型与桌面</option>
             <option value="sandbox">Sandbox · 真实隔离文件</option>
             <option value="windows_gui">Windows GUI · 需专用受控桥</option>
-            <option value="live_model">Live Model · 明确授权后调用</option>
+            <option value="live_model" disabled={form.datasetId === 'recovery-core'}>
+              Live Model · 明确授权后调用
+            </option>
           </select>
         </label>
         <label>

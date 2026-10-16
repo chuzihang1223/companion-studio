@@ -14,9 +14,11 @@ import './evaluation.css';
 export default memo(function EvaluationDashboard({ visible }: { visible: boolean }) {
   const api = window.desktopAPI;
   const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [evidenceDataset, setEvidenceDataset] = useState<Dataset | null>(null);
   const [models, setModels] = useState<ModelChoice[]>([]);
   const [form, setForm] = useState(initialForm);
   const {
+    datasetId,
     mode,
     role,
     caseId,
@@ -67,7 +69,11 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
   useEffect(() => {
     if (!api || !visible) return;
     let current = true;
-    void Promise.all([api.readEvaluation('dataset'), api.readEvaluation('models'), loadHistory()])
+    void Promise.all([
+      api.readEvaluation('dataset', { dataset_id: datasetId }),
+      api.readEvaluation('models'),
+      loadHistory(),
+    ])
       .then(([data, choices]) => {
         if (current) {
           setDataset(data);
@@ -80,7 +86,7 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
     return () => {
       current = false;
     };
-  }, [api, visible, loadHistory]);
+  }, [api, visible, loadHistory, datasetId]);
 
   useEffect(() => {
     setCursor(0);
@@ -100,6 +106,16 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
       .then(([detail, page]) => {
         if (!current) return;
         setRun(detail);
+        void api
+          .readEvaluation('dataset', {
+            dataset_id: detail.snapshot.dataset_id as 'studio-core' | 'recovery-core',
+          })
+          .then((value) => {
+            if (current) setEvidenceDataset(value);
+          })
+          .catch((e: unknown) => {
+            if (current) setError(String(e));
+          });
         setRows(page.items);
         setNextCursor(page.next_cursor);
         if (terminal(detail.status))
@@ -151,7 +167,8 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
     setNotice('');
     try {
       const created = await api.startEvaluation({
-        dataset_id: 'studio-core',
+        dataset_id:
+          ids && run ? (run.snapshot.dataset_id as 'studio-core' | 'recovery-core') : datasetId,
         case_ids: ids || (caseId ? [caseId] : []),
         mode,
         model_role: role,
@@ -253,6 +270,7 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
       </div>
       <EvaluationTrend
         values={history
+          .filter((r) => r.snapshot.dataset_id === datasetId && r.mode === mode)
           .map((r) => r.metrics.average_duration_ms)
           .filter((v): v is number => v != null)}
       />
@@ -317,7 +335,7 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
               key={evidence.attempt_id}
               row={evidence}
               visible={visible}
-              caseInfo={dataset?.cases?.find((c) => c.case_id === evidence.case_id)}
+              caseInfo={evidenceDataset?.cases?.find((c) => c.case_id === evidence.case_id)}
             />
           )}
           <div className="evaluation-actions">

@@ -84,7 +84,7 @@ async def evaluate(payload):
     from app.services.evaluation.grader import EvaluationGrader
     from app.services.llm.usage import UsageBudget, usage_scope
 
-    registry = BenchmarkRegistry()
+    registry = BenchmarkRegistry(payload.get("dataset_id", "studio-core"))
     case = registry.by_id[payload["case_id"]]
     if (
         case.case_id == "EVAL-007"
@@ -100,7 +100,8 @@ async def evaluate(payload):
         }
     home, data = settings.data_root.parent, settings.data_root
     workspace = home / "workspace"
-    initialize(data, workspace)
+    if not (case.case_id == "REC-012" and payload.get("restart_stage") == "reopen"):
+        initialize(data, workspace)
     before = {
         p.name: digest(p.read_text(encoding="utf-8")) for p in workspace.iterdir() if p.is_file()
     }
@@ -112,9 +113,20 @@ async def evaluate(payload):
     state.agent_service = AgentService()
     state.work_state = WorkState()
     state.runtime_registry = RuntimeTaskRegistry()
+    from app.services.recovery.checkpoints import CheckpointManager
+    from app.services.recovery.coordinator import ResumeCoordinator
+
+    state.checkpoint_manager = CheckpointManager()
+    state.checkpoint_manager.recover()
+    state.recovery_required = True
+    state.recovery = ResumeCoordinator(app, state.checkpoint_manager)
     state.work_state.registry = state.runtime_registry
     state.task_runtime = AgentTaskRuntime(app)
     state.desktop_bridge = MockDesktopBridge(case.case_id)
+    if case.case_id.startswith("REC-"):
+        from app.services.evaluation.recovery_fixtures import RecoveryDesktopBridge
+
+        state.desktop_bridge = RecoveryDesktopBridge(case.case_id)
     state.llm_service = (
         create_llm_service(LLMConfig.model_validate(payload["model_config"]))
         if payload["mode"] == "live_model"
@@ -128,13 +140,31 @@ async def evaluate(payload):
         )
     )
     state.model_roles = ModelRoleRouter(app)
+    if case.case_id.startswith("REC-"):
+        from app.services.evaluation.recovery_fixtures import RecoveryModel
+
+        state.llm_service.provider = RecoveryModel(case.case_id)
+    if case.case_id == "REC-012" and payload.get("restart_stage") == "reopen":
+        state.work_state.recover_interrupted()
     store = TraceStore()
+    if case.case_id == "REC-012" and payload.get("restart_stage") == "reopen":
+        store.recover()
     store.on_commit = state.work_state.notify_trace
     state.trace_recorder = TraceRecorder(store)
     state.trace_repository = TraceRepository(store)
     state.work_state.trace_recorder = state.trace_recorder
     state.runtime_registry.trace_recorder = state.trace_recorder
     store.start()
+    if case.case_id.startswith("REC-"):
+        from app.services.evaluation.recovery_cases import run_case
+
+        try:
+            return await run_case(app, store, case, payload, workspace, GuardedExecutor)
+        finally:
+            await state.recovery.close()
+            await state.runtime_registry.close()
+            await store.stop()
+            engine.dispose()
     plans, replies = [], []
     cancelled = False
     started = time.perf_counter()
@@ -211,9 +241,15 @@ async def evaluate(payload):
         await store.flush()
         traces, summaries, events = [], [], []
         for plan in plans:
-            trace = state.trace_repository.listing(
+            recorded = state.trace_repository.listing(
                 plan["conversation_id"], task_id=plan["plan_id"]
-            )["items"][0]
+            )["items"]
+            if not recorded:
+                # A missing projection is failed evidence, never a passed task or
+                # an IndexError that discards the other measured observations.
+                evidence["trace_missing"] = True
+                continue
+            trace = recorded[0]
             traces.append(trace)
             summaries.append(
                 state.trace_repository.summary(trace["trace_id"], plan["conversation_id"])

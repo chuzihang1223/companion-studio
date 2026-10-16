@@ -36,8 +36,11 @@ module.exports = ({
     const query = new URLSearchParams();
     let route = '/api/evaluation/';
     if (operation === 'datasets' || operation === 'models') route += operation;
-    else if (operation === 'dataset') route += 'datasets/studio-core';
-    else if (operation === 'compare') {
+    else if (operation === 'dataset') {
+      const dataset = options.dataset_id || 'studio-core';
+      if (!['studio-core', 'recovery-core'].includes(dataset)) throw Error('未知内置数据集');
+      route += 'datasets/' + dataset;
+    } else if (operation === 'compare') {
       route += 'compare';
       query.set('left', uuid(options.left));
       query.set('right', uuid(options.right));

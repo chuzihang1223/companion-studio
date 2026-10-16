@@ -1,6 +1,6 @@
 export type EvaluationMode = 'mock' | 'sandbox' | 'windows_gui' | 'live_model';
 export type EvaluationOptions = {
-  dataset_id?: 'studio-core';
+  dataset_id?: 'studio-core' | 'recovery-core';
   case_ids?: string[];
   mode?: EvaluationMode;
   model_role?: string;
@@ -29,6 +29,22 @@ export type Dataset = {
 };
 export type Usage = { status: string; total_tokens: number | null; observed_requests?: number };
 export type EvaluationMetrics = {
+  recovery?: {
+    attempt_count: number;
+    successful_attempts: number;
+    success_rate: number | null;
+    duration_ms: number;
+    replanning_count: number;
+    duplicate_execution_count: number;
+    checkpoint_checks: number;
+    validated_checkpoints: number;
+    checkpoint_validation_rate: number | null;
+    unresolved_side_effects: number;
+    human_interventions: number;
+    goal_completed_count: number;
+    goal_completion_rate: number;
+    cost: { value: number | null; status: string };
+  } | null;
   source: string;
   counts: Record<string, number>;
   valid_count: number;
@@ -103,6 +119,7 @@ export type Comparison = {
   cases: { left: EvaluationResult[]; right: EvaluationResult[] };
 };
 export type EvaluationQuery = {
+  dataset_id?: 'studio-core' | 'recovery-core';
   trace_id?: string;
   run_id?: string;
   attempt_id?: string;

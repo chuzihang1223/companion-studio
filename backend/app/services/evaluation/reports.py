@@ -47,6 +47,10 @@ class EvaluationReportService:
                     "retries",
                     "error_code",
                     "trace_id",
+                    "recovery_attempts",
+                    "recovery_duration_ms",
+                    "replanning_count",
+                    "duplicate_execution_count",
                 ]
             )
             for row in rows:
@@ -64,6 +68,15 @@ class EvaluationReportService:
                             result.get("retry_count"),
                             row["error_code"],
                             row["trace_id"],
+                            *(
+                                result.get("recovery_metrics", {}).get(key)
+                                for key in (
+                                    "attempt_count",
+                                    "duration_ms",
+                                    "replanning_count",
+                                    "duplicate_execution_count",
+                                )
+                            ),
                         )
                     ]
                 )
@@ -98,6 +111,15 @@ class EvaluationReportService:
                 f"|{row['case_id']}|{row['execution_status']}|{round(row['duration_ms'], 3) if row['duration_ms'] is not None else 'N/A'}|{row['error_code'] or ''}|{row['trace_id'] or 'N/A'}|"
                 for row in rows
             ]
+            if metrics.get("recovery"):
+                lines += [
+                    "",
+                    "## Recovery metrics",
+                    "",
+                    json.dumps(metrics["recovery"], ensure_ascii=False),
+                    "",
+                    "安全故障断言通过不等于原目标完成；进程退出前的未知耗时不补造。",
+                ]
             lines += [
                 "",
                 "## Failure categories",

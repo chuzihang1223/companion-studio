@@ -4,6 +4,7 @@ import { number, rate } from './presentation';
 
 export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | null }) {
   const m = run?.metrics;
+  const recovery = m?.recovery;
   const values = [
     ['有效评分 / 总任务', `${m?.valid_count ?? 0} / ${run?.total_cases ?? 0}`],
     [run?.mode === 'mock' ? 'Mock 回归通过率' : '评测通过率', rate(m?.success_rate)],
@@ -14,6 +15,17 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
     ['重试次数', String(m?.retry_count ?? 0)],
     ['恢复成功率', rate(m?.recovery_success_rate)],
   ];
+  if (recovery)
+    values.push(
+      ['恢复尝试 / 成功', `${recovery.attempt_count} / ${recovery.successful_attempts}`],
+      ['恢复耗时 ms', number(recovery.duration_ms)],
+      ['局部重新规划', String(recovery.replanning_count)],
+      ['重复执行', String(recovery.duplicate_execution_count)],
+      ['检查点核验率', rate(recovery.checkpoint_validation_rate)],
+      ['未确认副作用', String(recovery.unresolved_side_effects)],
+      ['合成用户干预', String(recovery.human_interventions)],
+      ['合成目标完成率', rate(recovery.goal_completion_rate)],
+    );
   return (
     <>
       <div className="evaluation-metrics">

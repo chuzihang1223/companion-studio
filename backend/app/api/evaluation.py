@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.api.agent_traces import authorized
 from app.schemas.evaluation import RunAction, RunRequest
 from app.services.evaluation.reports import EvaluationReportService
+from app.services.evaluation.registry import BenchmarkRegistry
 
 router = APIRouter(prefix="/api/evaluation", dependencies=[Depends(authorized)])
 
@@ -35,12 +36,14 @@ async def read(function, *args, **kwargs):
 
 @router.get("/datasets")
 async def datasets(request: Request):
-    return {"items": [engine(request).registry.public()]}
+    engine(request)
+    return {"items": [BenchmarkRegistry(key).public() for key in ("studio-core", "recovery-core")]}
 
 
 @router.get("/datasets/{dataset_id}")
-async def dataset(dataset_id: Literal["studio-core"], request: Request):
-    return engine(request).registry.public(True)
+async def dataset(dataset_id: Literal["studio-core", "recovery-core"], request: Request):
+    engine(request)
+    return BenchmarkRegistry(dataset_id).public(True)
 
 
 @router.get("/models")

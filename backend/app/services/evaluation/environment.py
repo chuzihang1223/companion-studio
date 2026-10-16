@@ -174,17 +174,68 @@ class EnvironmentManager:
                 "--evaluation-worker",
             ]
         )
+        try:
+            if payload.get("dataset_id") == "recovery-core" and payload["case_id"] == "REC-012":
+                started = asyncio.get_running_loop().time()
+                first = await self.launch_worker(
+                    command,
+                    dict(env),
+                    home,
+                    attempt_id,
+                    {**payload, "restart_stage": "prepare"},
+                    timeout,
+                )
+                if first.get("worker_exited") != 86:
+                    raise WorkerFailure("RESTART_PREPARATION_FAILED")
+                remaining = max(1, timeout - (asyncio.get_running_loop().time() - started))
+                result = await self.launch_worker(
+                    command,
+                    dict(env),
+                    home,
+                    attempt_id,
+                    {**payload, "restart_stage": "reopen", "parent_observed_restart": True},
+                    remaining,
+                )
+            else:
+                result = await self.launch_worker(
+                    command, dict(env), home, attempt_id, payload, timeout
+                )
+            if "worker_exited" in result:
+                raise WorkerFailure("UNEXPECTED_WORKER_EXIT")
+            return result
+        finally:
+            try:
+                # Closed worker DBs may retain a WAL after abrupt termination.
+                # SQLite backup reads a consistent snapshot and folds that WAL
+                # into the archived DB, rather than copying an incomplete file.
+                source = data / "chat.db"
+                if source.is_file():
+                    await asyncio.to_thread(self.archive_database, source, archive)
+            finally:
+                if home.resolve().parent == (self.root / "_w").resolve() and not home.is_symlink():
+                    await asyncio.to_thread(shutil.rmtree, home)
+
+    async def launch_worker(self, command, env, home, attempt_id, payload, timeout):
+        """One authenticated process/Job. No profiles or payload files cross IPC."""
         secret = secrets.token_urlsafe(32)
         outcome = asyncio.get_running_loop().create_future()
         ready = asyncio.Event()
         writers = set()
+        receivers = set()
 
         async def receive(reader, writer):
+            receiver = asyncio.current_task()
+            if len(receivers) >= 8:
+                writer.close()
+                return
+            receivers.add(receiver)
             writers.add(writer)
+            authenticated = False
             try:
                 hello = (await asyncio.wait_for(reader.readline(), 3)).decode().strip()
                 if not hmac.compare_digest(hello, secret):
                     return
+                authenticated = True
                 await ready.wait()
                 # Framed local IPC also works in PyInstaller --noconsole, whose
                 # sys.stdin/stdout are None. Credentials stay in this private pipe
@@ -194,16 +245,38 @@ class EnvironmentManager:
                 raw = await reader.readline()
                 if len(raw) > 32000:
                     raise ValueError("worker output exceeds limit")
-                value = json.loads(raw)
+                value = json.loads(raw) if raw else {"worker_exited": await process.wait()}
                 if not outcome.done():
                     outcome.set_result(value)
+            except (ConnectionError, OSError):
+                # Windows reports a reset, rather than EOF, when the controlled
+                # crash test hard-exits. Only the authenticated worker's actual
+                # process exit code can authorize the second recovery segment.
+                try:
+                    code = (
+                        await asyncio.wait_for(process.wait(), 3)
+                        if authenticated and process
+                        else None
+                    )
+                    if code is not None and not outcome.done():
+                        outcome.set_result({"worker_exited": code})
+                    elif not outcome.done():
+                        outcome.set_exception(RuntimeError("worker IPC unavailable"))
+                except Exception:
+                    if not outcome.done():
+                        outcome.set_exception(RuntimeError("worker IPC unavailable"))
             except Exception:
                 if not outcome.done():
                     outcome.set_exception(RuntimeError("worker IPC unavailable"))
             finally:
                 writer.close()
-                await writer.wait_closed()
-                writers.discard(writer)
+                try:
+                    await writer.wait_closed()
+                except (ConnectionError, OSError):
+                    pass
+                finally:
+                    writers.discard(writer)
+                    receivers.discard(receiver)
 
         server = await asyncio.start_server(receive, "127.0.0.1", 0, limit=32768)
         env["COMPANION_EVAL_PORT"] = str(server.sockets[0].getsockname()[1])
@@ -234,6 +307,7 @@ class EnvironmentManager:
             await server.wait_closed()
             for writer in list(writers):
                 writer.close()
+            ready.set()
             if job:
                 job.close()
             if process and process.returncode is None:
@@ -245,16 +319,14 @@ class EnvironmentManager:
                     process.kill()
                 await process.wait()
             self.active.pop(attempt_id, None)
-            try:
-                # Closed worker DBs may retain a WAL after abrupt termination.
-                # SQLite backup reads a consistent snapshot and folds that WAL
-                # into the archived DB, rather than copying an incomplete file.
-                source = data / "chat.db"
-                if source.is_file():
-                    await asyncio.to_thread(self.archive_database, source, archive)
-            finally:
-                if home.resolve().parent == (self.root / "_w").resolve() and not home.is_symlink():
-                    await asyncio.to_thread(shutil.rmtree, home)
+            pending = list(receivers)
+            if pending:
+                try:
+                    await asyncio.wait_for(asyncio.gather(*pending, return_exceptions=True), 4)
+                except TimeoutError:
+                    for receiver in pending:
+                        receiver.cancel()
+                    await asyncio.gather(*pending, return_exceptions=True)
 
     @staticmethod
     def archive_database(source, archive):
