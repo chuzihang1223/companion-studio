@@ -4,6 +4,9 @@
   [switch]$SkipTests
 )
 $ErrorActionPreference = 'Stop'
+# npm launched from PowerShell 7 can inherit its module search paths into 5.1.
+# Load the running shell's bundled cmdlets explicitly, as the installer test does.
+Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility') -ErrorAction Stop
 $project = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $desktop = Join-Path $project 'desktop'
 $version = (Get-Content -LiteralPath (Join-Path $desktop 'package.json') -Raw | ConvertFrom-Json).version
