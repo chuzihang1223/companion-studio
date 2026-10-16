@@ -17,6 +17,18 @@ from app.services import agent_service as agent_module
 from app.services import work_state as work_module
 
 
+def isolate_durable_services(monkeypatch, factory):
+    """The older fixture moves business tables; move new durable stores with it."""
+    from app import main as application
+    from app.services import runtime_registry
+    from app.services.recovery.checkpoints import CheckpointManager
+    from app.services.trace.store import TraceStore
+
+    monkeypatch.setattr(runtime_registry, "SessionLocal", factory)
+    monkeypatch.setattr(application, "CheckpointManager", lambda: CheckpointManager(factory))
+    monkeypatch.setattr(application, "TraceStore", lambda: TraceStore(factory))
+
+
 def test_intent_and_workspace_boundaries(tmp_path):
     router = ConversationRouter()
     assert router.route("我今天好累") == "chat"
@@ -114,6 +126,7 @@ def test_agent_plan_execute_persists_character_reply(tmp_path, monkeypatch):
     from app.services.coding import documents
 
     monkeypatch.setattr(documents, "SessionLocal", factory)
+    isolate_durable_services(monkeypatch, factory)
     with TestClient(app) as client:
         app.state.llm_service = FakeToolLLM()
         app.state.agent_service.executor = ToolExecutor(tmp_path / "workspace")
@@ -160,6 +173,7 @@ def test_selected_work_folder_scopes_agent_write(tmp_path, monkeypatch):
     from app.services.coding import documents
 
     monkeypatch.setattr(documents, "SessionLocal", factory)
+    isolate_durable_services(monkeypatch, factory)
     monkeypatch.setenv("COMPANION_CONTROL_TOKEN", "selected-workspace-test")
     from app.services import permission_policy
 

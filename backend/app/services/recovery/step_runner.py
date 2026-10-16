@@ -124,10 +124,20 @@ async def run_step(
                 if failure.error_code == "TOOL_TIMEOUT"
                 else failure.error_code.value
             )
+            public_error = failure.message
+            if (
+                max_attempts == 1
+                and isinstance(result.get("music_context"), dict)
+                and isinstance(result.get("public_error"), str)
+            ):
+                # The native music adapter owns its stage recovery and emits a
+                # user-facing classification. Preserve that bounded explanation
+                # and identity instead of replacing it with UNKNOWN_ERROR.
+                public_error = result["public_error"][:300]
             return {
                 **result,
                 "error": failure.message,
-                "public_error": failure.message,
+                "public_error": public_error,
                 "code": code,
                 "failure_code": failure.error_code.value,
                 "verified": False,

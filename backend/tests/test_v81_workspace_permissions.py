@@ -6,6 +6,7 @@ import os
 import sqlite3
 import subprocess
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
@@ -338,6 +339,8 @@ def test_runtime_denies_unknown_executable_even_with_approved_id(tmp_path, monke
     state = SimpleNamespace(is_stopped=lambda session: False, emit=lambda *a, **k: None)
     runtime = AgentTaskRuntime(SimpleNamespace(state=SimpleNamespace(work_state=state)))
     context = SimpleNamespace(
+        task_id=str(uuid4()),
+        resume_verified=None,
         work_session_id="s",
         user_text="打开未知应用",
         executor=ToolExecutor(tmp_path / "workspace"),

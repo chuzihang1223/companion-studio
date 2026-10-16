@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 import asyncio
+from uuid import uuid4
 from app.services.local_action_intent import LocalActionIntentResolver
 from app.services.desktop.music_task import music_context, music_feedback
 from app.services.desktop.runtime import AgentTaskRuntime
@@ -38,7 +39,7 @@ def test_adapter_failure_is_not_repeated_or_stripped():
 async def check_adapter_failure():
     work = SimpleNamespace(step_status=lambda *a: None, emit=lambda *a, **kw: None)
     runtime = AgentTaskRuntime(SimpleNamespace(state=SimpleNamespace(work_state=work)))
-    context = SimpleNamespace(work_session_id="work")
+    context = SimpleNamespace(work_session_id="work", task_id=str(uuid4()))
     count = 0
 
     async def operation():
@@ -75,6 +76,14 @@ def test_music_stream_has_one_canonical_reply_and_task_identity(tmp_path, monkey
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     for module in (agent_service, work_state, agent_api):
         monkeypatch.setattr(module, "SessionLocal", factory)
+    from app import main as application
+    from app.services import runtime_registry
+    from app.services.recovery.checkpoints import CheckpointManager
+    from app.services.trace.store import TraceStore
+
+    monkeypatch.setattr(runtime_registry, "SessionLocal", factory)
+    monkeypatch.setattr(application, "CheckpointManager", lambda: CheckpointManager(factory))
+    monkeypatch.setattr(application, "TraceStore", lambda: TraceStore(factory))
 
     class NoModelRequests:
         async def chat(self, *args):
