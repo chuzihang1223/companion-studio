@@ -41,7 +41,9 @@ ASSIGNMENT = re.compile(
     r"openai_api_key|gh_token|github_token)[\"']?\s*[:=]\s*[\"']([A-Za-z0-9_+/=-]{16,})[\"']"
 )
 DUMMY_TOKEN = re.compile(r"^(?:sk-(?:test|dummy|example)-|github_pat_test_)(?:0{24,}|x{24,})$")
-DUMMY_VALUES = {"isolated-test-key"}
+# 只识别已核验的固定合成占位，且下方仍要求 tests/ 或 backend/tests/ 路径。
+# Workflow 安全拒绝用例在本地历史中也保留这个明显虚构的字符串。
+DUMMY_VALUES = {"isolated-test-key", "not-a-real-password"}
 
 
 def load_export_policy(root: Path) -> Any:

@@ -57,7 +57,13 @@ def test_scan_redacts_values_and_only_allows_explicit_test_placeholders():
     fake = "sk-test-" + "0" * 32
     audit.text(fake, "history", "backend/tests/example.py")
     audit.text('api_key="isolated-test-key"', "history", "backend/tests/example.py")
+    audit.text('password="not-a-real-password"', "history", "backend/tests/example.py")
     assert not audit.findings
+    placeholder = AUDIT.Audit(POLICY)
+    placeholder.text('password="not-a-real-password"', "source", "backend/app/example.py")
+    placeholder.text('password="' + "M8uN4aV9" * 4 + '"', "history", "backend/tests/example.py")
+    assert len(placeholder.findings) == 2
+    assert all(row["kind"] == "credential-assignment" for row in placeholder.findings)
     audit.text(fake, "history", "backend/app/example.py")
     audit.text(credential(), "history", "backend/tests/not_a_placeholder.py")
     audit.text(private_path(), "history", "backend/app/private.py")
