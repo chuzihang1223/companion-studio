@@ -10,3 +10,10 @@ from .agent_trace import AgentTrace, TraceSpan, TraceEvent
 from .evaluation import EvaluationRun, EvaluationAttempt
 from .recovery import RecoveryTask, AgentCheckpoint, RecoveryAttempt
 from .extensions import ExtensionRecord
+from .workflows import (
+    WorkflowDefinitionRow,
+    WorkflowVersionRow,
+    WorkflowRunRow,
+    WorkflowNodeRow,
+    WorkflowRunEvent,
+)
