@@ -51,6 +51,8 @@ flowchart LR
 
 本分支的 [Agent Recovery](docs/AGENT_RECOVERY.md) 位于工作流模块：分类错误、有限恢复、保存执行意图、重启后预览、安全续接、暂停/接管/取消，并关联原有 Trace。文件哈希冲突或未知外部副作用会阻断续接；不会自动重复脚本、付费模型或表单。续接本身不追加模型/语音请求，任务执行年龄上限 30 分钟。[Recovery Core 的 16 项评测](docs/RECOVERY_EVALUATION.md)区分安全断言通过率与实际合成目标完成率。
 
+![安装版在执行中断并重启后，核验检查点并显示安全续接预览](docs/screenshots/recovery.png)
+
 | 功能 | 当前实现与条件 |
 | --- | --- |
 | 文字聊天 | 流式显示回复；Enter 发送、Shift + Enter 换行；加载和错误提示；单条消息最多 4000 字符。 |
