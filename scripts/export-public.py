@@ -32,6 +32,14 @@ TREES = {
     "examples/agent-skills",
 }
 PUBLIC_DOCS = {
+    "WORKFLOW_ARCHITECTURE.md",
+    "WORKFLOW_SCHEMA.md",
+    "WORKFLOW_VARIABLES.md",
+    "WORKFLOW_EXECUTION.md",
+    "WORKFLOW_SECURITY.md",
+    "WORKFLOW_TEMPLATES.md",
+    "WORKFLOW_EVALUATION.md",
+    "WORKFLOW_BASELINE.md",
     "MCP_ARCHITECTURE.md",
     "MCP_CONFIGURATION.md",
     "MCP_SECURITY.md",
@@ -119,6 +127,7 @@ LICENSE_ARCHIVE = (
 )
 LICENSE_ARCHIVE_SHA = "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc"
 SCREENSHOTS = {
+    "docs/screenshots/workflow-builder.png",
     "docs/screenshots/agent-skills.png",
     "docs/screenshots/mcp-evaluation.png",
     "docs/screenshots/recovery.png",
