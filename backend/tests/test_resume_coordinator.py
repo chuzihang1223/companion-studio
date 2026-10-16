@@ -274,3 +274,63 @@ def test_unsupported_checkpoint_and_changed_saved_plan_fail_closed(recovery_app)
         await store.stop()
 
     asyncio.run(run())
+
+
+def test_interrupted_resume_can_resume_again_without_rewriting_or_duplicate_user(recovery_app):
+    app, store, _, _ = recovery_app
+
+    async def run():
+        store.start()
+        plan, written = await crashed_write(app)
+        root, conversation, session = (
+            plan["plan_id"],
+            plan["conversation_id"],
+            plan["work_session_id"],
+        )
+        manager, coordinator = app.state.checkpoint_manager, app.state.recovery
+        original = app.state.task_runtime.run
+        entered = asyncio.Event()
+
+        async def hold(*args):
+            entered.set()
+            await asyncio.Event().wait()
+
+        app.state.task_runtime.run = hold
+        first = manager.detail(root, conversation)
+        await coordinator.resume(
+            root, conversation, session, "fixture", str(uuid4()), first["revision"], []
+        )
+        await asyncio.wait_for(entered.wait(), 3)
+        await coordinator.close()
+        assert manager.detail(root, conversation)["state"] == "INTERRUPTED"
+        assert (
+            not coordinator.tasks
+            and not coordinator.leases
+            and not app.state.runtime_registry.active
+        )
+        app.state.task_runtime.run = original
+        app.state.recovery = ResumeCoordinator(app, manager)
+        current = manager.detail(root, conversation)
+        await app.state.recovery.resume(
+            root, conversation, session, "fixture", str(uuid4()), current["revision"], []
+        )
+        await asyncio.gather(*list(app.state.recovery.tasks.values()))
+        assert manager.detail(root, conversation)["state"] == "COMPLETED"
+        assert len(written) == 1
+        with store.factory() as db:
+            assert (
+                len(
+                    list(
+                        db.scalars(
+                            select(Message).where(
+                                Message.conversation_id == conversation, Message.role == "user"
+                            )
+                        )
+                    )
+                )
+                == 1
+            )
+        await app.state.recovery.close()
+        await store.stop()
+
+    asyncio.run(run())

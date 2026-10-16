@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.services.recovery.classifier import FailureClassifier
+from app.services.recovery.planner import RecoveryPlanner
 from app.services.recovery.policy import RecoveryPolicyEngine, side_effect_class
 from app.services.recovery.types import FailureCode, MESSAGES, RecoveryBudget, TRANSITIONS
 
@@ -72,3 +73,20 @@ def test_read_retry_budget_and_unknown_failures_require_review():
         for state, targets in TRANSITIONS.items()
         if state not in {"RESUMING", "RECOVERING"}
     )
+
+
+def test_replanning_requires_new_evidence_and_honors_time_cycles_and_permissions():
+    call = {"id": "focus-test", "name": "app.focus", "arguments": {"app": "notepad"}}
+    error = failure(result={"code": "VERIFICATION_FAILED"}, tool="app.focus")
+    planner = RecoveryPlanner()
+    observation = {"running": True, "has_window": True, "verified": True}
+    assert planner.plan(error, call, retry_count=0, observation=observation).retry
+    repeated = planner.plan(error, call, retry_count=1, observation=observation)
+    assert not repeated.retry and repeated.strategy == "unchanged_observation"
+    planner = RecoveryPlanner(cycles=4)
+    assert not planner.plan(error, call, retry_count=0, observation=observation).retry
+    planner = RecoveryPlanner(started=-1801)
+    assert planner.plan(error, call, retry_count=0, observation=observation).stop
+    planner = RecoveryPlanner()
+    assert planner.plan(error, call, retry_count=0, permission=False).stop
+    assert planner.cycles == 0

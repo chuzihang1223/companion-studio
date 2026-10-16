@@ -159,6 +159,15 @@ class CheckpointManager:
             if row:
                 if row.idempotency_key != key or row.state not in {"PREPARED", "FAILED", "DENIED"}:
                     raise RecoveryError("SIDE_EFFECT_UNCERTAIN")
+                previous = decoded(row.intent_json)
+                # Reconciliation and execution are separate transactions. Reject
+                # a file changed between them instead of replacing its evidence.
+                if (
+                    row.side_effect_class == "RECONCILABLE"
+                    and previous.get("before_hash")
+                    and previous["before_hash"] != intent.get("before_hash")
+                ):
+                    raise RecoveryError("FILE_STATE_CHANGED")
                 row.intent_json = encoded(intent)
                 row.state, row.updated_at = "PREPARED", datetime.now(timezone.utc)
             else:
@@ -281,14 +290,21 @@ class CheckpointManager:
 
     def reuse(self, root, context, call):
         from app.services.recovery.reconciliation import resource_snapshot
+        from app.services.recovery.policy import FILE_READS, FILE_WRITES
 
         with self.factory() as db:
             step_id = str(uuid5(UUID(root), call["id"]))
             row = db.get(AgentCheckpoint, step_id)
             if not row:
                 raise RecoveryError("CHECKPOINT_INVALID")
+            intent = decoded(row.intent_json)
+            if call["name"] in FILE_READS | FILE_WRITES:
+                wanted = intent.get(
+                    "expected_hash" if call["name"] in FILE_WRITES else "before_hash"
+                )
+                if not wanted or resource_snapshot(context, call).get("before_hash") != wanted:
+                    raise RecoveryError("FILE_STATE_CHANGED")
             if row.state != "COMMITTED":
-                intent = decoded(row.intent_json)
                 current = resource_snapshot(context, call)
                 if (
                     not intent.get("expected_hash")

@@ -174,3 +174,47 @@ def test_transaction_failure_does_not_create_execution_intent(ledger, monkeypatc
     monkeypatch.setattr(session_type, "commit", original)
     assert manager.detail(root, context.conversation_id)["checkpoints"] == []
     assert not (context.executor.workspace / "result.md").exists()
+
+
+def test_file_changed_after_preview_cannot_replace_intent_or_reuse_success(ledger):
+    manager, context, _, root, _ = ledger
+    call = context.calls[0]
+    step = manager.prepare(root, call, 0, resource_snapshot(context, call))
+    target = context.executor.workspace / "result.md"
+    target.write_text("external edit", encoding="utf-8")
+    with pytest.raises(RecoveryError, match="FILE_STATE_CHANGED"):
+        manager.prepare(root, call, 0, resource_snapshot(context, call))
+    assert manager.intent(step)["before_hash"] == "ABSENT"
+    for state in ("EXECUTING", "OBSERVED", "VERIFIED", "COMMITTED"):
+        manager.step(step, state)
+    with pytest.raises(RecoveryError, match="FILE_STATE_CHANGED"):
+        manager.reuse(root, context, call)
+    assert target.read_text(encoding="utf-8") == "external edit"
+
+
+def test_cancelled_state_rejects_late_success_and_expired_budget(ledger):
+    manager, context, _, root, factory = ledger
+    manager.state(root, "CANCELLED")
+    with pytest.raises(RecoveryError, match="INVALID_RECOVERY_TRANSITION"):
+        manager.state(root, "COMPLETED")
+    assert manager.detail(root, context.conversation_id)["state"] == "CANCELLED"
+    with factory() as db:
+        row = db.get(RecoveryTask, root)
+        row.created_at = datetime.now(timezone.utc) - timedelta(minutes=31)
+        db.commit()
+        with pytest.raises(RecoveryError, match="MAX_RETRIES_EXCEEDED"):
+            manager.budget_check(row)
+
+
+def test_newer_database_migration_is_rejected_without_rebuilding_user_tables(ledger):
+    _, context, _, _, factory = ledger
+    engine = factory.kw["bind"]
+    with engine.begin() as connection:
+        connection.execute(
+            text("UPDATE studio_schema_migrations SET version=99 WHERE component='agent_recovery'")
+        )
+    with pytest.raises(ValueError, match="newer"):
+        migrate(engine)
+    with factory() as db:
+        assert db.get(Conversation, context.conversation_id)
+        assert db.get(WorkSession, context.work_session_id).goal == "synthetic goal"
