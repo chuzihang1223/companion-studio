@@ -65,8 +65,16 @@ Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出�
 [Agent Skills](docs/AGENT_SKILLS.md) 支持标准 SKILL.md 目录导入、自建、启用/禁用、更新、
 内容与文件查看及自建导出。工作任务可用 `$project-review` 显式选择；平时只读元数据，命中后
 才加载说明，需要时再读 references。随附三个 MIT 示例，不自动运行脚本、不继承 Codex 开发权限。
+
+![安装版的 Agent Skills 管理：预览示例、导入、启用和查看所需能力](docs/screenshots/agent-skills.png)
+
 [配置方法](docs/MCP_CONFIGURATION.md) · [安全边界](docs/MCP_SECURITY.md) ·
 [Skills 编写](docs/SKILLS_DEVELOPMENT.md) · [20 项受控评测](docs/MCP_EVALUATION.md)。
+
+安装版的 MCP & Skills Core 使用本机受控 Server 和合成模型，保留真实传输、权限、Runtime、
+检查点及 Trace。20 项断言通过率不等于真实 AI 任务成功率，预期注入的故障仍单独统计。
+
+![安装版的 MCP 与 Skills 评测：20 项受控结果、协议指标及 Trace 入口](docs/screenshots/mcp-evaluation.png)
 
 | 功能 | 当前实现与条件 |
 | --- | --- |

@@ -25,6 +25,7 @@ permission_required、side_effect_unknown。文件效果只发生在当前 worke
 指标包括连接、发现、调用成功率、Schema 拒绝、延迟、重连、权限拒绝、Skill 加载与合成匹配率。
 预期故障也是分母中的真实故障，断言通过率与协议调用成功率分别显示；真实 AI 目标完成率、
 第三方服务可靠性、Token 和费用在未观测时保持未测量/N/A。
+工具调用成功率按逻辑调用的最终结果统计，恢复重试次数另列，不是底层每个 RPC 的成功率。
 
 协议测试使用真实受控 stdio 与 Streamable HTTP：新版 2026-07-28、SDK legacy 2025-11-25
 及 auto。API 测试验证 Resources、Prompts、控制令牌、凭据脱敏与 Skill 生命周期。
@@ -34,3 +35,21 @@ permission_required、side_effect_unknown。文件效果只发生在当前 worke
 .\.venv\Scripts\python.exe -B -m pytest backend\tests\test_mcp_connection.py backend\tests\test_mcp_security.py backend\tests\test_mcp_api.py backend\tests\test_skill_security.py backend\tests\test_mcp_evaluation.py -q
 node tests\ui\extensions-unit.cjs
 ```
+
+## 已执行的本地安装验收
+
+`0.2.0-extensions.1` 候选包经过实际 NSIS 安装、27 项基础界面检查及卸载。
+原注册信息与快捷方式已恢复；正式档案 95 个文件摘要未改变。
+从该次实际安装保留的程序执行扩展界面验收 **29 项**、MCP & Skills Core **20/20**；
+另以最终审核程序执行原恢复界面 **22 项**、Recovery Core **16/16**。
+构建所需 Ruff、TypeScript、ESLint、Prettier、15 组 Electron 回归和 pytest 均已执行；
+pytest 为 **358 passed、2 skipped**，两项跳过均因 Windows 账号没有创建符号链接权限。
+
+安装版已验证 SDK stdio、Streamable HTTP、工具审批、Resources 预览、Skill 导入和按需加载、
+Trace 归属、重启持久化及无自动连接。SDK 的三种协议模式另在源码环境对受控 stdio/HTTP 验证。
+安装版的原生扩展授权框响应由测试替代；没有人工点击、第三方服务、真实 OAuth、付费模型或
+实际语音质量验收。已有用户记事本实例保留，未在本轮打开或聚焦它。
+
+1/5/20 个服务器配置已检查实际界面加载，不会启动配置中的程序；100 个合成 Schema 的
+注册器检查将候选限制在 8 项、24 KiB 内。这些检查不代表 20 个外部进程并发承载能力，
+也不是 FPS 或长期内存稳定性测量。源码首次与深目录回归失败均已保留本地诊断，修复后重新构建。
