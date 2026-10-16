@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-eval.1 本地审核版**，新增 Agent Trace、只读回放和 Agent Evaluation；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含此功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-recovery.1 本地审核版**，新增 Agent Trace、只读回放、Agent Evaluation 与安全检查点续接；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -35,7 +35,7 @@ flowchart LR
 - **桌面工具与权限**：多来源发现 Windows 应用，再解析和启动；工具参数验证、风险判定和桌面控制令牌共同限定调用。操作后的窗口/结果证据参与验证。
 - **模块化工作台**：布局迁移与持久化、拖动/缩放、单帧预览、自动滚动和会话输出归属；调整模块不重写聊天记录。
 
-应用重启会把未完成任务标为中断，尚未实现完整自动断点恢复、自主学习或分布式多 Agent 系统。
+应用重启会把未完成任务标为中断。本分支可由用户预览检查点、核验当前状态后安全续接；无法确认的副作用会停止并要求人工检查。没有通用外部操作的 Exactly Once、自主学习或分布式多 Agent 系统。
 
 架构与源码细节：[系统架构](docs/ARCHITECTURE.md) · [Agent Runtime](docs/AGENT_RUNTIME.md) · [工具系统](docs/TOOL_SYSTEM.md) · [工作台](docs/WORKBENCH.md) · [工程审计](docs/ENGINEERING_AUDIT.md)
 
@@ -48,6 +48,8 @@ flowchart LR
 下面是安装版实际运行的 Mock 评测：统计来自合成任务，真实 AI 任务成功率仍为未测量。
 
 ![Agent Evaluation 的 Mock 指标、逐项结果与 Trace 入口](docs/screenshots/evaluation.png)
+
+本分支的 [Agent Recovery](docs/AGENT_RECOVERY.md) 位于工作流模块：分类错误、有限恢复、保存执行意图、重启后预览、安全续接、暂停/接管/取消，并关联原有 Trace。文件哈希冲突或未知外部副作用会阻断续接；不会自动重复脚本、付费模型或表单。续接本身不追加模型/语音请求，任务执行年龄上限 30 分钟。[Recovery Core 的 16 项评测](docs/RECOVERY_EVALUATION.md)区分安全断言通过率与实际合成目标完成率。
 
 | 功能 | 当前实现与条件 |
 | --- | --- |

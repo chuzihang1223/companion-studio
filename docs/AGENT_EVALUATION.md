@@ -10,6 +10,10 @@ Trace 和只读回放。选择任务可单项运行，勾选结果可重跑为�
 历史结果支持分页、比较条件和导出 JSON/CSV/Markdown 到当前应用的 `Exports`。
 没有运行时显示空状态，查看历史/Replay 不执行工具或模型。
 
+Recovery 审核分支可在同一面板选择 Recovery Core 1.0.0（16 项），包括真正退出 worker 后
+续接、文件冲突、去重和权限故障。Recovery 不接受 Live Model。新增指标区分断言通过与目标完成，
+见 [恢复评测](RECOVERY_EVALUATION.md)；原 20 项数据集和已有结果继续保留。
+
 ## 模式与实际支持
 
 |模式|当前行为|

@@ -2,7 +2,8 @@
 
 从已完成的本地 Trace / Evaluation 分支 `1406b02133188a3f602c7db4f4a220cb690d7334`
 建立 `feature/agent-recovery-checkpoint`，初始工作区干净，版本 0.2.0-eval.1。
-本地缓存的 origin/main 比该提交少 22 个提交；未联网刷新，不宣称代表当前 GitHub。
+建立基线时未刷新远程；随后只读核对远程 main 为 `bb1d1a1482255edd55704fad5964c691128e4077`，
+与本地 main 相同，比基线少 22 个提交。没有 fetch、推送、改标签或改写公开版本。
 不修改 main、既有公开 v0.1.2、正式档案或个人版。
 
 ## 实际运行

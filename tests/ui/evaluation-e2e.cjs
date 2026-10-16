@@ -23,7 +23,8 @@ async function run() {
   await driver.prepare();
   await driver.launch();
   const info = await driver.c.evaluate('window.desktopAPI.appInfo()');
-  driver.check(info.packaged && info.version==='0.2.0-eval.1', 'Packaged Trace + Evaluation candidate launches', {version:info.version});
+  const expectedVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../desktop/package.json'), 'utf8')).version;
+  driver.check(info.packaged && info.version===expectedVersion, 'Packaged candidate matches the source version under test', {version:info.version});
   await driver.click('工作模式');
   await driver.click('模块');
   await driver.click('Agent Evaluation · 评测', "document.querySelector('.workspace-module-picker')");

@@ -57,3 +57,15 @@ jobs:
           path: |
             .cache/checks/evaluation.xml
           if-no-files-found: warn
+      - name: Recovery Mock, durable restart and safety integration
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -B -m pytest backend/tests/test_recovery_policy.py backend/tests/test_checkpoint_manager.py backend/tests/test_resume_coordinator.py backend/tests/test_recovery_evaluation.py -q --basetemp .cache/recovery-ci-temp --junitxml .cache/checks/recovery.xml
+          node tests/ui/recovery-unit.cjs
+      - name: Keep synthetic recovery test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: recovery-mock-results
+          path: .cache/checks/recovery.xml
+          if-no-files-found: warn

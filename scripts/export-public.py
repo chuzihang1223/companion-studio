@@ -24,6 +24,11 @@ ROOT_FILES = {
 }
 TREES = {"backend", "characters", "desktop", "scripts", "tests", "licenses"}
 PUBLIC_DOCS = {
+    "AGENT_RECOVERY.md",
+    "CHECKPOINT_DESIGN.md",
+    "RECOVERY_SAFETY.md",
+    "RECOVERY_EVALUATION.md",
+    "RECOVERY_BASELINE.md",
     "AGENT_EVALUATION.md",
     "BENCHMARK_DATASET.md",
     "EVALUATION_METRICS.md",
@@ -99,6 +104,7 @@ LICENSE_ARCHIVE = (
 )
 LICENSE_ARCHIVE_SHA = "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc"
 SCREENSHOTS = {
+    "docs/screenshots/recovery.png",
     "docs/screenshots/evaluation.png",
     "docs/screenshots/chat.png",
     "docs/screenshots/workbench.png",

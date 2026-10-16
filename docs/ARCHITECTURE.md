@@ -23,6 +23,7 @@ flowchart TB
   subgraph Python[FastAPI 后端]
     Routes[app/api\n聊天、工作、配置与语音接口]
     Agent[AgentService / AgentTaskRuntime]
+    Recovery[FailureClassifier / CheckpointManager / ResumeCoordinator]
     Roles[ModelRoleRouter / LLMService]
     DesktopBridge[DesktopBridge\n私有命令队列与结果匹配]
     Store[SQLAlchemy / SQLite]
@@ -43,6 +44,8 @@ flowchart TB
   Routes --> Agent
   Routes --> Voice
   Agent --> DesktopBridge
+  Agent --> Recovery
+  Recovery --> Store
   Pump <-->|带控制 Token 的 HTTP| DesktopBridge
   Pump --> Windows
   Pump --> Web
@@ -188,3 +191,7 @@ URL 策略用于拒绝不允许的协议、凭据及明显本机/私有 IP 地�
 | IPC 增补 | 主进程 handler、preload 固定方法、`vite-env.d.ts` 和对应回归 |
 
 工程整改需保持请求字段、事件归属、权限规则和既有交互；格式化、注释、独立故障修复分别留有验证证据。更多工具和任务细节见 [工具系统](TOOL_SYSTEM.md) 与 [Agent 运行时](AGENT_RUNTIME.md)。
+
+审核分支的恢复层复用原任务锁、权限、执行器、Trace 和 Evaluation。运行前提交意图，异常按固定
+Schema 分类，再按预算和当前证据恢复；重启不自动重放。工作流中提供续接面板，评测中新增
+Recovery Core 16 项合成故障。设计和当前限制见 [检查点](CHECKPOINT_DESIGN.md) 与 [恢复安全](RECOVERY_SAFETY.md)。

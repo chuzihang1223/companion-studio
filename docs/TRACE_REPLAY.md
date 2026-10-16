@@ -14,6 +14,9 @@
 
 旧版任务没有 Trace；不会重新操作电脑来补齐。重启时正在执行的轨迹标为中断，未结束 Span 的耗时留空。待执行/待授权计划仍沿用原手动执行流程；用户主动执行时记录新片段并标记不完整，不自动恢复工具。
 
+Recovery 审核版的主动安全续接使用新的执行 UUID / Trace，并通过 origin_task_id 关联逻辑任务，
+记录 RECOVERY_*、CHECKPOINT_*、RESUME_* 事件。原中断轨迹保持历史；Replay 不触发 Resume。
+
 ## 状态与可信度
 
 - `TOOL_STARTED` 表示工具请求进入运行时，不证明已执行。
