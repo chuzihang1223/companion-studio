@@ -76,6 +76,21 @@ assert(
 );
 assert.throws(() => compareRuns(compared, { ...compared, conversation_id: 'owner-b' }));
 assert.throws(() => compareRuns(compared, { ...compared, workflow_id: 'workflow-b' }));
+assert.deepEqual(
+  compareRuns(
+    {
+      ...compared,
+      inputs: { a: 1, b: 2 },
+      nodes: [{ node_id: 'a', observed_model: { model: 'fixture' } }, { node_id: 'b' }],
+    },
+    {
+      ...compared,
+      inputs: { b: 2, a: 1 },
+      nodes: [{ node_id: 'b' }, { node_id: 'a', observed_model: { model: 'fixture' } }],
+    },
+  ),
+  { differences: [], conditionsKnown: true },
+);
 const eventRows = [
   {
     sequence: 1,
