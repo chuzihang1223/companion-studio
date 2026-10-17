@@ -3,6 +3,17 @@ from app.services.recovery.types import MESSAGES
 
 
 class TraceEventType(StrEnum):
+    INDEX_JOB_STARTED = "INDEX_JOB_STARTED"
+    DOCUMENT_PARSED = "DOCUMENT_PARSED"
+    DOCUMENT_INDEXED = "DOCUMENT_INDEXED"
+    DOCUMENT_FAILED = "DOCUMENT_FAILED"
+    INDEX_JOB_COMPLETED = "INDEX_JOB_COMPLETED"
+    RETRIEVAL_STARTED = "RETRIEVAL_STARTED"
+    RETRIEVAL_COMPLETED = "RETRIEVAL_COMPLETED"
+    RAG_CONTEXT_BUILT = "RAG_CONTEXT_BUILT"
+    CITATION_RESOLVED = "CITATION_RESOLVED"
+    MEMORY_SAVED = "MEMORY_SAVED"
+    MEMORY_DELETED = "MEMORY_DELETED"
     WORKFLOW_CREATED = "WORKFLOW_CREATED"
     WORKFLOW_VALIDATED = "WORKFLOW_VALIDATED"
     WORKFLOW_STARTED = "WORKFLOW_STARTED"
@@ -76,6 +87,7 @@ class TraceEventType(StrEnum):
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 STATUSES = TERMINAL | {"planning", "ready", "queued", "running", "paused", "waiting_permission"}
 PHASES = {
+    "knowledge",
     "workflow",
     "workflow_node",
     "task",

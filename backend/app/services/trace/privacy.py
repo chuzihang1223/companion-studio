@@ -14,6 +14,9 @@ SENSITIVE = re.compile(
     r"(?i)(sk[-_]|gh[pousr]_|github_pat_|bearer|password|secret|token|api.?key|[a-z]:[\\/]|https?://|@|\\\\)"
 )
 NUMBERS = {
+    "document_count",
+    "chunk_count",
+    "result_count",
     "step_count",
     "attempt",
     "approved_count",
@@ -155,6 +158,11 @@ def metadata(value: object) -> dict:
         elif key == "external_tool_id" and identifier(item):
             result[key] = item
         elif key in {
+            "collection_id",
+            "document_id",
+            "chunk_id",
+            "job_id",
+            "memory_id",
             "step_id",
             "checkpoint_id",
             "recovery_id",

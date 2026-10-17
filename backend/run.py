@@ -30,6 +30,11 @@ def watch_parent(parent_pid: int) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:] == ["--knowledge-parse-worker"]:
+        from app.services.knowledge.parser_worker import main as knowledge_main
+
+        knowledge_main()
+        return
     if sys.argv[1:2] == ["--mcp-demo"]:
         from app.services.mcp_ext.demo_server import main as mcp_demo_main
 

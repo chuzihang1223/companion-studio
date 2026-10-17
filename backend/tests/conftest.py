@@ -58,3 +58,26 @@ def reject_external_network(monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket, "getaddrinfo", guarded_lookup)
+
+
+@pytest.fixture
+def corpus(tmp_path):
+    from sqlalchemy import create_engine
+    from app.database.migrations import migrate
+    from app.models.conversation import Conversation
+    from app.services.knowledge.store import KnowledgeStore
+    from uuid import uuid4
+
+    engine = create_engine(
+        f"sqlite:///{(tmp_path / 'knowledge.db').as_posix()}",
+        connect_args={"check_same_thread": False},
+    )
+    migrate(engine)
+    store = KnowledgeStore(engine)
+    root = tmp_path / "selected"
+    root.mkdir()
+    conversation_id = str(uuid4())
+    with store.sessions.begin() as db:
+        db.add(Conversation(id=conversation_id, character_id="assistant"))
+    yield store, root, conversation_id
+    engine.dispose()

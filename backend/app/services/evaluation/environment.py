@@ -19,7 +19,7 @@ from app.core.filesystem import disk_path
 class OwnedJob:
     """Windows Job 的 kill-on-close 覆盖 worker 的后代，父进程崩溃也不遗留它们。"""
 
-    def __init__(self, pid):
+    def __init__(self, pid, *, memory_bytes=None):
         self.handle = None
         if sys.platform != "win32":
             return
@@ -58,6 +58,9 @@ class OwnedJob:
         job = kernel.CreateJobObjectW(None, None)
         config = Extended()
         config.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        if memory_bytes is not None:
+            config.basic.flags |= 0x100  # JOB_OBJECT_LIMIT_PROCESS_MEMORY
+            config.process_memory = memory_bytes
         process = kernel.OpenProcess(0x0100 | 0x0001, False, pid)
         try:
             if (
