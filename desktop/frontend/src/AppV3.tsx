@@ -83,6 +83,7 @@ function blobUrl(base64: string) {
 }
 
 export default function AppV3() {
+  const openingKnowledge = useRef(false);
   const appTheme = useAppTheme();
   const theme = appTheme.config.theme;
   const setTheme = (value: string) =>
@@ -686,6 +687,32 @@ export default function AppV3() {
       );
     } catch (cause) {
       setError(`清理语音失败：${errorText(cause)}`);
+    }
+  }
+
+  async function openKnowledgePage() {
+    if (!character || openingKnowledge.current) return;
+    openingKnowledge.current = true;
+    const token = openTokenRef.current;
+    try {
+      // Local knowledge needs a real owner, even before the first model request.
+      // Create only an empty local conversation; never send a greeting to an API.
+      if (!activeIdRef.current && !busyRef.current) {
+        const row = await createConversation(
+          character.id,
+          agentModeRef.current === 'agent' ? 'work' : 'chat',
+        );
+        if (token !== openTokenRef.current || characterIdRef.current !== character.id) return;
+        await refreshList(character.id, search);
+        if (token !== openTokenRef.current) return;
+        await openConversation(row.id);
+        if (activeIdRef.current !== row.id) return;
+      }
+      setPanel('knowledge');
+    } catch (cause) {
+      setError(errorText(cause));
+    } finally {
+      openingKnowledge.current = false;
     }
   }
 
@@ -1523,6 +1550,7 @@ export default function AppV3() {
     <MessageItem
       key={message.id}
       message={message}
+      conversationId={activeId}
       name={character?.name ?? '通用助手'}
       avatarSrc={avatarSrc}
       pendingText={agentStatus}
@@ -1611,7 +1639,7 @@ export default function AppV3() {
           onManage={(row, action) => void chatAction(row, action)}
         />
         <div className="sidebar-bottom">
-          <button type="button" onClick={() => setPanel('knowledge')}>
+          <button type="button" disabled={!character} onClick={() => void openKnowledgePage()}>
             <Icon name="folder" />
             <span>知识与记忆</span>
           </button>

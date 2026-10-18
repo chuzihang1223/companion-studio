@@ -61,6 +61,14 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, shell }) => {
       return request('/api/knowledge/' + operation);
     if (operation === 'jobs')
       return request('/api/knowledge/collections/' + uuid(options.collection_id) + '/jobs');
+    if (operation === 'documents') {
+      const cursor = options.cursor || 0;
+      if (!Number.isSafeInteger(cursor) || cursor < 0 || cursor > 100000)
+        throw Error('文档分页无效');
+      return request(
+        '/api/knowledge/collections/' + uuid(options.collection_id) + '/documents?cursor=' + cursor,
+      );
+    }
     const query = new URLSearchParams(owner(options));
     if (operation === 'selection') return request('/api/knowledge/selection?' + query);
     if (operation === 'evidence')

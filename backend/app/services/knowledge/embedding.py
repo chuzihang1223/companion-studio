@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 import httpx
 from sqlalchemy import delete, select, func
 
-from app.models.knowledge import KnowledgeChunk, KnowledgeVector
+from app.models.knowledge import KnowledgeChunk, KnowledgeVector, KnowledgeDocument
 from app.services.knowledge.contracts import KnowledgeError
 from app.services.knowledge.store import dumps
 
@@ -185,12 +185,13 @@ class VectorStore:
                     )
                 )
 
-    def search(self, collection_ids, query, provider, *, limit=100):
+    def search(self, collection_ids, query, provider, *, limit=100, file_types=(), path_scope=""):
         vector = vectors(provider.embed([query]), 1, provider.dimension)[0]
         with self.store.sessions() as db:
-            rows = db.execute(
+            statement = (
                 select(KnowledgeVector, KnowledgeChunk)
                 .join(KnowledgeChunk, KnowledgeChunk.id == KnowledgeVector.chunk_id)
+                .join(KnowledgeDocument, KnowledgeDocument.id == KnowledgeChunk.document_id)
                 .where(
                     KnowledgeChunk.collection_id.in_(collection_ids),
                     KnowledgeVector.fingerprint == provider.fingerprint,
@@ -198,7 +199,16 @@ class VectorStore:
                 )
                 .order_by(KnowledgeVector.chunk_id)
                 .limit(10001)
-            ).yield_per(128)
+            )
+            if file_types:
+                statement = statement.where(KnowledgeDocument.file_type.in_(file_types))
+            if path_scope:
+                scope = path_scope.rstrip("/")
+                statement = statement.where(
+                    (KnowledgeDocument.relative_path == scope)
+                    | KnowledgeDocument.relative_path.startswith(scope + "/", autoescape=True)
+                )
+            rows = db.execute(statement).yield_per(128)
             ranked = []
             for index, (record, chunk) in enumerate(rows):
                 if index >= 10000:

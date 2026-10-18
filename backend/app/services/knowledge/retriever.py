@@ -107,14 +107,22 @@ class HybridRetriever:
         # Only terms produced by our lexer reach MATCH. User operators, quotes,
         # parentheses and SQL never become query syntax.
         match = " OR ".join('"' + word + '"' for word in words)
-        statement = text(
-            "SELECT c.id, bm25(knowledge_fts) AS distance FROM knowledge_fts JOIN knowledge_chunks c ON c.id=knowledge_fts.chunk_id JOIN knowledge_documents d ON d.id=c.document_id WHERE knowledge_fts MATCH :match AND c.collection_id IN :ids AND d.status IN ('INDEXED','UNCHANGED') ORDER BY distance,c.id LIMIT 100"
-        ).bindparams(bindparam("ids", expanding=True))
+        sql = "SELECT c.id, bm25(knowledge_fts) AS distance FROM knowledge_fts JOIN knowledge_chunks c ON c.id=knowledge_fts.chunk_id JOIN knowledge_documents d ON d.id=c.document_id WHERE knowledge_fts MATCH :match AND c.collection_id IN :ids AND d.status IN ('INDEXED','UNCHANGED')"
+        parameters = {"match": match, "ids": ids}
+        bindings = [bindparam("ids", expanding=True)]
+        if query.file_types:
+            sql += " AND d.file_type IN :types"
+            parameters["types"] = query.file_types
+            bindings.append(bindparam("types", expanding=True))
+        if query.path_scope:
+            scope = query.path_scope.rstrip("/")
+            sql += (
+                " AND (d.relative_path=:scope OR substr(d.relative_path,1,:prefix_length)=:prefix)"
+            )
+            parameters.update(scope=scope, prefix=scope + "/", prefix_length=len(scope) + 1)
+        statement = text(sql + " ORDER BY distance,c.id LIMIT 100").bindparams(*bindings)
         with self.store.sessions() as db:
-            return [
-                (row[0], float(row[1]))
-                for row in db.execute(statement, {"match": match, "ids": ids})
-            ]
+            return [(row[0], float(row[1])) for row in db.execute(statement, parameters)]
 
     def search(self, query: SearchQuery, conversation_id, character_id, *, target=None):
         started, deadline = time.perf_counter(), time.monotonic() + 12
@@ -131,7 +139,15 @@ class HybridRetriever:
                     provider = self.providers.get(collection_id)
                     if provider is None:
                         raise KnowledgeError("KNOWLEDGE_EMBEDDING_DISABLED")
-                    semantic.extend(self.vector.search([collection_id], query.query, provider))
+                    semantic.extend(
+                        self.vector.search(
+                            [collection_id],
+                            query.query,
+                            provider,
+                            file_types=query.file_types,
+                            path_scope=query.path_scope,
+                        )
+                    )
                 if not semantic:
                     raise KnowledgeError("KNOWLEDGE_VECTOR_INDEX_EMPTY")
                 actual_mode = query.mode

@@ -67,6 +67,12 @@ require('../../desktop/electron/knowledge.cjs')({
   shell: { showItemInFolder: (value) => revealed.push(value) },
 });
 async function run() {
+  await handlers['knowledge-read'](event, 'documents', { collection_id: id, cursor: 100 });
+  assert.equal(calls.at(-1)[0], '/api/knowledge/collections/' + id + '/documents?cursor=100');
+  assert.throws(
+    () => handlers['knowledge-read'](event, 'documents', { collection_id: id, cursor: -1 }),
+    /分页无效/,
+  );
   assert.throws(() => handlers['knowledge-read']({}, 'collections'), /main only/);
   assert.throws(
     () => handlers['knowledge-read'](event, 'jobs', { collection_id: '../../escape' }),

@@ -26,6 +26,20 @@ def prepare(corpus):
     return item
 
 
+def test_filters_apply_before_candidate_limit_and_path_is_directory_boundary(corpus):
+    store, root, owner = corpus
+    for i in range(105):
+        (root / f"short-{i}.py").write_text("needle", encoding="utf-8")
+    (root / "docs").mkdir()
+    (root / "docs-other").mkdir()
+    (root / "docs-other" / "short.md").write_text("needle", encoding="utf-8")
+    (root / "docs" / "guide.md").write_text("needle " + " ".join(f"long_identifier_{i}" for i in range(35)), encoding="utf-8")
+    item = prepare(corpus)
+    assert index(store, item["id"])["state"] == "COMPLETED"
+    result = search(store, item, owner, "needle", file_types=[".md"], path_scope="docs")
+    assert [r["relative_path"] for r in result["results"]] == ["docs/guide.md"]
+
+
 def index(store, collection_id):
     async def run():
         manager = IndexManager(store)

@@ -7,6 +7,7 @@ import MessageContent from './MessageContent';
 import MessageSources from './knowledge/KnowledgeSources';
 
 type Props = {
+  conversationId?: string | null;
   message: ChatMessage;
   name: string;
   avatarSrc?: string;
@@ -35,6 +36,7 @@ export default function MessageItem(props: Props) {
     void window.desktopAPI?.getBackendUrl().then(setBackendUrl);
   }, []);
   const pending = message.id.startsWith('pending-');
+  const conversationId = message.conversation_id || props.conversationId;
   async function copy() {
     try {
       await ClipboardService.writeText(message.content);
@@ -98,10 +100,10 @@ export default function MessageItem(props: Props) {
             text={message.content || (pending ? props.pendingText || `${name}正在想…` : '')}
           />
         </div>
-        {message.role === 'assistant' && !pending && !props.disabled && message.conversation_id && (
+        {message.role === 'assistant' && !pending && !props.disabled && conversationId && (
           <MessageSources
             messageId={message.id}
-            owner={{ conversation_id: message.conversation_id, character_id: message.character_id }}
+            owner={{ conversation_id: conversationId, character_id: message.character_id }}
           />
         )}
         {!!message.attachments?.length && (
