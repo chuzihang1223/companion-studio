@@ -41,7 +41,12 @@ function Invoke-VisualAction($Request,[long]$Handle){
  if(-not $previous -or $previous.nonce -cne $Request.visual_nonce -or [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()-$previous.created_ms -gt 8000){throw 'COMPUTER_OBSERVATION_EXPIRED'}
  $script:visualFrames.Remove([string]$Request.observation_id)
  $current=Assert-VisualIdentity $Request $Handle
- if(-not $current.foreground){throw 'FOCUS_LOST'}
+ if(-not $current.foreground){
+  # Approving in Studio necessarily foregrounds our own UI. Restore only from
+  # that exact main PID, never steal focus from another application. This stays
+  # in the original single-use native action and works for Workflow approvals.
+  if(-not [VisualWindow]::ForegroundOwnedBy([int]$Request.expected_ui_pid) -or -not [CompanionWindows]::Focus([IntPtr]$Handle)){throw 'FOCUS_LOST'}
+ }
  [CompanionWindows]::RequireFocus([IntPtr]$Handle)
  $fresh=New-VisualObservation $Request $Handle
  if($fresh.tree_truncated){throw 'COMPUTER_OBSERVATION_INCOMPLETE'}

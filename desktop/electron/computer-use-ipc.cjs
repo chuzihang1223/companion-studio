@@ -107,7 +107,8 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, getComputer, ge
       'region',
       'display_id',
     ]);
-    const grant = computer().get(scope, options.arguments.target_id);
+    const grant = computer().get(scope, options.arguments.target_id),
+      generation = grant.nonce;
     const isInput = ['click', 'type_text', 'scroll'].includes(options.operation);
     const previous = isInput ? grant.frames.get(options.arguments.observation_id) : null;
     const selected = previous?.candidates?.find(
@@ -130,53 +131,11 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, getComputer, ge
       );
     }
     requireMainWindow(event);
-    let argumentsForAction = { ...options.arguments };
-    if (isInput) {
-      // A real click on this UI/dialog foregrounds Studio. Re-focus only after
-      // explicit consent, then go through the original Runtime for fresh reads.
-      // Compare the selected identity/geometry, never substitute a new target.
-      if (computer().get(scope, grant.id) !== grant || Date.now() - previous.created_ms > 8000)
-        throw Error('COMPUTER_OBSERVATION_EXPIRED');
-      const focus = await request(
-        '/api/computer/execute',
-        { ...scope, operation: 'focus_window', arguments: { target_id: grant.id } },
-        'POST',
-        45000,
-      );
-      if (!focus.verified) throw Error('FOCUS_LOST');
-      const found = await request(
-        '/api/computer/execute',
-        {
-          ...scope,
-          operation: 'find_element',
-          arguments: { target_id: grant.id, locator: previous.locator },
-        },
-        'POST',
-        45000,
-      );
-      const fresh = computer().get(scope, grant.id).frames.get(found.observation_id);
-      const candidate = fresh?.candidates?.[0];
-      if (
-        !found.verified ||
-        fresh.candidates.length !== 1 ||
-        !candidate ||
-        candidate.source !== selected.source ||
-        candidate.native.identity !== selected.native.identity ||
-        candidate.native.name !== selected.native.name ||
-        JSON.stringify(candidate.native.bounds) !== JSON.stringify(selected.native.bounds) ||
-        fresh.geometry.layout_signature !== previous.geometry.layout_signature ||
-        JSON.stringify(fresh.window.bounds) !== JSON.stringify(previous.window.bounds)
-      )
-        throw Error('UIA_ELEMENT_STALE');
-      argumentsForAction = {
-        ...argumentsForAction,
-        observation_id: found.observation_id,
-        candidate_id: candidate.candidate_id,
-      };
-    }
+    if (computer().get(scope, grant.id) !== grant || grant.nonce !== generation)
+      throw Error('COMPUTER_PAUSED');
     return request(
       '/api/computer/execute',
-      { ...scope, operation: options.operation, arguments: argumentsForAction },
+      { ...scope, operation: options.operation, arguments: options.arguments },
       'POST',
       45000,
     );

@@ -19,6 +19,8 @@ public static class VisualWindow {
     [DllImport("user32.dll")] static extern bool GetWindowDisplayAffinity(IntPtr h, out uint affinity);
     [DllImport("user32.dll")] static extern IntPtr WindowFromPoint(Point point);
     [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr h, uint flags);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h,out uint pid);
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h,StringBuilder name,int size);
     [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h,int index);
@@ -29,6 +31,10 @@ public static class VisualWindow {
         if(handle==0)return false;
         var name=new StringBuilder(256);GetClassName(new IntPtr(handle),name,256);
         return name.ToString().ToLowerInvariant().Contains("edit") && (GetWindowLong(new IntPtr(handle),-16)&0x20)!=0;
+    }
+    public static bool ForegroundOwnedBy(int expectedPid) {
+        uint actual;GetWindowThreadProcessId(GetForegroundWindow(),out actual);
+        return expectedPid>0 && actual==(uint)expectedPid;
     }
 
     public static Dictionary<string, object> Geometry(long handle) {

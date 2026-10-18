@@ -195,7 +195,10 @@ async def verify_case(f, index):
         )
         import asyncio
 
-        for _ in range(400):
+        import time
+
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
             current = service.repository.run(run["run_id"], f.owner)
             if current["state"] == "WAITING_PERMISSION":
                 pending = next(n["pending"] for n in current["nodes"] if n.get("pending"))

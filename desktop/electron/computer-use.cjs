@@ -231,6 +231,7 @@ class ComputerUseCoordinator {
         expected_executable: grant.exe,
         visual_nonce: grant.nonce,
         expected_expires_ms: grant.expires,
+        expected_ui_pid: process.pid,
         visual_operation: 'observe',
         visual_capture: grant.preview,
         ocr: grant.preview,
