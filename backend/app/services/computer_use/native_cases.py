@@ -72,6 +72,9 @@ async def verify_case(f, index):
         await f.inspect()
         return "DISPLAY_CHANGE_ENVIRONMENT_UNAVAILABLE"  # do not modify user display settings
     if index == 17:
+        # A filtered password subtree cannot prove arbitrary absence. Prepare
+        # an entirely observable fixture area through an ordinary approved tool.
+        await f.click("PrepareAbsence", {"kind": "element_present", "automation_id": "SampleInput"})
         old = await f.find("CounterAction")
         await f.click("VanishControl", {"kind": "element_absent", "automation_id": "CounterAction"})
         result = await f.tool(
@@ -193,6 +196,7 @@ async def verify_case(f, index):
             {"target_id": f.fixture["target_id"]},
             "visual-qa",
         )
+        f.workflow_runs.append(run["run_id"])
         import asyncio
 
         import time

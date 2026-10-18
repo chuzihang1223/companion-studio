@@ -22,6 +22,7 @@ class NativeComputerCase:
         self.fixture = None
         self.calls, self.timings = [], []
         self.contexts = []
+        self.workflow_runs = []
         self.inspection = {}
 
     async def fixture_command(self, operation):
@@ -138,6 +139,17 @@ async def run_case(app, case, consent, timeout_seconds=60):
     except Exception as error:
         status, code = "FAIL", getattr(error, "code", "VISUAL_FIXTURE_ASSERTION_FAILED")
     finally:
+        # A workflow launched by CU023 is an original Coordinator-owned child,
+        # not implicitly cancelled with this evaluation coroutine.
+        for run_id in fixture.workflow_runs:
+            task = app.state.workflows.tasks.get(run_id)
+            if task and not task.done():
+                try:
+                    await asyncio.wait_for(
+                        app.state.workflows.control(run_id, fixture.owner, "cancel"), 10
+                    )
+                except Exception:
+                    status, code = "FAIL", "VISUAL_FIXTURE_CLEANUP_FAILED"
         try:
             await asyncio.wait_for(fixture.fixture_command("close_owner"), 10)
         except Exception:

@@ -32,7 +32,8 @@ public sealed class VisualFixture : Window {
         var list=Put(new ListBox(),"SampleList",25,155,230,175);for(int i=0;i<100;i++)list.Items.Add("Item "+i);
         var tree=Put(new TreeView(),"SampleTree",275,155,230,175);
         var root=new TreeViewItem{Header="Project",IsExpanded=true};root.Items.Add(new TreeViewItem{Header="Documents"});root.Items.Add(new TreeViewItem{Header="Code"});tree.Items.Add(root);
-        Put(new PasswordBox{Password=new string('x',8)},"ProtectedInput",540,155,180,32);
+        var protectedInput=Put(new PasswordBox{Password=new string('x',8)},"ProtectedInput",540,155,180,32);
+        Button("PrepareAbsence","Prepare absence",650,550,()=>canvas.Children.Remove(protectedInput));
         generation=Put(new TextBlock{Text="0"},"RebuildGeneration",730,215,45,30);
         Button("RebuildControl","Rebuild input",535,215,()=>{canvas.Children.Remove(input);input=Put(new TextBox(),"SampleInput",35,45,310,32);generation.Text=(++rebuilds).ToString();});
         Button("VanishControl","Remove counter",535,265,()=>canvas.Children.Remove(increment));
