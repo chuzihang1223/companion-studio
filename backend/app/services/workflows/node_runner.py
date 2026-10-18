@@ -42,11 +42,22 @@ class WorkflowNodeRunner:
                     event="WORKFLOW_NODE_STARTED",
                 )
                 async with asyncio.timeout(node.timeout):
+                    from app.services.knowledge.runtime import workflow_provenance
+
+                    tainted, refs = workflow_provenance(self.app, compiled, run, node)
+                    context["knowledge_tainted"], context["knowledge_refs"] = tainted, refs
+                    context["conversation_id"] = owner
+                    if tainted and (
+                        node.type == "mcp_tool"
+                        or node.type == "tool"
+                        and str(node.config.get("name", "")).startswith(("mcp.", "browser."))
+                    ):
+                        raise WorkflowError("KNOWLEDGE_EXPORT_NOT_GRANTED", node.node_id)
                     for item in active_inputs:
                         check_port(
                             node.input_ports[item["target_port"]], item["output"], node.node_id
                         )
-                    if node.type in {"tool", "mcp_tool"}:
+                    if node.type in {"tool", "mcp_tool", "knowledge_search"}:
                         if self.scope(owner) != run.get("workspace"):
                             raise WorkflowError("WORKFLOW_WORKSPACE_CHANGED", node.node_id)
                         reservation = (
@@ -59,7 +70,15 @@ class WorkflowNodeRunner:
                             > compiled.definition.budget.max_tool_calls
                         ):
                             raise WorkflowError("WORKFLOW_TOOL_BUDGET", node.node_id)
-                        arguments = bounded(resolve(node.config["arguments"], context), limit=16000)
+                        arguments = bounded(
+                            resolve(
+                                node.config
+                                if node.type == "knowledge_search"
+                                else node.config["arguments"],
+                                context,
+                            ),
+                            limit=16000,
+                        )
                         agent, pending = self.bridge.prepare(
                             run, node, arguments, run.get("workspace")
                         )

@@ -1,4 +1,5 @@
 export type NodeType =
+  | 'knowledge_search'
   | 'manual_trigger'
   | 'input'
   | 'llm_agent'

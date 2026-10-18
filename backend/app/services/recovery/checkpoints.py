@@ -210,22 +210,25 @@ class CheckpointManager:
                 raise RecoveryError("CHECKPOINT_CONFLICT")
             row.state, row.updated_at = state, datetime.now(timezone.utc)
             if result is not None:
-                row.result_json = encoded(
-                    {
-                        key: result[key]
-                        for key in (
-                            "verified",
-                            "reconciled",
-                            "running",
-                            "installed",
-                            "window_ready",
-                            "virtual",
-                            "exit_code",
-                        )
-                        if key in result
-                        and (isinstance(result[key], (bool, int)) or result[key] is None)
-                    }
-                )
+                summary = {
+                    key: result[key]
+                    for key in (
+                        "verified",
+                        "reconciled",
+                        "running",
+                        "installed",
+                        "window_ready",
+                        "virtual",
+                        "exit_code",
+                    )
+                    if key in result
+                    and (isinstance(result[key], (bool, int)) or result[key] is None)
+                }
+                if row.tool_name.startswith("knowledge."):
+                    from app.services.knowledge.runtime import references
+
+                    summary["knowledge_refs"] = references(result)
+                row.result_json = encoded(summary)
             if permission:
                 row.permission_state = permission
             db.commit()

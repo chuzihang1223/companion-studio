@@ -1,6 +1,7 @@
 """User-owned overlay and manual memory; base character files stay immutable."""
 
 import json
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -50,14 +51,23 @@ def list_manual(db: Session, character_id: str) -> list[ManualMemory]:
     return list(
         db.scalars(
             select(ManualMemory)
-            .where(ManualMemory.character_id == character_id)
+            .where(ManualMemory.character_id == character_id, ManualMemory.scope == "CHARACTER")
             .order_by(ManualMemory.created_at.desc(), ManualMemory.id.desc())
         ).all()
     )
 
 
 def relevant_manual(db: Session, character_id: str, message: str, limit: int = 6) -> list[str]:
-    rows = [row for row in list_manual(db, character_id) if row.enabled]
+    rows = [
+        row
+        for row in list_manual(db, character_id)
+        if row.enabled
+        and row.status == "ACTIVE"
+        and (
+            row.expires_at is None
+            or row.expires_at.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc)
+        )
+    ]
     query = message.casefold()
 
     def relevance(row: ManualMemory) -> int:

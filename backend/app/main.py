@@ -56,6 +56,8 @@ from app.services.skills.manager import AgentSkillManager
 from app.api.extensions import router as extensions_router
 from app.api.workflows import router as workflows_router
 from app.services.workflows.coordinator import WorkflowCoordinator
+from app.services.knowledge.service import KnowledgeService
+from app.api.knowledge import router as knowledge_router
 
 
 @asynccontextmanager
@@ -153,8 +155,17 @@ async def lifespan(app: FastAPI):
 
         logging.getLogger(__name__).warning("workflow_initialization_unavailable")
     try:
+        app.state.knowledge = KnowledgeService(engine, app.state.trace_recorder)
+    except Exception:
+        app.state.knowledge = None
+        import logging
+
+        logging.getLogger(__name__).warning("knowledge_initialization_unavailable")
+    try:
         yield
     finally:
+        if app.state.knowledge:
+            await app.state.knowledge.close()
         if app.state.workflows:
             await app.state.workflows.close()
         if app.state.recovery:
@@ -207,6 +218,7 @@ app.include_router(evaluation_router)
 app.include_router(recovery_router)
 app.include_router(extensions_router)
 app.include_router(workflows_router)
+app.include_router(knowledge_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

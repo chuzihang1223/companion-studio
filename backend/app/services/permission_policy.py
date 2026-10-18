@@ -23,6 +23,10 @@ class PermissionPolicyEngine:
         if risk == "high":
             return "ask"
         readonly = category in {
+            "knowledge.collections",
+            "knowledge.search",
+            "knowledge.get_document",
+            "knowledge.get_chunk",
             "skill.read_reference",
             "app.detect",
             "app.status",

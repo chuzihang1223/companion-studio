@@ -6,6 +6,9 @@ const { contextBridge, ipcRenderer } = require('electron');
  * 增减方法时同步 main.cjs handler、前端 vite-env.d.ts 与相关回归。
  */
 contextBridge.exposeInMainWorld('desktopAPI', {
+  readKnowledge: (operation, options) => ipcRenderer.invoke('knowledge-read', operation, options),
+  controlKnowledge: (operation, options) =>
+    ipcRenderer.invoke('knowledge-control', operation, options),
   readWorkflows: (operation, options) => ipcRenderer.invoke('workflow-read', operation, options),
   controlWorkflows: (operation, options) =>
     ipcRenderer.invoke('workflow-control', operation, options),

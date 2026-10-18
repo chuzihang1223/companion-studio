@@ -2,6 +2,12 @@ import type { NodeType, WorkflowDefinition, WorkflowNode, WorkflowEdge } from '.
 
 export const nodeTypes: Array<{ type: NodeType; title: string; group: string; help: string }> = [
   {
+    type: 'knowledge_search',
+    title: '知识检索',
+    group: 'Agent 与工具',
+    help: '按会话授权检索本地知识，返回来源和位置。后续模型需要单独的片段传输授权，转换节点不能去除来源约束。',
+  },
+  {
     type: 'manual_trigger',
     title: '手动触发',
     group: '输入与输出',
@@ -69,6 +75,7 @@ export const nodeTypes: Array<{ type: NodeType; title: string; group: string; he
   },
 ];
 const defaults: Record<NodeType, Record<string, unknown>> = {
+  knowledge_search: { query: '项目如何启动？', collection_ids: [], top_k: 5, mode: 'keyword' },
   manual_trigger: {},
   input: { name: 'text', type: 'string', required: true },
   output: { value: '工作流已执行', format: 'text' },

@@ -54,6 +54,7 @@ import WorkbenchActionButton from './WorkbenchActionButton';
 import MessageItem from './MessageItem';
 import MusicCenter from './MediaCenterPage';
 import Workbench from './Workbench';
+import KnowledgePanel from './knowledge/KnowledgePanel';
 import AppSettings from './AppSettings';
 import CharacterPage from './CharacterPage';
 import FirstRunGuide from './FirstRunGuide';
@@ -1610,6 +1611,10 @@ export default function AppV3() {
           onManage={(row, action) => void chatAction(row, action)}
         />
         <div className="sidebar-bottom">
+          <button type="button" onClick={() => setPanel('knowledge')}>
+            <Icon name="folder" />
+            <span>知识与记忆</span>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -1713,6 +1718,7 @@ export default function AppV3() {
         >
           {agentMode === 'agent' ? (
             <Workbench
+              characterId={character?.id || 'assistant'}
               key={activeId || 'new-work'}
               conversationId={activeId}
               visible={!musicOpen && !panel}
@@ -1969,6 +1975,15 @@ export default function AppV3() {
         />
 
         <FirstRunGuide refresh={panel} onConfigure={() => setPanel('settings')} />
+        {panel === 'knowledge' && (
+          <KnowledgePanel
+            key={activeId || 'knowledge'}
+            conversationId={activeId}
+            characterId={character?.id || 'assistant'}
+            workSessionId={workSession?.workspace_root ? workSession.id : undefined}
+            onBack={() => setPanel(null)}
+          />
+        )}
         {panel === 'settings' && (
           <AppSettings
             onBack={() => setPanel(null)}

@@ -16,6 +16,7 @@ export type ModuleId =
   | 'trace'
   | 'evaluation'
   | 'workflow_builder'
+  | 'knowledge'
   | 'permissions';
 export type ModuleDefinition = {
   id: ModuleId;
@@ -49,6 +50,7 @@ const definitions: Array<[ModuleId, string, IconName, 'main' | 'side']> = [
   ['trace', 'Agent Trace · 执行追踪', 'activity', 'main'],
   ['evaluation', 'Agent Evaluation · 评测', 'activity', 'main'],
   ['workflow_builder', 'Visual Workflow · 流程设计', 'workflow', 'main'],
+  ['knowledge', '本地知识与记忆', 'folder', 'main'],
 ];
 export const WorkspaceModuleRegistry = Object.fromEntries(
   definitions.map(([id, title, icon, defaultDock]) => [

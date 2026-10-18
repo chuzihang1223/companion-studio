@@ -124,6 +124,28 @@ class NodeExecutor:
             raise WorkflowError("WORKFLOW_MODEL_ROLE_INVALID", node.node_id)
         # Original LLMService supplies provider isolation, usage accounting and Trace spans.
         service = self.app.state.model_roles.service(role)
+        if context.get("knowledge_tainted"):
+            from app.services.knowledge.context import GroundedService, model_target
+            from app.services.knowledge.runtime import validate_references
+            from app.services.knowledge.contracts import KnowledgeError
+            import asyncio
+
+            knowledge = self.app.state.knowledge
+            owner = context["conversation_id"]
+            with knowledge.store.sessions() as db:
+                character_id = knowledge.store.conversation(db, owner).character_id
+            try:
+                sources = await asyncio.to_thread(
+                    validate_references,
+                    knowledge,
+                    context["knowledge_refs"],
+                    owner,
+                    character_id,
+                    model_target(service),
+                )
+            except KnowledgeError as error:
+                raise WorkflowError(error.code, node.node_id) from None
+            service = GroundedService(knowledge, service, sources, owner, character_id, None)
         # 热切换可能改变后续节点的实际模型；同时记录实际服务，不能只看运行起点的快照。
         context["observed_model"] = model_metadata(service)
         result = await service.chat(prompt)

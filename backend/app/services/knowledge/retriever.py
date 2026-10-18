@@ -33,6 +33,8 @@ class CitationResolver:
     def fresh(self, db, doc):
         collection = self.store.collection(db, doc.collection_id)
         options, roots = self.store.config(collection)
+        if collection.status not in {"READY", "READY_WITH_ERRORS"}:
+            raise KnowledgeError("KNOWLEDGE_INDEX_NOT_READY")
         root = next((r for r in roots if r["id"] == doc.root_id), None)
         if not root or doc.status not in {"INDEXED", "UNCHANGED"}:
             raise KnowledgeError("KNOWLEDGE_STALE_EVIDENCE")
@@ -129,6 +131,8 @@ class HybridRetriever:
                     if provider is None:
                         raise KnowledgeError("KNOWLEDGE_EMBEDDING_DISABLED")
                     semantic.extend(self.vector.search([collection_id], query.query, provider))
+                if not semantic:
+                    raise KnowledgeError("KNOWLEDGE_VECTOR_INDEX_EMPTY")
                 actual_mode = query.mode
             except KnowledgeError as error:
                 semantic = []
@@ -182,6 +186,12 @@ class HybridRetriever:
                 seen_hashes.add(chunk.content_hash)
                 per_document[doc.id] = per_document.get(doc.id, 0) + 1
                 result = self.citations.dto(doc, chunk, collection)
+                event(
+                    "CITATION_RESOLVED",
+                    collection_id=collection.id,
+                    document_id=doc.id,
+                    chunk_id=chunk.id,
+                )
                 result.update(
                     mode=actual_mode,
                     scores={

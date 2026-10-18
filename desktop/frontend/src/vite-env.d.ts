@@ -2,6 +2,14 @@
 
 interface Window {
   desktopAPI?: {
+    readKnowledge: <K extends keyof import('./knowledge/types').Reads>(
+      operation: K,
+      options?: Record<string, unknown>,
+    ) => Promise<import('./knowledge/types').Reads[K]>;
+    controlKnowledge: (
+      operation: import('./knowledge/types').Operation,
+      options?: Record<string, unknown>,
+    ) => Promise<unknown>;
     readWorkflows: <K extends keyof import('./workflows/types').WorkflowReads>(
       operation: K,
       options?: import('./workflows/types').WorkflowQuery,

@@ -65,7 +65,14 @@ module.exports = ({
     if (['list', 'catalog', 'templates'].includes(operation))
       return request('/api/workflows' + (operation === 'list' ? '' : '/' + operation));
     if (operation === 'template') {
-      if (!['project-review', 'code-test-report', 'mcp-research'].includes(options.template_id))
+      if (
+        ![
+          'project-review',
+          'code-test-report',
+          'mcp-research',
+          'project-knowledge-assistant',
+        ].includes(options.template_id)
+      )
         throw Error('模板无效');
       return request('/api/workflows/templates/' + options.template_id);
     }

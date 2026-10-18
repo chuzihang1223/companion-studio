@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 NODE_TYPES = {
+    "knowledge_search",
     "manual_trigger",
     "input",
     "llm_agent",
@@ -24,6 +25,15 @@ VALUE_TYPES = {"any", "string", "number", "boolean", "object", "array", "file_re
 TERMINAL = {"COMPLETED", "FAILED", "SKIPPED", "CANCELLED", "INTERRUPTED", "NEEDS_REVIEW"}
 STATES = TERMINAL | {"PENDING", "READY", "RUNNING", "WAITING_PERMISSION", "PAUSED"}
 CONFIG_KEYS = {
+    "knowledge_search": {
+        "query",
+        "collection_ids",
+        "top_k",
+        "mode",
+        "file_types",
+        "path_scope",
+        "min_relevance",
+    },
     "manual_trigger": set(),
     "input": {"name", "type", "required", "default"},
     "llm_agent": {"instruction", "value", "output_schema", "model_role", "max_characters"},

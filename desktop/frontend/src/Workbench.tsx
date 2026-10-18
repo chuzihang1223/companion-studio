@@ -23,8 +23,10 @@ import WorkbenchActionButton from './WorkbenchActionButton';
 import './workbench.css';
 import './workspace-grid.css';
 const WorkflowBuilder = lazy(() => import('./workflows/WorkflowBuilder'));
+const KnowledgePanel = lazy(() => import('./knowledge/KnowledgePanel'));
 
 type Props = {
+  characterId: string;
   visible: boolean;
   conversationId: string | null;
   session: WorkSession | null;
@@ -89,6 +91,7 @@ const ended = new Set(['idle', 'done', 'completed', 'failed', 'stopped', 'cancel
 
 /** 组合工作模块；工具结果独立展示，任务状态与布局分别按会话归属。 */
 export default function Workbench({
+  characterId,
   visible,
   conversationId,
   session,
@@ -213,6 +216,17 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'knowledge')
+      return (
+        <Suspense fallback={<p>正在打开知识库…</p>}>
+          <KnowledgePanel
+            key={conversationId || 'none'}
+            conversationId={conversationId}
+            characterId={characterId}
+            workSessionId={session?.workspace_root ? session.id : undefined}
+          />
+        </Suspense>
+      );
     if (id === 'workflow_builder')
       return (
         <Suspense fallback={<p>正在打开流程设计器…</p>}>

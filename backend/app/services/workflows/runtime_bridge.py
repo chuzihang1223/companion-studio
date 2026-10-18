@@ -49,8 +49,15 @@ class WorkflowRuntimeBridge:
         )
         try:
             executor.bind(session)
+            character_id = "assistant"
+            knowledge = getattr(self.app.state, "knowledge", None)
+            if call["name"].startswith("knowledge.") and knowledge:
+                with knowledge.store.sessions() as db:
+                    character_id = knowledge.store.conversation(
+                        db, run["conversation_id"]
+                    ).character_id
             context = AgentContext(
-                "assistant",
+                character_id,
                 run["conversation_id"],
                 "执行并验证单个已配置工作流工具",
                 [],
@@ -62,6 +69,7 @@ class WorkflowRuntimeBridge:
                 coding_mode=mode,
                 renderer_id=run["renderer_id"],
                 task_id=task_id,
+                knowledge_service=knowledge,
             )
             context.retry_max_attempts = (
                 node.retry_policy.max_attempts if node.retry_policy.strategy == "safe_read" else 1

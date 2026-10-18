@@ -4,6 +4,7 @@ import Icon from './Icon';
 import logo from './assets/companion-logo.svg';
 import { ClipboardService } from './ClipboardService';
 import MessageContent from './MessageContent';
+import MessageSources from './knowledge/KnowledgeSources';
 
 type Props = {
   message: ChatMessage;
@@ -97,6 +98,12 @@ export default function MessageItem(props: Props) {
             text={message.content || (pending ? props.pendingText || `${name}正在想…` : '')}
           />
         </div>
+        {message.role === 'assistant' && !pending && !props.disabled && message.conversation_id && (
+          <MessageSources
+            messageId={message.id}
+            owner={{ conversation_id: message.conversation_id, character_id: message.character_id }}
+          />
+        )}
         {!!message.attachments?.length && (
           <div className="message-attachments">
             {message.attachments.map((item) => (

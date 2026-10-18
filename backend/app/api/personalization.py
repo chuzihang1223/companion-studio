@@ -93,7 +93,7 @@ def update_memory(
     ensure_character(request, character_id)
     with SessionLocal() as db:
         row = db.get(ManualMemory, memory_id)
-        if row is None or row.character_id != character_id:
+        if row is None or row.character_id != character_id or row.scope != "CHARACTER":
             raise HTTPException(status_code=404, detail="未找到记忆")
         if payload.content is not None:
             row.content = payload.content.strip()
@@ -108,7 +108,7 @@ def delete_memory(character_id: str, memory_id: str, request: Request) -> None:
     ensure_character(request, character_id)
     with SessionLocal() as db:
         row = db.get(ManualMemory, memory_id)
-        if row is None or row.character_id != character_id:
+        if row is None or row.character_id != character_id or row.scope != "CHARACTER":
             raise HTTPException(status_code=404, detail="未找到记忆")
         db.delete(row)
         db.commit()

@@ -19,6 +19,7 @@ const ids = [
   'trace',
   'evaluation',
   'workflow_builder',
+  'knowledge',
 ];
 const file = path.join(paths.userData, 'workbench-layout.json');
 /** 按已有版本验证布局；只保存模块几何/可见性，不保存对话、凭据或任务权限。 */
@@ -40,7 +41,8 @@ function clean(value) {
       closed:
         id === 'conversation'
           ? false
-          : ['trace', 'evaluation', 'workflow_builder'].includes(id) && v.closed === undefined
+          : ['trace', 'evaluation', 'workflow_builder', 'knowledge'].includes(id) &&
+              v.closed === undefined
             ? true
             : !!v.closed,
       order: Math.max(0, Math.min(100, Number(v.order) || 0)),
@@ -92,7 +94,8 @@ function cleanGrid(value) {
       closed:
         id === 'conversation'
           ? false
-          : ['trace', 'evaluation', 'workflow_builder'].includes(id) && v.closed === undefined
+          : ['trace', 'evaluation', 'workflow_builder', 'knowledge'].includes(id) &&
+              v.closed === undefined
             ? true
             : !!v.closed,
       order: Math.floor(number(v.order, order, 0, 100)),

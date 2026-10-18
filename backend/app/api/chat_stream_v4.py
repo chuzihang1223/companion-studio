@@ -29,6 +29,7 @@ from app.services.voice.speech_filter import speakable_text
 from app.services.voice.message_cache import _samples
 from app.services.attachment_service import AttachmentService
 from app.services.event_router import routed_sse
+from app.services.knowledge import chat_integration as knowledge_chat
 
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -80,12 +81,20 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
                 reply_target is None or reply_target.role != "assistant"
             ):
                 raise HTTPException(status_code=404, detail="Reply target not found")
-            history = [{"role": item.role, "content": item.content} for item in previous[-20:]]
+            history = knowledge_chat.history(
+                request.app, previous[-20:], conversation.id, payload.character_id
+            )
             memory = relationship_memory(
                 db, payload.character_id, {item.id for item in previous[-20:]}
             )
             overlay = read_settings(db, payload.character_id)
-            manual = relevant_manual(db, payload.character_id, user_text)
+            manual = knowledge_chat.manual(
+                request.app,
+                relevant_manual(db, payload.character_id, user_text),
+                conversation.id,
+                payload.character_id,
+                user_text,
+            )
             metadata = attachments.save(prepared)
             user_row = Message(
                 character_id=payload.character_id,
@@ -137,6 +146,9 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
         ]
     llm = request.app.state.model_roles.service("character_model")
     assistant_id = str(uuid4())
+    llm = await knowledge_chat.grounded(
+        request.app, llm, conversation_id, payload.character_id, user_text, assistant_id
+    )
     envelope = {
         "task_id": assistant_id,
         "conversation_id": conversation_id,

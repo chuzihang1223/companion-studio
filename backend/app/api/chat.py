@@ -1,4 +1,5 @@
 import logging
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.exc import SQLAlchemyError
@@ -11,6 +12,7 @@ from app.services.character.prompt_builder import CharacterPromptBuilder
 from app.services.character.relationship_memory import relationship_memory
 from app.services.character.personalization import read_settings, relevant_manual
 from app.services.character.loader import DEFAULT_CHARACTER_ID
+from app.services.knowledge import chat_integration as knowledge_chat
 from app.services.conversation import latest_or_create, touch_after_user_message, visible_messages
 from app.services.llm.openai_provider import (
     LLMAuthenticationError,
@@ -42,10 +44,12 @@ async def retry_answer(
     character = request.app.state.characters.get(old.character_id)
     if character is None:
         raise HTTPException(status_code=404, detail="Character not found")
-    history = [
-        {"role": row.role, "content": row.content}
-        for row in visible[max(0, position - 21) : position - 1]
-    ]
+    history = knowledge_chat.history(
+        request.app,
+        visible[max(0, position - 21) : position - 1],
+        conversation.id,
+        old.character_id,
+    )
     memory = relationship_memory(
         db, old.character_id, {row.id for row in visible[max(0, position - 21) : position]}
     )
@@ -55,10 +59,25 @@ async def retry_answer(
         original.content,
         memory_context=memory,
         personalization=read_settings(db, old.character_id),
-        manual_memory=relevant_manual(db, old.character_id, original.content),
+        manual_memory=knowledge_chat.manual(
+            request.app,
+            relevant_manual(db, old.character_id, original.content),
+            conversation.id,
+            old.character_id,
+            original.content,
+        ),
+    )
+    alternative_id = str(uuid4())
+    service = await knowledge_chat.grounded(
+        request.app,
+        request.app.state.model_roles.service("character_model"),
+        conversation.id,
+        old.character_id,
+        original.content,
+        alternative_id,
     )
     try:
-        reply = await request.app.state.model_roles.service("character_model").chat(prompt)
+        reply = await service.chat(prompt)
     except (LLMConfigurationError, LLMAuthenticationError) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
@@ -66,6 +85,7 @@ async def retry_answer(
         raise HTTPException(status_code=502, detail="Model request failed") from exc
     try:
         alternative = Message(
+            id=alternative_id,
             character_id=old.character_id,
             conversation_id=conversation.id,
             role="assistant",
@@ -150,10 +170,18 @@ async def chat(
             reply_target is None or reply_target.role != "assistant"
         ):
             raise HTTPException(status_code=404, detail="Reply target not found")
-        history_messages = [{"role": item.role, "content": item.content} for item in previous[-20:]]
+        history_messages = knowledge_chat.history(
+            request.app, previous[-20:], conversation.id, payload.character_id
+        )
         memory = relationship_memory(db, payload.character_id, {item.id for item in previous[-20:]})
         overlay = read_settings(db, payload.character_id)
-        manual = relevant_manual(db, payload.character_id, user_text)
+        manual = knowledge_chat.manual(
+            request.app,
+            relevant_manual(db, payload.character_id, user_text),
+            conversation.id,
+            payload.character_id,
+            user_text,
+        )
         user_row = Message(
             character_id=payload.character_id,
             conversation_id=conversation.id,
@@ -182,8 +210,17 @@ async def chat(
         personalization=overlay,
         manual_memory=manual,
     )
+    assistant_id = str(uuid4())
+    service = await knowledge_chat.grounded(
+        request.app,
+        request.app.state.model_roles.service("character_model"),
+        conversation.id,
+        payload.character_id,
+        user_text,
+        assistant_id,
+    )
     try:
-        reply = await request.app.state.model_roles.service("character_model").chat(messages)
+        reply = await service.chat(messages)
     except LLMConfigurationError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except LLMAuthenticationError as exc:
@@ -197,6 +234,7 @@ async def chat(
 
     try:
         assistant_row = Message(
+            id=assistant_id,
             character_id=payload.character_id,
             conversation_id=conversation.id,
             role="assistant",

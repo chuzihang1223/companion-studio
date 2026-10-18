@@ -126,6 +126,7 @@ class GraphValidator:
             if node.type != "output" and not children[key]:
                 raise WorkflowError("WORKFLOW_OUTPUT_UNREACHABLE", key)
             required = {
+                "knowledge_search": {"query", "collection_ids"},
                 "input": {"name", "type"},
                 "llm_agent": {"instruction"},
                 "tool": {"name", "arguments"},

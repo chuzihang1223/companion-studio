@@ -4,6 +4,10 @@ from app.services.workflows.contracts import Definition, Node, Edge
 
 
 TEMPLATES = {
+    "project-knowledge-assistant": (
+        "项目知识助手",
+        "在当前会话授权的知识库中检索，核对来源后用已授权模型回答；模板本身不授予目录或模型传输权限。",
+    ),
     "project-review": (
         "项目检查报告",
         "选择项目中的一个文本文件，读取后使用 project-review Skill 与模型生成建议；需先导入并启用该 Skill、配置模型。",
@@ -58,7 +62,58 @@ def make_template(template_id, catalog):
             )
         return key
 
-    if template_id == "project-review":
+    if template_id == "project-knowledge-assistant":
+        add(
+            "question",
+            "input",
+            "知识检索问题",
+            {"name": "query", "type": "string", "required": True},
+            "start",
+        )
+        add(
+            "knowledge",
+            "knowledge_search",
+            "检索授权知识库",
+            {
+                "query": {"$ref": "nodes.question.output"},
+                "collection_ids": {"$ref": "inputs.collection_ids"},
+                "top_k": 5,
+                "mode": "keyword",
+            },
+            "question",
+        )
+        add(
+            "answer",
+            "llm_agent",
+            "基于证据回答",
+            {
+                "instruction": "仅根据检索证据回答问题，附实际引用；区分推断与事实，没有证据就说明无法确认。",
+                "value": {"$ref": "nodes.knowledge.output"},
+            },
+            "knowledge",
+        )
+        add(
+            "report",
+            "output",
+            "带引用的回答",
+            {"value": {"$ref": "nodes.answer.output"}, "format": "text"},
+            "answer",
+        )
+        inputs = {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "maxLength": 300},
+                "collection_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                    "maxItems": 10,
+                },
+            },
+            "required": ["query", "collection_ids"],
+            "additionalProperties": False,
+        }
+    elif template_id == "project-review":
         add(
             "file",
             "input",

@@ -382,6 +382,7 @@ const stopWorkflowSubscriptions = require('./workflows.cjs')({
   controlToken: backendManager.controlToken,
 });
 app.on('before-quit', stopWorkflowSubscriptions);
+require('./knowledge.cjs')({ ipcMain, requireMainWindow, request: privateBackend, dialog, shell });
 // 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher = null,
   projectWatchTimer = null,

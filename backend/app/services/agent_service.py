@@ -77,6 +77,9 @@ class AgentContext:
     resume_verified: set[str] | None = None
     selected_skills: list[dict] | None = None
     retry_max_attempts: int | None = None
+    knowledge_service: Any = None
+    knowledge_references: list[dict] | None = None
+    knowledge_tainted: bool = False
 
 
 class AgentService:
@@ -120,6 +123,18 @@ class AgentService:
                 raise LookupError("聊天不存在")
             previous = visible_messages(db, conversation) if conversation else []
             history = [{"role": row.role, "content": row.content} for row in previous[-20:]]
+            knowledge = getattr(app.state, "knowledge", None)
+            if knowledge and conversation_id:
+                # Planning may choose a different provider. Keep knowledge-derived
+                # prior answers out of planning altogether; tools re-retrieve under grants.
+                from app.models.knowledge import KnowledgeEvidence
+
+                with knowledge.store.sessions() as proof_db:
+                    history = [
+                        {"role": row.role, "content": row.content}
+                        for row in previous[-20:]
+                        if proof_db.get(KnowledgeEvidence, row.id) is None
+                    ]
             memory = relationship_memory(db, character_id, {row.id for row in previous[-20:]})
             overlay = read_settings(db, character_id)
             manual = relevant_manual(db, character_id, user_text)
@@ -554,6 +569,7 @@ class AgentService:
             stored.get("local_resolution"),
             stored.get("renderer_id"),
             selected_skills=stored.get("selected_skills", []),
+            knowledge_service=getattr(app.state, "knowledge", None),
         )
 
     async def execute(
@@ -891,6 +907,26 @@ class AgentService:
         else:
             roles = getattr(app.state, "model_roles", None)
             service = roles.service("character_model") if roles else app.state.llm_service
+            if context.knowledge_tainted:
+                from app.services.knowledge.runtime import validate_references
+                from app.services.knowledge.context import GroundedService, model_target
+
+                sources = await asyncio.to_thread(
+                    validate_references,
+                    app.state.knowledge,
+                    context.knowledge_references or [],
+                    context.conversation_id,
+                    context.character_id,
+                    model_target(service),
+                )
+                service = GroundedService(
+                    app.state.knowledge,
+                    service,
+                    sources,
+                    context.conversation_id,
+                    context.character_id,
+                    assistant_id,
+                )
             if on_text:
                 from app.services.voice.canonical_text import CanonicalResponseText
 

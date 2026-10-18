@@ -18,6 +18,14 @@ def file_hash(target):
 def resource_snapshot(context, call):
     """Read only the exact scoped file/draft. No project walk, no raw file bodies."""
     name, args = call["name"], call["arguments"]
+    if name.startswith("knowledge."):
+        from app.services.knowledge.runtime import snapshot
+
+        if context.knowledge_service is None:
+            raise RecoveryError("CHECKPOINT_CONFLICT")
+        return snapshot(
+            context.knowledge_service, call, context.conversation_id, context.character_id
+        )
     if name.startswith("mcp."):
         return {
             "kind": "mcp",
@@ -73,7 +81,12 @@ class StateReconciler:
         for index, call in enumerate(context.calls):
             step = by_call.get(call["id"])
             decision, code = "EXECUTE", None
-            snapshot = await asyncio.to_thread(resource_snapshot, context, call)
+            try:
+                snapshot = await asyncio.to_thread(resource_snapshot, context, call)
+            except ValueError:
+                if not call["name"].startswith("knowledge."):
+                    raise
+                snapshot = {"kind": "knowledge", "invalid": True}
             if call["name"].startswith("mcp."):
                 try:
                     self.app.state.external_tools.validate_call(call)
@@ -83,7 +96,31 @@ class StateReconciler:
                 if step["tool_name"] != call["name"] or step["step_index"] != index:
                     raise RecoveryError("CHECKPOINT_CONFLICT")
                 intent = step["execution_intent"]
-                if call["name"] in FILE_READS | FILE_WRITES:
+                if call["name"].startswith("knowledge."):
+                    from app.services.knowledge.runtime import validate_references
+                    from app.services.knowledge.contracts import KnowledgeError
+
+                    try:
+                        if snapshot != intent:
+                            raise KnowledgeError("KNOWLEDGE_STALE_EVIDENCE")
+                        validate_references(
+                            context.knowledge_service,
+                            step["result_summary"].get("knowledge_refs", []),
+                            context.conversation_id,
+                            context.character_id,
+                        )
+                        decision = (
+                            "SKIP_VERIFIED" if step["step_state"] == "COMMITTED" else "EXECUTE"
+                        )
+                        if decision == "SKIP_VERIFIED":
+                            context.knowledge_tainted = True
+                            context.knowledge_references = [
+                                *(context.knowledge_references or []),
+                                *step["result_summary"].get("knowledge_refs", []),
+                            ]
+                    except KnowledgeError:
+                        decision, code = "REVIEW", "FILE_STATE_CHANGED"
+                elif call["name"] in FILE_READS | FILE_WRITES:
                     current = snapshot.get("before_hash")
                     wanted = (
                         intent.get("expected_hash")

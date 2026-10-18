@@ -67,6 +67,7 @@ class AgentTaskRuntime:
 
     def prepare(self, context: AgentContext) -> None:
         """从工具生成可见步骤并准备 Handle；此阶段不执行任何工具。"""
+        context.knowledge_service = getattr(self.app.state, "knowledge", None)
         titles = []
         for call in context.calls:
             if (
@@ -292,6 +293,22 @@ class AgentTaskRuntime:
         """
         name, args = call["name"], call["arguments"]
         session, work = context.work_session_id, self.app.state.work_state
+        if name.startswith("knowledge."):
+            from app.services.knowledge.runtime import execute
+            from app.services.knowledge.contracts import KnowledgeError
+
+            try:
+                return await self.step(
+                    context, "知识库检索", lambda: execute(self.app, context, call), handle
+                )
+            except KnowledgeError as error:
+                return {"verified": False, "error": error.code, "code": error.code}
+        if context.knowledge_tainted and name.startswith(("mcp.", "browser.")):
+            return {
+                "verified": False,
+                "error": "KNOWLEDGE_EXPORT_NOT_GRANTED",
+                "code": "KNOWLEDGE_EXPORT_NOT_GRANTED",
+            }
         if name == "skill.read_reference":
             if args["skill_id"] not in {
                 s["skill_id"] for s in context.selected_skills or []

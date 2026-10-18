@@ -21,6 +21,7 @@ const tests = [
   'recovery-unit.cjs',
   'extensions-unit.cjs',
   'workflow-unit.cjs',
+  'knowledge-unit.cjs',
 ];
 
 for (const test of tests) {

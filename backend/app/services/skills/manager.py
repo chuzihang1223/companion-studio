@@ -18,6 +18,12 @@ from app.services.mcp_ext.events import emit
 from app.services.skills.parser import parse_skill, skill_name
 
 CAPABILITIES = {
+    "search_knowledge": {
+        "knowledge.search",
+        "knowledge.collections",
+        "knowledge.get_document",
+        "knowledge.get_chunk",
+    },
     "read_project_files": {"workspace.read", "filesystem.read", "code.read_file"},
     "search_code": {"workspace.search"},
     "write_report": {"workspace.create", "workspace.write"},

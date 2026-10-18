@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 from app.core.config import settings
 from app.services.evaluation.environment import OwnedJob
@@ -45,10 +46,20 @@ def parse_isolated(raw, file_type, stop=None):
         job = OwnedJob(process.pid, memory_bytes=512 * 1024 * 1024)
         if stop and stop.is_set():
             raise KnowledgeError("KNOWLEDGE_CANCELLED")
-        output, _ = process.communicate(
-            json.dumps({"raw": base64.b64encode(raw).decode("ascii"), "type": file_type}).encode(),
-            timeout=15,
-        )
+        data = json.dumps(
+            {"raw": base64.b64encode(raw).decode("ascii"), "type": file_type}
+        ).encode()
+        deadline = time.monotonic() + 15
+        while True:
+            if stop and stop.is_set():
+                raise KnowledgeError("KNOWLEDGE_CANCELLED")
+            if time.monotonic() >= deadline:
+                raise KnowledgeError("KNOWLEDGE_PARSER_TIMEOUT")
+            try:
+                output, _ = process.communicate(data, timeout=0.1)
+                break
+            except subprocess.TimeoutExpired:
+                data = None
         if stop and stop.is_set():
             raise KnowledgeError("KNOWLEDGE_CANCELLED")
         if process.returncode != 0 or len(output) > 4 * 1024 * 1024:

@@ -67,7 +67,12 @@ def action_for(call: dict, workspace: Path | None = None) -> str:
 
 
 def risk_for(action: str) -> str:
-    if action == "skill.read_reference":
+    if action == "skill.read_reference" or action in {
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk",
+    }:
         return "low"
     if action.startswith("mcp.execute:"):
         return "high"

@@ -59,6 +59,9 @@ class KnowledgeStore:
                 select(KnowledgeIndexJob).where(KnowledgeIndexJob.state.in_(ACTIVE))
             ):
                 row.state, row.last_error = "NEEDS_REVIEW", "KNOWLEDGE_INTERRUPTED"
+                collection = db.get(KnowledgeCollection, row.collection_id)
+                if collection:
+                    collection.status = "NEEDS_REVIEW"
 
     def collection(self, db, collection_id):
         row = db.get(KnowledgeCollection, str(collection_id))
@@ -199,7 +202,12 @@ class KnowledgeStore:
 
     def conversation(self, db, conversation_id, character_id=None):
         row = db.get(Conversation, str(conversation_id))
-        if not row or character_id is not None and row.character_id != character_id:
+        if (
+            not row
+            or row.is_deleted
+            or character_id is not None
+            and row.character_id != character_id
+        ):
             raise KnowledgeError("KNOWLEDGE_OWNER_MISMATCH", 403)
         return row
 

@@ -22,8 +22,9 @@ from app.services.knowledge.trace import event
 
 
 class IndexManager:
-    def __init__(self, store, recorder=None):
+    def __init__(self, store, recorder=None, providers=None):
         self.store, self.recorder = store, recorder
+        self.providers = providers if providers is not None else {}
         self.tasks, self.signals = {}, {}
 
     def jobs(self, collection_id):
@@ -64,6 +65,7 @@ class IndexManager:
             if not roots:
                 raise KnowledgeError("KNOWLEDGE_ROOT_REQUIRED")
             job = KnowledgeIndexJob(collection_id=row.id, revision=row.revision)
+            row.status = "INDEXING"
             db.add(job)
             db.flush()
             job_id = job.id
@@ -189,6 +191,10 @@ class IndexManager:
                         job_id, collection_id, revision, root, relative, document_id, options, full
                     )
                     progress[changed] += 1
+                    with self.store.sessions() as db:
+                        stored = json.loads(db.get(KnowledgeIndexJob, job_id).progress_json)
+                        if "embedding_fallbacks" in stored:
+                            progress["embedding_fallbacks"] = stored["embedding_fallbacks"]
                 except KnowledgeError as error:
                     if error.code == "KNOWLEDGE_CANCELLED":
                         raise
@@ -230,8 +236,12 @@ class IndexManager:
                 progress,
                 error.code,
             )
+            with self.store.sessions.begin() as db:
+                self.store.collection(db, collection_id).status = "NEEDS_REVIEW"
         except Exception:
             self.checkpoint(job_id, "FAILED", progress, "KNOWLEDGE_INDEX_FAILED")
+            with self.store.sessions.begin() as db:
+                self.store.collection(db, collection_id).status = "NEEDS_REVIEW"
 
     def index_one(
         self, job_id, collection_id, revision, root, relative, document_id, options, full
@@ -317,6 +327,30 @@ class IndexManager:
                     },
                 )
             collection.index_version += 1
+        provider = self.providers.get(collection_id)
+        if provider:
+            from app.services.knowledge.embedding import VectorStore
+
+            with self.store.sessions() as db:
+                rows = db.scalars(
+                    select(KnowledgeChunk)
+                    .where(KnowledgeChunk.document_id == document_id)
+                    .order_by(KnowledgeChunk.ordinal)
+                ).all()
+            try:
+                for offset in range(0, len(rows), 16):
+                    self.check(job_id)
+                    VectorStore(self.store).put(rows[offset : offset + 16], provider)
+            except KnowledgeError as error:
+                if error.code == "KNOWLEDGE_CANCELLED":
+                    raise
+                # Indexing of readable source text remains successful; an optional
+                # embedding failure is explicit and never deletes keyword evidence.
+                with self.store.sessions.begin() as db:
+                    job = db.get(KnowledgeIndexJob, job_id)
+                    progress = json.loads(job.progress_json)
+                    progress["embedding_fallbacks"] = progress.get("embedding_fallbacks", 0) + 1
+                    job.progress_json = dumps(progress)
         event(
             "DOCUMENT_INDEXED",
             collection_id=collection_id,

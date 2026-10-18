@@ -37,6 +37,27 @@ def migrate(engine: Engine) -> None:
 
     # V8.3: add virtual_code_documents only; existing data and tables stay intact.
     Base.metadata.create_all(bind=engine)
+    # Preserve legacy character memories verbatim. New scopes share this table;
+    # they must not be returned by the legacy character-only API.
+    with engine.begin() as conn:
+        columns = {r[1] for r in conn.execute(text("PRAGMA table_info(manual_memories)"))}
+        additions = {
+            "scope": "VARCHAR(30) NOT NULL DEFAULT 'CHARACTER'",
+            "owner_id": "VARCHAR(100)",
+            "category": "VARCHAR(30) NOT NULL DEFAULT 'fact'",
+            "source_type": "VARCHAR(30) NOT NULL DEFAULT 'manual'",
+            "source_reference": "VARCHAR(100)",
+            "expires_at": "DATETIME",
+            "status": "VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'",
+        }
+        for column, declaration in additions.items():
+            if column not in columns:
+                conn.execute(text(f"ALTER TABLE manual_memories ADD COLUMN {column} {declaration}"))
+        conn.execute(
+            text(
+                "UPDATE manual_memories SET owner_id=character_id WHERE owner_id IS NULL AND scope='CHARACTER'"
+            )
+        )
     from app.database.recovery_migration import migrate_recovery
 
     with engine.begin() as conn:

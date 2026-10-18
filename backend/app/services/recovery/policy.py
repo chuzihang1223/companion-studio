@@ -3,6 +3,10 @@
 from app.services.recovery.types import RecoveryDecision
 
 READ_ONLY = {
+    "knowledge.collections",
+    "knowledge.search",
+    "knowledge.get_document",
+    "knowledge.get_chunk",
     "skill.read_reference",
     "app.detect",
     "app.status",

@@ -4,6 +4,7 @@ from app.services.agent_tools import ToolRegistry
 from app.services.recovery.checkpoints import digest
 from app.services.workflows.contracts import WorkflowError
 from app.services.workflows.variables import references
+from app.services.knowledge.workflow import tool_node
 
 
 class WorkflowCatalog:
@@ -40,6 +41,7 @@ class WorkflowCatalog:
                 raise WorkflowError("WORKFLOW_CAPABILITY_UNAVAILABLE")
 
     def validate_node(self, node):
+        node = tool_node(node)
         config = node.config
         if node.type == "tool":
             registry = ToolRegistry()
@@ -88,13 +90,17 @@ class WorkflowCatalog:
         result = definition.model_copy(deep=True)
         registry = ToolRegistry()
         for node in result.nodes:
-            if node.type == "tool":
-                tool = registry.by_api_name.get(str(node.config.get("name", "")).replace(".", "_"))
+            if node.type in {"tool", "knowledge_search"}:
+                normalized = tool_node(node)
+                tool = registry.by_api_name.get(
+                    str(normalized.config.get("name", "")).replace(".", "_")
+                )
                 if tool:
                     node.metadata["tool_schema_hash"] = digest(tool.schema())
         return result
 
     def parse_call(self, node, arguments, call_id):
+        node = tool_node(node)
         import json
         from jsonschema import Draft202012Validator
         from jsonschema.exceptions import ValidationError

@@ -28,6 +28,13 @@ class ManualMemory(Base):
     character_id: Mapped[str] = mapped_column(String(100), index=True)
     content: Mapped[str] = mapped_column(Text)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    scope: Mapped[str] = mapped_column(String(30), default="CHARACTER")
+    owner_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    category: Mapped[str] = mapped_column(String(30), default="fact")
+    source_type: Mapped[str] = mapped_column(String(30), default="manual")
+    source_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=now_utc, onupdate=now_utc
