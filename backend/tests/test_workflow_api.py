@@ -88,8 +88,13 @@ def test_controlled_workflow_api_owner_revisions_and_events(tmp_path, monkeypatc
                 ).json()["items"]
                 assert "output" not in events[-1] and "inputs" not in events[-1]
                 templates = (await client.get("/api/workflows/templates")).json()["items"]
-                assert len(templates) == 4
-                assert any(row["template_id"] == "project-knowledge-assistant" for row in templates)
+                assert {row["template_id"] for row in templates} == {
+                    "project-knowledge-assistant",
+                    "project-review",
+                    "code-test-report",
+                    "mcp-research",
+                    "visual-desktop-automation",
+                }
                 invalid = Definition().model_dump(mode="json") | {"password": "synthetic"}
                 assert (
                     await client.post("/api/workflows", json={"definition": invalid})
