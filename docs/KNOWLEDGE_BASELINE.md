@@ -17,3 +17,14 @@ Python 测试耗时 305.82 秒。两个跳过均因当前 Windows 账户不能�
 
 Embedding 默认关闭；本地关键词检索不需要下载模型、外部传输或付费调用。
 实际 GUI、安装包、性能、检索质量及数据保留结果另行记录，不由基线单元测试推断。
+
+## 最终候选完整构建门
+
+2026-10-18：415 passed、2 skipped、4 warnings，pytest 419.19 秒；
+Ruff、TypeScript、ESLint、Prettier、Vite 与 17 组 Electron 检查通过。
+两个旧 symlink 测试仍因 Windows 权限跳过；新 Knowledge Benchmark 的实际 Windows junction
+逃逸测试已执行通过。安装版和知识评测结果见 [评测文档](KNOWLEDGE_EVALUATION.md) 及本地交付证据。
+
+早期界面验收发现空白档案会话归属、文档列表 IPC 和实时来源显示问题，已修复。
+复核还修正了编辑记忆重新启用的状态问题，并为检索加入有界并发背压。
+中止的中间构建不计为通过；最终安装版必须独立重测。
