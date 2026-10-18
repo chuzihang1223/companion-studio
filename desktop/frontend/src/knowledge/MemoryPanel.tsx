@@ -22,6 +22,11 @@ export default function MemoryPanel({
       : scope === 'WORKSPACE'
         ? workSessionId
         : owner.character_id;
+  // Editing the text must preserve an explicit disable, including a toggle
+  // performed while this editor is open.
+  const editingEnabled = editing
+    ? (rows.find((row) => row.memory_id === editing.memory_id)?.enabled ?? editing.enabled)
+    : true;
   async function load() {
     if (ownerId)
       setRows(
@@ -87,7 +92,7 @@ export default function MemoryPanel({
                 owner_id: ownerId,
                 content,
                 category,
-                enabled: true,
+                enabled: editingEnabled,
                 expires_at: editing?.expires_at || null,
               },
             });

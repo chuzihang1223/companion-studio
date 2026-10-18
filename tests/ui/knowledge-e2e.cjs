@@ -249,6 +249,13 @@ async function run() {
   await driver.c.until(
     "document.querySelector('.knowledge-memory article')?.innerText.includes('给出来源')",
   );
+  const editedMemory = (
+    await read('memories', { ...scope, scope: 'CONVERSATION', owner_id: owner })
+  ).memories[0];
+  driver.check(
+    editedMemory.enabled === false,
+    'Editing a disabled memory preserves its explicit disabled status',
+  );
   await driver.c.evaluate(
     "document.querySelector('.knowledge-memory article')?.scrollIntoView({block:'center'});true",
   );
