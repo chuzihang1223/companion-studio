@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import stat
 from uuid import uuid4
 
@@ -29,6 +29,15 @@ def root_record(value):
 
 
 def checked_path(root, relative):
+    lexical_parts = PurePosixPath(relative.replace("\\", "/"))
+    if (
+        lexical_parts.is_absolute()
+        or ".." in lexical_parts.parts
+        or ":" in relative
+        or "\x00" in relative
+        or len(relative) > 500
+    ):
+        raise KnowledgeError("KNOWLEDGE_PATH_OUTSIDE_ROOT", 403)
     base = Path(root["path"])
     no_links(base)
     info = base.stat()

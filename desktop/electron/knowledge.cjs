@@ -53,6 +53,7 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, shell }) => {
       'conversation_id',
       'character_id',
       'message_id',
+      'cursor',
       'scope',
       'owner_id',
     ]);
@@ -108,6 +109,14 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, shell }) => {
         { revision: revision(options.revision), payload: options.payload },
         'PATCH',
       );
+    if (operation === 'documents') {
+      const cursor = options.cursor || 0;
+      if (!Number.isSafeInteger(cursor) || cursor < 0 || cursor > 100000)
+        throw Error('文档分页无效');
+      return request(
+        '/api/knowledge/collections/' + uuid(options.collection_id) + '/documents?cursor=' + cursor,
+      );
+    }
     if (operation === 'add-root') {
       const selected = await dialog.showOpenDialog({
         title: '仅授权所选目录（不扫描其他位置）',
@@ -150,6 +159,7 @@ module.exports = ({ ipcMain, requireMainWindow, request, dialog, shell }) => {
     if (operation === 'index')
       return request('/api/knowledge/collections/' + uuid(options.collection_id) + '/index', {
         full: options.full === true,
+        ...(options.conversation_id ? owner(options) : {}),
       });
     if (operation === 'embedding') {
       object(options.embedding, ['mode', 'endpoint', 'model', 'dimension', 'revision_name']);

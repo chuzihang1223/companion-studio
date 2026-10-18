@@ -787,6 +787,23 @@ class AgentService:
                 status="summarizing",
                 step=None if runtime else 2,
             )
+        if context.knowledge_tainted:
+            # Original tool observations remain in the local Work result, but
+            # their bodies enter the model only through the bounded RAG builder.
+            knowledge_calls = {
+                call["id"]
+                for call in context.calls
+                if call["name"].startswith("knowledge.") and call["name"] != "knowledge.collections"
+            }
+            observations = [
+                {
+                    **row,
+                    "content": '{"knowledge_evidence":"provided_separately_after_source_verification"}',
+                }
+                if row.get("tool_call_id") in knowledge_calls
+                else row
+                for row in observations
+            ]
         final_prompt = [
             *context.prompt,
             context.assistant_plan,
@@ -909,7 +926,11 @@ class AgentService:
             service = roles.service("character_model") if roles else app.state.llm_service
             if context.knowledge_tainted:
                 from app.services.knowledge.runtime import validate_references
-                from app.services.knowledge.context import GroundedService, model_target
+                from app.services.knowledge.context import (
+                    GROUNDING_RULE,
+                    GroundedService,
+                    model_target,
+                )
 
                 sources = await asyncio.to_thread(
                     validate_references,
@@ -919,14 +940,32 @@ class AgentService:
                     context.character_id,
                     model_target(service),
                 )
-                service = GroundedService(
-                    app.state.knowledge,
-                    service,
-                    sources,
-                    context.conversation_id,
-                    context.character_id,
-                    assistant_id,
-                )
+                if sources or any(
+                    call["name"].startswith("knowledge.")
+                    and call["name"] != "knowledge.collections"
+                    for call in context.calls
+                ):
+                    service = GroundedService(
+                        app.state.knowledge,
+                        service,
+                        sources,
+                        context.conversation_id,
+                        context.character_id,
+                        assistant_id,
+                    )
+                else:
+                    grants = app.state.knowledge.store.grants(
+                        context.conversation_id, context.character_id
+                    )
+                    with app.state.knowledge.store.sessions() as db:
+                        app.state.knowledge.store.authorize(
+                            db,
+                            context.conversation_id,
+                            context.character_id,
+                            [row.collection_id for row in grants],
+                            model_target(service),
+                        )
+                    final_prompt.insert(1, {"role": "system", "content": GROUNDING_RULE})
             if on_text:
                 from app.services.voice.canonical_text import CanonicalResponseText
 

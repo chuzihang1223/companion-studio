@@ -111,6 +111,15 @@ class EvaluationReportService:
                 f"|{row['case_id']}|{row['execution_status']}|{round(row['duration_ms'], 3) if row['duration_ms'] is not None else 'N/A'}|{row['error_code'] or ''}|{row['trace_id'] or 'N/A'}|"
                 for row in rows
             ]
+            if metrics.get("knowledge"):
+                lines += [
+                    "",
+                    "## Knowledge metrics",
+                    "",
+                    json.dumps(metrics["knowledge"], ensure_ascii=False),
+                    "",
+                    "检索指标来自原创合成资料与确定性标注，MockRAG 不是模型质量评分。",
+                ]
             if metrics.get("recovery"):
                 lines += [
                     "",

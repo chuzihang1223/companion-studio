@@ -1,6 +1,7 @@
 export type EvaluationMode = 'mock' | 'sandbox' | 'windows_gui' | 'live_model';
 export type EvaluationOptions = {
-  dataset_id?: 'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core';
+  dataset_id?:
+    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
   case_ids?: string[];
   mode?: EvaluationMode;
   model_role?: string;
@@ -11,6 +12,7 @@ export type EvaluationOptions = {
   max_requests?: number;
   token_budget?: number;
   live_consent?: boolean;
+  knowledge_mode?: 'KeywordOnly' | 'HybridLocal' | 'HybridRemote' | 'MockRAG';
 };
 export type BenchmarkCase = {
   input: string;
@@ -29,6 +31,22 @@ export type Dataset = {
 };
 export type Usage = { status: string; total_tokens: number | null; observed_requests?: number };
 export type EvaluationMetrics = {
+  knowledge?: {
+    recall_at_k: number | null;
+    mrr: number | null;
+    citation_accuracy: number | null;
+    citation_coverage: number | null;
+    answer_groundedness: number | null;
+    retrieval_p50_ms: number | null;
+    retrieval_p95_ms: number | null;
+    index_documents_per_second: number | null;
+    update_correctness: number | null;
+    unauthorized_access_count: number;
+    memory_isolation: number | null;
+    actual_modes: string[];
+    requested_modes: string[];
+    real_model_quality: null;
+  } | null;
   workflow?: {
     source: string;
     case_count: number;
@@ -144,7 +162,8 @@ export type Comparison = {
   cases: { left: EvaluationResult[]; right: EvaluationResult[] };
 };
 export type EvaluationQuery = {
-  dataset_id?: 'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core';
+  dataset_id?:
+    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
   trace_id?: string;
   run_id?: string;
   attempt_id?: string;

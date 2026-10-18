@@ -3,6 +3,7 @@ import type { Collection, Job, Operation, Owner, SearchResult } from './types';
 import { Sources } from './KnowledgeSources';
 import MemoryPanel from './MemoryPanel';
 import EmbeddingPanel from './EmbeddingPanel';
+import DocumentList from './DocumentList';
 import './knowledge.css';
 
 const states: Record<string, string> = {
@@ -115,6 +116,10 @@ export default function KnowledgePanel({
             )
           )
             timer = window.setTimeout(() => void poll(), 1000);
+          else {
+            const fresh = await window.desktopAPI!.readKnowledge('collections');
+            if (live) setCollections(fresh.collections);
+          }
         }
       } catch (cause) {
         if (live) setError(String(cause));
@@ -228,6 +233,7 @@ export default function KnowledgePanel({
           {current && (
             <article className="knowledge-collection">
               <EmbeddingPanel key={current.id} collection={current} onChanged={refresh} />
+              <DocumentList collectionId={current.id} indexVersion={current.index_version} />
               <h3>{current.name}</h3>
               <p>
                 {states[current.status] || current.status} · {current.document_count} 个文档 ·{' '}
@@ -237,29 +243,32 @@ export default function KnowledgePanel({
                 格式：{current.config.allowed_types.join(' ')} · 单文件上限{' '}
                 {Math.round(current.config.max_file_bytes / 1048576)} MiB
               </p>
-              <ul>
-                {current.source_roots.map((root) => (
-                  <li key={root.id}>
-                    <span>{root.path}</span>
-                    <button
-                      disabled={busy}
-                      onClick={() =>
-                        void action(
-                          'remove-root',
-                          {
-                            collection_id: current.id,
-                            revision: current.revision,
-                            root_id: root.id,
-                          },
-                          '目录授权已撤销',
-                        )
-                      }
-                    >
-                      移除目录
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <details>
+                <summary>已授权目录（{current.source_roots.length}）</summary>
+                <ul>
+                  {current.source_roots.map((root) => (
+                    <li key={root.id}>
+                      <span>{root.path}</span>
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          void action(
+                            'remove-root',
+                            {
+                              collection_id: current.id,
+                              revision: current.revision,
+                              root_id: root.id,
+                            },
+                            '目录授权已撤销',
+                          )
+                        }
+                      >
+                        移除目录
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
               <div className="knowledge-actions">
                 <button
                   disabled={busy}
@@ -276,7 +285,7 @@ export default function KnowledgePanel({
                 <button
                   disabled={busy || !current.source_roots.length}
                   onClick={() =>
-                    void action('index', { collection_id: current.id }, '增量索引已启动')
+                    void action('index', { ...owner, collection_id: current.id }, '增量索引已启动')
                   }
                 >
                   增量索引
@@ -284,7 +293,11 @@ export default function KnowledgePanel({
                 <button
                   disabled={busy || !current.source_roots.length}
                   onClick={() =>
-                    void action('index', { collection_id: current.id, full: true }, '重建已启动')
+                    void action(
+                      'index',
+                      { ...owner, collection_id: current.id, full: true },
+                      '重建已启动',
+                    )
                   }
                 >
                   重建索引
@@ -347,7 +360,8 @@ export default function KnowledgePanel({
                   <p>
                     处理 {jobs[0].progress.processed || 0} · 新增 {jobs[0].progress.new || 0} · 修改{' '}
                     {jobs[0].progress.modified || 0} · 未变 {jobs[0].progress.unchanged || 0} · 删除{' '}
-                    {jobs[0].progress.deleted || 0} · 错误 {jobs[0].progress.errors || 0}
+                    {jobs[0].progress.deleted || 0} · 错误 {jobs[0].progress.errors || 0} · 向量回退{' '}
+                    {jobs[0].progress.embedding_fallbacks || 0}
                   </p>
                   {jobs[0].last_error && <code>{jobs[0].last_error}</code>}
                   {['PENDING', 'SCANNING', 'PARSING', 'CHUNKING', 'INDEXING', 'PAUSED'].includes(

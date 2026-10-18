@@ -5,10 +5,11 @@ import hashlib
 import ipaddress
 import json
 import math
+import time
 from urllib.parse import urlsplit
 
 import httpx
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, func
 
 from app.models.knowledge import KnowledgeChunk, KnowledgeVector
 from app.services.knowledge.contracts import KnowledgeError
@@ -109,8 +110,12 @@ class EndpointEmbeddingProvider(EmbeddingProvider):
             raise KnowledgeError("KNOWLEDGE_EMBEDDING_BATCH_LIMIT")
         headers = {"Authorization": "Bearer " + self.key} if self.key else {}
         try:
+            deadline = time.monotonic() + 20
             with httpx.Client(
-                timeout=20, follow_redirects=False, trust_env=False, transport=self.transport
+                timeout=httpx.Timeout(2, connect=5),
+                follow_redirects=False,
+                trust_env=False,
+                transport=self.transport,
             ) as client:
                 with client.stream(
                     "POST",
@@ -121,6 +126,8 @@ class EndpointEmbeddingProvider(EmbeddingProvider):
                     response.raise_for_status()
                     raw = bytearray()
                     for part in response.iter_bytes():
+                        if time.monotonic() > deadline:
+                            raise KnowledgeError("KNOWLEDGE_EMBEDDING_TIMEOUT")
                         raw.extend(part)
                         if len(raw) > 2 * 1024 * 1024:
                             raise KnowledgeError("KNOWLEDGE_EMBEDDING_RESPONSE_LIMIT")
@@ -141,6 +148,21 @@ class VectorStore:
         self.store = store
 
     def put(self, chunks, provider):
+        if not chunks:
+            return
+        collection_ids = {row.collection_id for row in chunks}
+        with self.store.sessions() as db:
+            count = db.scalar(
+                select(func.count())
+                .select_from(KnowledgeVector)
+                .join(KnowledgeChunk, KnowledgeChunk.id == KnowledgeVector.chunk_id)
+                .where(
+                    KnowledgeChunk.collection_id.in_(collection_ids),
+                    KnowledgeVector.chunk_id.not_in([row.id for row in chunks]),
+                )
+            )
+            if count + len(chunks) > 10000:
+                raise KnowledgeError("KNOWLEDGE_VECTOR_STORE_LIMIT")
         embedded = vectors(
             provider.embed([r.content for r in chunks]), len(chunks), provider.dimension
         )
@@ -176,11 +198,11 @@ class VectorStore:
                 )
                 .order_by(KnowledgeVector.chunk_id)
                 .limit(10001)
-            ).all()
-            if len(rows) > 10000:
-                raise KnowledgeError("KNOWLEDGE_VECTOR_SCAN_LIMIT")
+            ).yield_per(128)
             ranked = []
-            for record, chunk in rows:
+            for index, (record, chunk) in enumerate(rows):
+                if index >= 10000:
+                    raise KnowledgeError("KNOWLEDGE_VECTOR_SCAN_LIMIT")
                 stored = vectors([json.loads(record.vector_json)], 1, provider.dimension)[0]
                 score = sum(a * b for a, b in zip(vector, stored))
                 if score > 0:

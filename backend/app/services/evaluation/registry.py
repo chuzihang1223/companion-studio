@@ -9,14 +9,22 @@ from app.schemas.evaluation import BenchmarkCase
 
 class BenchmarkRegistry:
     def __init__(self, dataset_id="studio-core"):
-        if dataset_id not in {"studio-core", "recovery-core", "mcp-skills-core", "workflow-core"}:
+        if dataset_id not in {
+            "studio-core",
+            "recovery-core",
+            "mcp-skills-core",
+            "workflow-core",
+            "knowledge-core",
+        }:
             raise ValueError("未知内置数据集")
         raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
         self.digest = hashlib.sha256(raw).hexdigest()
         data = json.loads(raw)
         self.cases = [BenchmarkCase.model_validate(row) for row in data["cases"]]
         self.by_id = {row.case_id: row for row in self.cases}
-        expected = 16 if dataset_id == "recovery-core" else 20
+        expected = (
+            28 if dataset_id == "knowledge-core" else 16 if dataset_id == "recovery-core" else 20
+        )
         if len(self.by_id) != len(self.cases) or len(self.cases) != expected:
             raise ValueError("内置数据集测试项数量不符")
         self.dataset_id = dataset_id
@@ -28,6 +36,8 @@ class BenchmarkRegistry:
             "dataset_version": self.version,
             "title": "Studio Core · 20 项"
             if self.dataset_id == "studio-core"
+            else "Knowledge Core · 28 项"
+            if self.dataset_id == "knowledge-core"
             else "Recovery Core · 16 项"
             if self.dataset_id == "recovery-core"
             else "Workflow Core · 20 项"

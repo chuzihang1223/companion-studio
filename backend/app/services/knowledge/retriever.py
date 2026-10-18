@@ -46,7 +46,7 @@ class CitationResolver:
             raise KnowledgeError("KNOWLEDGE_STALE_EVIDENCE")
         return root, collection
 
-    def dto(self, doc, chunk, collection, *, excerpt=1200):
+    def dto(self, doc, chunk, collection, *, excerpt=2000):
         return {
             "collection_id": collection.id,
             "collection_name": collection.name,
@@ -55,6 +55,7 @@ class CitationResolver:
             "content_hash": doc.content_hash,
             "index_version": collection.index_version,
             "chunk_id": chunk.id,
+            "ordinal": chunk.ordinal,
             "relative_path": doc.relative_path,
             "file_type": doc.file_type,
             "location": json.loads(chunk.location_json),
@@ -161,7 +162,8 @@ class HybridRetriever:
                     query.file_types
                     and doc.file_type not in query.file_types
                     or query.path_scope
-                    and not doc.relative_path.startswith(query.path_scope)
+                    and doc.relative_path != query.path_scope.rstrip("/")
+                    and not doc.relative_path.startswith(query.path_scope.rstrip("/") + "/")
                 ):
                     continue
                 if doc.id not in verified:

@@ -1,7 +1,8 @@
 import type { Dataset, EvaluationMode, ModelChoice } from './types';
 
 export type EvaluationForm = {
-  datasetId: 'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core';
+  datasetId:
+    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
   mode: EvaluationMode;
   role: string;
   caseId: string;
@@ -12,6 +13,7 @@ export type EvaluationForm = {
   requestLimit: number;
   tokenBudget: number;
   consent: boolean;
+  knowledgeMode: 'KeywordOnly' | 'HybridLocal' | 'HybridRemote' | 'MockRAG';
 };
 export const initialForm: EvaluationForm = {
   datasetId: 'studio-core',
@@ -25,6 +27,7 @@ export const initialForm: EvaluationForm = {
   requestLimit: 10,
   tokenBudget: 20000,
   consent: false,
+  knowledgeMode: 'KeywordOnly',
 };
 type Props = {
   form: EvaluationForm;
@@ -62,6 +65,7 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             <option value="recovery-core">Recovery Core · 16 项</option>
             <option value="mcp-skills-core">MCP & Skills Core · 20 项</option>
             <option value="workflow-core">Workflow Core · 20 项</option>
+            <option value="knowledge-core">Knowledge Core · 28 项（本地合成资料）</option>
           </select>
         </label>
         <label>
@@ -79,6 +83,27 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             </option>
           </select>
         </label>
+        {form.datasetId === 'knowledge-core' && (
+          <label>
+            知识评测类型
+            <select
+              aria-label="知识评测类型"
+              value={form.knowledgeMode}
+              onChange={(event) =>
+                change({ knowledgeMode: event.target.value as EvaluationForm['knowledgeMode'] })
+              }
+            >
+              <option value="KeywordOnly">KeywordOnly · 本地关键词</option>
+              <option value="MockRAG">MockRAG · 本地固定模型</option>
+              <option value="HybridLocal" disabled>
+                HybridLocal · 隔离环境未配置模型
+              </option>
+              <option value="HybridRemote" disabled>
+                HybridRemote · 未授权外部服务
+              </option>
+            </select>
+          </label>
+        )}
         <label>
           任务
           <select
@@ -86,7 +111,7 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             value={form.caseId}
             onChange={(e) => change({ caseId: e.target.value })}
           >
-            <option value="">全部 20 项</option>
+            <option value="">全部 {dataset?.case_count || 20} 项</option>
             {dataset?.cases?.map((c) => (
               <option key={c.case_id} value={c.case_id}>
                 {c.case_id} · {c.title}

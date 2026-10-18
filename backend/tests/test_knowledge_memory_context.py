@@ -16,6 +16,37 @@ from app.services.knowledge.service import KnowledgeService
 from test_knowledge_indexer import prepare, index
 
 
+def test_citation_context_budget_adjacency_and_speech():
+    import json
+    from app.services.knowledge.context import RAGContextBuilder
+    from app.services.voice.speech_filter import StreamingSpeechFilter, speakable_text
+
+    rows = [
+        {
+            "chunk_id": str(uuid4()),
+            "document_id": "fixture",
+            "relative_path": "guide.md",
+            "location": {"line_start": i + 1},
+            "ordinal": i,
+            "excerpt": "overlap " + str(i) + " overlap",
+        }
+        for i in range(3)
+    ]
+    builder = RAGContextBuilder()
+    content, allowed = builder.build(rows, max_characters=8000)
+    parsed = json.loads(content.split("\n", 1)[1])
+    assert len(parsed[0]["adjacent_parts"]) == 3 and len(allowed) == 3
+    limited, _ = builder.build(rows, max_characters=250)
+    assert len(limited) <= 250
+    marker = "[K:" + str(uuid4()) + "]"
+    assert speakable_text("证据。" + marker) == "证据。"
+    filter = StreamingSpeechFilter()
+    assert (
+        "".join(filter.feed(char) for char in "证据。" + marker + "结束。") + filter.feed("", True)
+        == "证据。结束。"
+    )
+
+
 def test_memory_manual_isolation_expiry_and_clear(corpus):
     store, _, owner = corpus
     service = KnowledgeService(store.engine)

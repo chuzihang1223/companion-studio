@@ -27,21 +27,57 @@ def model_target(service):
 
 class RAGContextBuilder:
     def build(self, results, *, max_characters=8000):
-        records, used, seen = [], 0, set()
+        selected, seen = [], set()
+        prefix = "UNTRUSTED_KNOWLEDGE_DATA\n"
         for result in results:
             if result["chunk_id"] in seen:
                 continue
+            if len(prefix) + len(dumps(self.merge([*selected, result]))) > max_characters:
+                break
+            selected.append(result)
+            seen.add(result["chunk_id"])
+        context = prefix + dumps(self.merge(selected))
+        event("RAG_CONTEXT_BUILT", chunk_count=len(selected), character_count=len(context))
+        return context, {row["chunk_id"] for row in selected}
+
+    @staticmethod
+    def merge(selected):
+        grouped = []
+        for result in sorted(selected, key=lambda row: (row["document_id"], row.get("ordinal", 0))):
             record = {
                 key: result[key] for key in ("chunk_id", "relative_path", "location", "excerpt")
             }
-            size = len(dumps(record))
-            if used + size > max_characters:
-                break
-            records.append(record)
-            seen.add(result["chunk_id"])
-            used += size
-        event("RAG_CONTEXT_BUILT", chunk_count=len(records), character_count=used)
-        return "UNTRUSTED_KNOWLEDGE_DATA\n" + dumps(records), {r["chunk_id"] for r in records}
+            if (
+                grouped
+                and grouped[-1]["document_id"] == result["document_id"]
+                and grouped[-1]["ordinal"] + 1 == result.get("ordinal")
+            ):
+                previous = grouped[-1]["parts"][-1]["excerpt"]
+                overlap = next(
+                    (
+                        n
+                        for n in range(min(150, len(previous), len(record["excerpt"])), 0, -1)
+                        if previous[-n:] == record["excerpt"][:n]
+                    ),
+                    0,
+                )
+                record["excerpt"] = record["excerpt"][overlap:]
+                grouped[-1]["parts"].append(record)
+                grouped[-1]["ordinal"] = result["ordinal"]
+            else:
+                grouped.append(
+                    {
+                        "document_id": result["document_id"],
+                        "ordinal": result.get("ordinal", 0),
+                        "parts": [record],
+                    }
+                )
+        # Adjacent evidence is grouped without inventing a combined citation:
+        # every part retains its own real chunk ID and source coordinates.
+        return [
+            group["parts"][0] if len(group["parts"]) == 1 else {"adjacent_parts": group["parts"]}
+            for group in grouped
+        ]
 
 
 class CitationFilter:
@@ -61,9 +97,9 @@ class CitationFilter:
                 break
             output += self.pending[:start]
             self.pending = self.pending[start:]
-            if "[K:".startswith(self.pending) and not final:
+            if "[k:".startswith(self.pending.casefold()) and not final:
                 break
-            if not self.pending.startswith("[K:"):
+            if not self.pending.casefold().startswith("[k:"):
                 output += self.pending[0]
                 self.pending = self.pending[1:]
                 continue
@@ -73,9 +109,9 @@ class CitationFilter:
                     break
                 self.pending = ""  # Incomplete/oversized marker is not a citation.
                 break
-            marker = self.pending[3:end]
+            marker = self.pending[3:end].casefold()
             if marker in self.allowed:
-                output += self.pending[: end + 1]
+                output += "[K:" + marker + "]"
             self.pending = self.pending[end + 1 :]
         return output
 

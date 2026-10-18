@@ -19,6 +19,14 @@ def make_docx():
     return buffer.getvalue()
 
 
+def test_paragraph_amplification_and_identifier_metadata_are_bounded():
+    with pytest.raises(KnowledgeError, match="CHUNK_LIMIT"):
+        parse(("line\n\n" * 10000).encode(), ".md")
+    name = "function_" + "x" * 4000
+    blocks = parse(("def " + name + "():\n    pass\n").encode(), ".py")
+    assert len(blocks[0]["location"]["symbol"]) == 200
+
+
 def make_pdf():
     from pypdf import PdfWriter
     from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject

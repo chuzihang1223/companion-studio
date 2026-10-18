@@ -185,7 +185,7 @@ class KnowledgeService:
             return {
                 "collections": [
                     {
-                        k: row[k]
+                        k: row[k][:300] if k == "description" else row[k]
                         for k in (
                             "id",
                             "name",

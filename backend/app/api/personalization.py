@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.database.session import SessionLocal
@@ -40,10 +40,22 @@ class MemoryPayload(BaseModel):
     content: str = Field(min_length=1, max_length=500)
     enabled: bool = True
 
+    @field_validator("content")
+    @classmethod
+    def safe_content(cls, value):
+        from app.services.knowledge.memory import MemoryInput
+
+        return MemoryInput.no_credentials(value)
+
 
 class MemoryUpdate(BaseModel):
     content: str | None = Field(None, min_length=1, max_length=500)
     enabled: bool | None = None
+
+    @field_validator("content")
+    @classmethod
+    def safe_content(cls, value):
+        return MemoryPayload.safe_content(value) if value is not None else None
 
 
 def ensure_character(request: Request, character_id: str) -> None:
@@ -78,7 +90,11 @@ def add_memory(character_id: str, payload: MemoryPayload, request: Request) -> d
     ensure_character(request, character_id)
     with SessionLocal() as db:
         row = ManualMemory(
-            character_id=character_id, content=payload.content.strip(), enabled=payload.enabled
+            character_id=character_id,
+            owner_id=character_id,
+            content=payload.content.strip(),
+            enabled=payload.enabled,
+            status="ACTIVE" if payload.enabled else "DISABLED",
         )
         db.add(row)
         db.commit()
@@ -99,6 +115,7 @@ def update_memory(
             row.content = payload.content.strip()
         if payload.enabled is not None:
             row.enabled = payload.enabled
+            row.status = "ACTIVE" if payload.enabled else "DISABLED"
         db.commit()
         return memory_dict(row)
 

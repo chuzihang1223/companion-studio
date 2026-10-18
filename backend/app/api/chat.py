@@ -206,7 +206,9 @@ async def chat(
         history_messages,
         user_text,
         memory_context=memory,
-        reply_context=reply_target.content if reply_target else None,
+        reply_context=knowledge_chat.reply(
+            request.app, reply_target, conversation.id, payload.character_id
+        ),
         personalization=overlay,
         manual_memory=manual,
     )

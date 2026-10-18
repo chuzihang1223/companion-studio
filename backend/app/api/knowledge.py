@@ -2,12 +2,14 @@
 
 import asyncio
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from pydantic import Field
+from sqlalchemy import select
+from app.models.knowledge import KnowledgeDocument
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.agent_traces import authorized
@@ -61,6 +63,19 @@ def service(request):
 class Owner(Strict):
     conversation_id: UUID
     character_id: str = Field(min_length=1, max_length=100)
+
+
+async def traced(request, owner, callback, *args, **kwargs):
+    from contextlib import nullcontext
+
+    recorder = getattr(request.app.state, "trace_recorder", None)
+    scope = (
+        await recorder.execution_scope(str(uuid4()), str(owner), None)
+        if recorder
+        else nullcontext()
+    )
+    with scope:
+        return await asyncio.to_thread(callback, *args, **kwargs)
 
 
 class UpdateCollection(Strict):
@@ -131,8 +146,46 @@ def jobs(request: Request, collection_id: UUID):
     return {"jobs": service(request).indexer.jobs(str(collection_id))}
 
 
+@router.get("/collections/{collection_id}/documents")
+def documents(request: Request, collection_id: UUID, cursor: int = 0):
+    if not 0 <= cursor <= 100000:
+        raise KnowledgeError("KNOWLEDGE_CURSOR_INVALID", 422)
+    current = service(request)
+    with current.store.sessions() as db:
+        current.store.collection(db, str(collection_id))
+        rows = db.scalars(
+            select(KnowledgeDocument)
+            .where(KnowledgeDocument.collection_id == str(collection_id))
+            .order_by(
+                KnowledgeDocument.status != "ERROR",
+                KnowledgeDocument.relative_path,
+                KnowledgeDocument.id,
+            )
+            .offset(cursor)
+            .limit(101)
+        ).all()
+        return {
+            "documents": [
+                {
+                    "id": row.id,
+                    "relative_path": row.relative_path,
+                    "file_type": row.file_type,
+                    "size": row.size,
+                    "status": row.status,
+                    "version": row.version,
+                    "last_error": row.last_error,
+                    "indexed_at": row.indexed_at,
+                }
+                for row in rows[:100]
+            ],
+            "next_cursor": cursor + 100 if len(rows) > 100 else None,
+        }
+
+
 class Index(Strict):
     full: bool = False
+    conversation_id: UUID | None = None
+    character_id: str = Field(default="assistant", min_length=1, max_length=100)
 
 
 class Embedding(Strict):
@@ -154,7 +207,18 @@ def embedding(request: Request, collection_id: UUID, payload: Embedding):
 
 @router.post("/collections/{collection_id}/index")
 async def start_index(request: Request, collection_id: UUID, payload: Index):
-    return {"job_id": await service(request).indexer.start(str(collection_id), full=payload.full)}
+    if payload.conversation_id:
+        with service(request).store.sessions() as db:
+            service(request).store.conversation(
+                db, str(payload.conversation_id), payload.character_id
+            )
+    return {
+        "job_id": await service(request).indexer.start(
+            str(collection_id),
+            full=payload.full,
+            conversation_id=str(payload.conversation_id) if payload.conversation_id else None,
+        )
+    }
 
 
 class Control(Strict):
@@ -210,7 +274,9 @@ class Search(Owner):
 
 @router.post("/search")
 async def search(request: Request, payload: Search):
-    return await asyncio.to_thread(
+    return await traced(
+        request,
+        payload.conversation_id,
         service(request).retriever.search,
         payload.search,
         str(payload.conversation_id),
@@ -223,9 +289,15 @@ class Resolve(Owner):
 
 
 @router.post("/resolve")
-def resolve(request: Request, payload: Resolve):
-    return service(request).retriever.citations.resolve(
-        payload.reference, str(payload.conversation_id), payload.character_id, include_path=True
+async def resolve(request: Request, payload: Resolve):
+    return await traced(
+        request,
+        payload.conversation_id,
+        service(request).retriever.citations.resolve,
+        payload.reference,
+        str(payload.conversation_id),
+        payload.character_id,
+        include_path=True,
     )
 
 
@@ -240,8 +312,11 @@ class MemorySave(Owner):
 
 
 @router.post("/memories")
-def memory_save(request: Request, payload: MemorySave):
-    return service(request).memory.save(
+async def memory_save(request: Request, payload: MemorySave):
+    return await traced(
+        request,
+        payload.conversation_id,
+        service(request).memory.save,
         payload.memory,
         payload.character_id,
         str(payload.conversation_id),
@@ -271,8 +346,11 @@ class MemoryRemove(Owner):
 
 
 @router.post("/memories/remove")
-def memory_remove(request: Request, payload: MemoryRemove):
-    return service(request).memory.remove(
+async def memory_remove(request: Request, payload: MemoryRemove):
+    return await traced(
+        request,
+        payload.conversation_id,
+        service(request).memory.remove,
         payload.scope,
         payload.owner_id,
         payload.character_id,

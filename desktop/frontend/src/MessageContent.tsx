@@ -5,7 +5,35 @@ export default function MessageContent({ text }: { text: string }) {
   return (
     <>
       {parts.map((part, i) => {
-        if (!part.startsWith('```')) return <span key={i}>{part}</span>;
+        if (!part.startsWith('```'))
+          return (
+            <span key={i}>
+              {part.split(/(\[K:[a-f0-9-]{36}\])/gi).map((value, key) =>
+                /^\[K:[a-f0-9-]{36}\]$/i.test(value) ? (
+                  <button
+                    className="knowledge-inline-citation"
+                    key={key}
+                    title="查看检索来源"
+                    onClick={(event) => {
+                      const source = event.currentTarget
+                        .closest('article')
+                        ?.querySelector<HTMLDetailsElement>(
+                          `[data-knowledge-source="${value.slice(3, -1)}"]`,
+                        );
+                      if (source) {
+                        source.open = true;
+                        source.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      }
+                    }}
+                  >
+                    〔来源〕
+                  </button>
+                ) : (
+                  value
+                ),
+              )}
+            </span>
+          );
         const code = part.slice(part.indexOf('\n') + 1, -3).replace(/\n$/, '');
         return (
           <div key={i} className="message-code">

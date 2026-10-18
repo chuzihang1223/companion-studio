@@ -122,7 +122,9 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
         history,
         user_text,
         memory_context=memory,
-        reply_context=reply_target.content if payload.reply_to_message_id else None,
+        reply_context=knowledge_chat.reply(
+            request.app, reply_target, conversation_id, payload.character_id
+        ),
         personalization=overlay,
         manual_memory=manual,
     )

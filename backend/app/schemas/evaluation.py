@@ -2,6 +2,7 @@
 
 from enum import StrEnum
 from pathlib import PurePosixPath
+from typing import Literal
 import re
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -19,19 +20,19 @@ class StrictModel(BaseModel):
 
 
 class BenchmarkCase(StrictModel):
-    case_id: str = Field(pattern=r"^(EVAL|REC|MCP|WF)-\d{3}$")
+    case_id: str = Field(pattern=r"^(EVAL|REC|MCP|WF|KB)-\d{3}$")
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=500)
     category: str = Field(
-        pattern=r"^(routing|files|browser|desktop|control|recovery|extensions|workflow)$"
+        pattern=r"^(routing|files|browser|desktop|control|recovery|extensions|workflow|knowledge)$"
     )
     difficulty: str = Field(pattern=r"^(basic|intermediate)$")
     input: str = Field(min_length=1, max_length=1000)
-    environment: str = Field(pattern=r"^(studio|recovery|mcp|workflow)-fixture-v1$")
+    environment: str = Field(pattern=r"^(studio|recovery|mcp|workflow|knowledge)-fixture-v1$")
     execution_mode: list[Mode] = Field(min_length=1, max_length=4)
     expected_outcome: dict[str, str | bool | int] = Field(max_length=15)
     grader: str = Field(
-        pattern=r"^(exact|structured|file|exit_code|browser_dom|desktop|permission|trace|recovery|extensions|workflow)$"
+        pattern=r"^(exact|structured|file|exit_code|browser_dom|desktop|permission|trace|recovery|extensions|workflow|knowledge)$"
     )
     allowed_tools: list[str] = Field(max_length=8)
     allowed_paths: list[str] = Field(max_length=8)
@@ -67,9 +68,10 @@ class BenchmarkCase(StrictModel):
 class RunRequest(StrictModel):
     dataset_id: str = Field(
         default="studio-core",
-        pattern=r"^(studio-core|recovery-core|mcp-skills-core|workflow-core)$",
+        pattern=r"^(studio-core|recovery-core|mcp-skills-core|workflow-core|knowledge-core)$",
     )
-    case_ids: list[str] = Field(default_factory=list, max_length=20)
+    case_ids: list[str] = Field(default_factory=list, max_length=28)
+    knowledge_mode: Literal["KeywordOnly", "HybridLocal", "HybridRemote", "MockRAG"] = "KeywordOnly"
     mode: Mode = Mode.MOCK
     model_role: str = Field(
         default="planning_model",
@@ -87,7 +89,7 @@ class RunRequest(StrictModel):
     @classmethod
     def unique_ids(cls, values):
         if len(values) != len(set(values)) or any(
-            not re.fullmatch(r"(EVAL|REC|MCP|WF)-\d{3}", v) for v in values
+            not re.fullmatch(r"(EVAL|REC|MCP|WF|KB)-\d{3}", v) for v in values
         ):
             raise ValueError("测试项编号必须唯一且有效")
         return values
@@ -95,7 +97,8 @@ class RunRequest(StrictModel):
     @model_validator(mode="after")
     def budgets(self):
         if (
-            self.dataset_id in {"recovery-core", "mcp-skills-core", "workflow-core"}
+            self.dataset_id
+            in {"recovery-core", "mcp-skills-core", "workflow-core", "knowledge-core"}
             and self.mode == Mode.LIVE
         ):
             raise ValueError("Recovery 故障集仅使用确定性模型，不启动真实模型请求")

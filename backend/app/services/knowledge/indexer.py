@@ -10,7 +10,7 @@ import threading
 import time
 from uuid import NAMESPACE_URL, uuid5
 
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 
 from app.models.knowledge import KnowledgeChunk, KnowledgeDocument, KnowledgeIndexJob, now
 from app.services.knowledge.chunker import chunk_document
@@ -50,7 +50,7 @@ class IndexManager:
             "updated_at": row.updated_at,
         }
 
-    async def start(self, collection_id, *, full=False):
+    async def start(self, collection_id, *, full=False, conversation_id=None):
         if len(self.tasks) >= 2:
             raise KnowledgeError("KNOWLEDGE_JOB_CAPACITY")
         with self.store.sessions.begin() as db:
@@ -64,19 +64,35 @@ class IndexManager:
             options, roots = self.store.config(row)
             if not roots:
                 raise KnowledgeError("KNOWLEDGE_ROOT_REQUIRED")
+            recent = (
+                select(KnowledgeIndexJob.id)
+                .where(KnowledgeIndexJob.collection_id == row.id)
+                .order_by(KnowledgeIndexJob.created_at.desc())
+                .limit(29)
+            )
+            db.execute(
+                delete(KnowledgeIndexJob).where(
+                    KnowledgeIndexJob.collection_id == row.id,
+                    KnowledgeIndexJob.state.not_in(ACTIVE),
+                    KnowledgeIndexJob.id.not_in(recent),
+                )
+            )
+            if full:
+                self.store.purge_documents(db, row.id)
+                row.index_version += 1
             job = KnowledgeIndexJob(collection_id=row.id, revision=row.revision)
             row.status = "INDEXING"
             db.add(job)
             db.flush()
             job_id = job.id
         self.signals[job_id] = (threading.Event(), threading.Event())
-        self.tasks[job_id] = asyncio.create_task(self._run(job_id, full))
+        self.tasks[job_id] = asyncio.create_task(self._run(job_id, full, conversation_id))
         return job_id
 
-    async def _run(self, job_id, full):
+    async def _run(self, job_id, full, conversation_id=None):
         try:
             scope = (
-                await self.recorder.execution_scope(job_id, None, None)
+                await self.recorder.execution_scope(job_id, conversation_id, None)
                 if self.recorder
                 else nullcontext()
             )
@@ -199,7 +215,14 @@ class IndexManager:
                     if error.code == "KNOWLEDGE_CANCELLED":
                         raise
                     progress["errors"] += 1
-                    self.invalidate(collection_id, root["id"], relative, document_id, error.code)
+                    self.invalidate(
+                        collection_id,
+                        root["id"],
+                        relative,
+                        document_id,
+                        error.code,
+                        options.max_documents,
+                    )
                     event("DOCUMENT_FAILED", collection_id=collection_id, document_id=document_id)
                 progress["processed"] += 1
                 self.checkpoint(job_id, "SCANNING", progress)
@@ -282,6 +305,7 @@ class IndexManager:
             doc = db.get(KnowledgeDocument, document_id)
             state = "modified" if doc else "new"
             if doc is None:
+                self.metadata_capacity(db, collection_id, options.max_documents)
                 doc = KnowledgeDocument(
                     id=document_id,
                     collection_id=collection_id,
@@ -338,9 +362,9 @@ class IndexManager:
                     .order_by(KnowledgeChunk.ordinal)
                 ).all()
             try:
-                for offset in range(0, len(rows), 16):
+                for offset in range(0, len(rows), 8):
                     self.check(job_id)
-                    VectorStore(self.store).put(rows[offset : offset + 16], provider)
+                    VectorStore(self.store).put(rows[offset : offset + 8], provider)
             except KnowledgeError as error:
                 if error.code == "KNOWLEDGE_CANCELLED":
                     raise
@@ -359,10 +383,20 @@ class IndexManager:
         )
         return state
 
-    def invalidate(self, collection_id, root_id, relative, document_id, error):
+    def metadata_capacity(self, db, collection_id, maximum):
+        count = db.scalar(
+            select(func.count())
+            .select_from(KnowledgeDocument)
+            .where(KnowledgeDocument.collection_id == collection_id)
+        )
+        if count >= maximum * 2:
+            raise KnowledgeError("KNOWLEDGE_DOCUMENT_METADATA_LIMIT")
+
+    def invalidate(self, collection_id, root_id, relative, document_id, error, maximum=2000):
         with self.store.sessions.begin() as db:
             doc = db.get(KnowledgeDocument, document_id)
             if doc is None:
+                self.metadata_capacity(db, collection_id, maximum)
                 doc = KnowledgeDocument(
                     id=document_id,
                     collection_id=collection_id,

@@ -68,6 +68,19 @@ export type Memory = {
   expires_at: string | null;
 };
 export type Reads = {
+  documents: {
+    documents: Array<{
+      id: string;
+      relative_path: string;
+      file_type: string;
+      size: number;
+      status: string;
+      version: number;
+      last_error: string | null;
+      indexed_at: string | null;
+    }>;
+    next_cursor: number | null;
+  };
   collections: { collections: Collection[] };
   jobs: { jobs: Job[] };
   selection: {

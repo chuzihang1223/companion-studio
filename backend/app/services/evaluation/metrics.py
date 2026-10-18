@@ -58,6 +58,7 @@ class MetricsCollector:
             "recovery": recovery,
             "mcp": aggregate_mcp(valid),
             "workflow": aggregate_workflow(valid),
+            "knowledge": aggregate_knowledge(valid),
             "recovery_attempts": recovery["attempt_count"] if recovery else len(recovering),
             "recovery_success_rate": recovery_rate,
             "model_usage": {
@@ -113,6 +114,50 @@ def aggregate_mcp(results):
         "average_skill_load_ms": sum(load) / len(load) if load else None,
         "skill_match_accuracy": rate("skill_matches", "skill_match_attempts"),
         "real_third_party_reliability": None,
+    }
+
+
+def aggregate_knowledge(results):
+    rows = [
+        row["knowledge_metrics"]
+        for row in results
+        if isinstance(row.get("knowledge_metrics"), dict)
+    ]
+    if not rows:
+        return None
+
+    def total(key):
+        return sum(row.get(key, 0) for row in rows)
+
+    def fraction(numerator, denominator):
+        count = total(denominator)
+        return total(numerator) / count if count else None
+
+    latencies = [value for row in rows for value in row.get("query_latencies_ms", [])]
+    return {
+        "source": "original_synthetic_documents_deterministic_ground_truth",
+        "requested_modes": sorted({row["requested_mode"] for row in rows}),
+        "actual_modes": sorted({row["actual_mode"] for row in rows}),
+        "recall_at_k": fraction("recall_hits", "relevant_documents"),
+        "mrr": fraction("reciprocal_rank_sum", "ranked_queries"),
+        "ranked_queries": total("ranked_queries"),
+        "citation_accuracy": fraction("citation_correct", "citation_checks"),
+        "citation_checks": total("citation_checks"),
+        "citation_coverage": fraction("citation_supported", "citation_required"),
+        "answer_groundedness": fraction("grounded_answers", "answered_cases"),
+        "answered_cases": total("answered_cases"),
+        "retrieval_p50_ms": percentile(latencies, 0.5),
+        "retrieval_p95_ms": percentile(latencies, 0.95),
+        "retrieval_queries": len(latencies),
+        "index_documents_per_second": total("indexed_documents") * 1000 / total("index_duration_ms")
+        if total("index_duration_ms")
+        else None,
+        "update_correctness": fraction("update_correct", "update_checks"),
+        "unauthorized_access_count": total("unauthorized_accesses"),
+        "memory_isolation": 1 - fraction("memory_leaks", "memory_isolation_checks")
+        if total("memory_isolation_checks")
+        else None,
+        "real_model_quality": None,
     }
 
 
@@ -175,6 +220,7 @@ def compare_conditions(left, right):
         "token_budget",
         "workflow_schema_version",
         "workflow_templates_version",
+        "knowledge_mode",
     )
     differences = [
         {"field": key, "left": left.get(key), "right": right.get(key)}

@@ -34,19 +34,24 @@ def decode(raw):
 
 
 def paragraphs(value, **location):
-    result = []
+    result, cursor, line = [], 0, 1
     for match in re.finditer(r"\S[\s\S]*?(?=\n\s*\n|\Z)", value):
         if match.group().strip():
+            line += value[cursor : match.start()].count("\n")
+            end_line = line + match.group().count("\n")
             result.append(
                 {
                     "text": match.group().strip(),
                     "location": {
                         **location,
-                        "line_start": value[: match.start()].count("\n") + 1,
-                        "line_end": value[: match.end()].count("\n") + 1,
+                        "line_start": line,
+                        "line_end": end_line,
                     },
                 }
             )
+            cursor, line = match.end(), end_line
+            if len(result) > 256:
+                raise KnowledgeError("KNOWLEDGE_DOCUMENT_CHUNK_LIMIT")
     return result
 
 
@@ -90,7 +95,7 @@ def code(value, file_type):
             tree = ast.parse(value)
             for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    boundaries[node.lineno] = node.name
+                    boundaries[node.lineno] = node.name[:200]
         except SyntaxError:
             pass  # In-progress source remains searchable as numbered text.
     else:
@@ -100,8 +105,10 @@ def code(value, file_type):
                 line,
             )
             if match:
-                boundaries[number] = match.group(1)
+                boundaries[number] = match.group(1)[:200]
     ordered = sorted(boundaries)
+    if len(ordered) > 256:
+        raise KnowledgeError("KNOWLEDGE_DOCUMENT_CHUNK_LIMIT")
     return [
         {
             "text": "".join(lines[start - 1 : end - 1]).rstrip(),
@@ -128,6 +135,8 @@ def pdf(raw):
             raise KnowledgeError("KNOWLEDGE_EXTRACTED_TEXT_LIMIT")
         if value.strip():
             result.append({"text": value.strip(), "location": {"page": page}})
+            if len(result) > 256:
+                raise KnowledgeError("KNOWLEDGE_DOCUMENT_CHUNK_LIMIT")
     return result
 
 
@@ -159,6 +168,8 @@ def docx(raw):
                 raise KnowledgeError("KNOWLEDGE_EXTRACTED_TEXT_LIMIT")
             if value:
                 result.append({"text": value, "location": {"paragraph": number}})
+                if len(result) > 256:
+                    raise KnowledgeError("KNOWLEDGE_DOCUMENT_CHUNK_LIMIT")
         return result
     except (BadZipFile, KeyError, ET.ParseError):
         raise KnowledgeError("KNOWLEDGE_DOCUMENT_CORRUPT") from None

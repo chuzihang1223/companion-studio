@@ -36,6 +36,13 @@ def manual(app, original, conversation_id, character_id, query):
     return list(dict.fromkeys([*original, *extra]))[:8]
 
 
+def reply(app, row, conversation_id, character_id):
+    if row is None:
+        return None
+    permitted = history(app, [row], conversation_id, character_id)
+    return permitted[0]["content"] if permitted else None
+
+
 async def grounded(app, service, conversation_id, character_id, query, message_id):
     knowledge = owned_service(app, conversation_id, character_id)
     if knowledge:

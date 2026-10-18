@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-workflow.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills 和可视化工作流；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-knowledge.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills、可视化工作流，以及本地知识库、引用与可控长期记忆；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -75,6 +75,43 @@ Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出�
 检查点及 Trace。20 项断言通过率不等于真实 AI 任务成功率，预期注入的故障仍单独统计。
 
 ![安装版的 MCP 与 Skills 评测：20 项受控结果、协议指标及 Trace 入口](docs/screenshots/mcp-evaluation.png)
+
+### 本地知识库与可控记忆（本地审核分支）
+
+解决项目资料分散、聊天缺少可核对出处的问题。侧栏「知识与记忆」或工作台对应模块可以
+创建库、显式授权目录、增量索引、中文/英文关键词搜索，并查看行号、页码或段落来源。
+支持 Markdown/TXT、常见代码/JSON/YAML、文本层 PDF 和 DOCX；不做 OCR，不执行文档代码。
+
+仅授权本地检索即可离线使用。若要让当前模型根据资料回答，需要另外确认片段传输目标，
+再启用当前会话 RAG；改模型地址或名称后需要重新授权。没有证据会明确无法确认，
+来源按钮只能打开重新核验过的索引位置。来源核验不代表模型每个结论都通过事实核查。
+
+Embedding 默认关闭，不下载模型，不要求付费 API。可接用户自行运行的本地
+OpenAI-compatible Embedding 服务，或另外授权的远程服务；未配置/失败时混合搜索明确回退关键词。
+
+「长期记忆」只保存用户主动填写的事实、偏好和任务信息；支持范围隔离、编辑、启停、删除及清空。
+不自动保存全部私人聊天，不把项目文件当个人记忆。旧角色记忆保留在原表并做增量迁移。
+
+Agent 新增四个受限 Knowledge 工具；流程设计器新增「知识检索」节点与「项目知识助手」模板。
+来源约束沿工作流祖先传递，旧任务恢复前重新核验，不能靠转换节点或导入 Skill 扩大权限。
+Evaluation 新增 28 项 Knowledge Core，使用合成资料和固定模型，不能代表真实 AI 质量。
+
+输入输出示例（原创合成文件，不是一次真实云模型测试）：
+
+```text
+授权文件 guide.md 第 3 行：Orchard launch port is 8794.
+本地搜索输入：Orchard
+输出：guide.md / 第 3 行 / 实际摘录 / 来源摘要核验状态
+
+启用并授权知识回答后输入：项目启动端口是什么？
+固定 MockRAG 验证输出：根据合成项目资料，启动端口为 8794。〔来源〕
+无匹配证据：在当前授权知识库中没有找到可验证的资料，无法据此确认。
+```
+
+[架构](docs/KNOWLEDGE_ARCHITECTURE.md) · [目录与使用](docs/KNOWLEDGE_COLLECTIONS.md) ·
+[解析和索引](docs/KNOWLEDGE_INDEXING.md) · [检索/可选模型](docs/RAG_RETRIEVAL.md) ·
+[引用](docs/RAG_CITATIONS.md) · [记忆](docs/LONG_TERM_MEMORY.md) ·
+[安全边界](docs/KNOWLEDGE_SECURITY.md) · [评测与实测性能](docs/KNOWLEDGE_EVALUATION.md)
 
 ### Visual Workflow Builder（本地审核分支）
 

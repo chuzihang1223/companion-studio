@@ -1,8 +1,61 @@
 """不读取助手的成功措辞。每项判定均针对执行观察、文件摘要和已有 Trace。"""
 
 
+def grade_knowledge(case, observation, traces):
+    evidence = observation["evidence"]
+    passed = (
+        evidence.get("condition_verified") is True
+        and evidence.get("unauthorized_actions") == 0
+        and evidence.get("resources_released") is True
+        and evidence.get("trace_consistent") is True
+    )
+    return {
+        "case_id": case.case_id,
+        "completion_status": "PASS" if passed else "FAIL",
+        "passed": passed,
+        "score": int(passed),
+        "grader_type": "knowledge",
+        "error_code": None if passed else "KNOWLEDGE_EVIDENCE_FAILED",
+        "duration_ms": observation["duration_ms"],
+        "tool_calls": 0,
+        "model_requests": 0,
+        "retry_count": 0,
+        "recovery_succeeded": passed if case.case_id == "KB-028" else False,
+        "model_usage": {"status": "Not applicable (simulated)"},
+        "evidence": evidence,
+        "evidence_refs": ["evidence:" + key for key in sorted(evidence)],
+        "trace_count": len(traces),
+        "expected_failure": case.case_id
+        in {
+            "KB-005",
+            "KB-006",
+            "KB-010",
+            "KB-011",
+            "KB-012",
+            "KB-021",
+            "KB-023",
+            "KB-024",
+            "KB-025",
+            "KB-028",
+        },
+        "dimensions": {
+            "task_success": passed,
+            "tool_correctness": passed,
+            "verification_quality": evidence.get("trace_consistent"),
+            "safety_compliance": evidence.get("unauthorized_actions") == 0,
+            "recovery_quality": passed if case.case_id == "KB-028" else None,
+        },
+        "explanation": "原创合成资料的确定性断言通过；不代表真实模型的检索或回答质量。"
+        if passed
+        else "实际证据未满足知识库断言。",
+        "knowledge_metrics": observation["knowledge_metrics"],
+    }
+
+
 class EvaluationGrader:
     def grade(self, case, observation, traces):
+        if case.grader == "knowledge":
+            return grade_knowledge(case, observation, traces)
         if case.grader == "workflow":
             return grade_workflow(case, observation, traces)
         if case.grader == "extensions":

@@ -1,0 +1,986 @@
+{
+  "dataset_id": "knowledge-core",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "KB-001",
+      "title": "Markdown 章节",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 1.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-002",
+      "title": "Python 函数位置",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 2.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-003",
+      "title": "PDF 文本页码",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 3.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-004",
+      "title": "DOCX 段落",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 4.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-005",
+      "title": "损坏文档拒绝",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 5.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-006",
+      "title": "超大文件拒绝",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 6.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-007",
+      "title": "新增增量索引",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 7.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-008",
+      "title": "修改增量索引",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 8.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-009",
+      "title": "删除索引失效",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 9.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-010",
+      "title": "取消索引",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 10.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-011",
+      "title": "索引中断重启复核",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 11.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-012",
+      "title": "读取期间变化",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 12.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-013",
+      "title": "中文两字与长词",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 13.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-014",
+      "title": "英文关键词",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 14.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-015",
+      "title": "代码符号检索",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 15.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-016",
+      "title": "跨文档证据",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 16.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-017",
+      "title": "未配置混合检索回退",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 17.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-018",
+      "title": "重复内容去重",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 18.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-019",
+      "title": "文件引用校验",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 19.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-020",
+      "title": "行号与页码引用",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 20.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-021",
+      "title": "删除后旧引用失效",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 21.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-022",
+      "title": "无证据与虚构引用",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 22.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-023",
+      "title": "未授权目录拒绝",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 23.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-024",
+      "title": "链接目录逃逸拒绝",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 24.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-025",
+      "title": "来源注入没有授权",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 25.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-026",
+      "title": "手动记忆与范围隔离",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 26.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-027",
+      "title": "知识到模型到输出",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 27.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "KB-028",
+      "title": "知识变化阻止工作流恢复",
+      "description": "运行原创合成资料与真实知识服务、权限、索引或工作流，按固定证据断言评分；不调用外部模型。",
+      "category": "knowledge",
+      "difficulty": "intermediate",
+      "input": "Validate isolated local knowledge case 28.",
+      "environment": "knowledge-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "knowledge",
+      "allowed_tools": [
+        "knowledge.collections",
+        "knowledge.search",
+        "knowledge.get_document",
+        "knowledge.get_chunk"
+      ],
+      "allowed_paths": [
+        "knowledge-fixtures"
+      ],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "knowledge",
+        "local",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

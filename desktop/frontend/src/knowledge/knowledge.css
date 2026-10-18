@@ -4,6 +4,15 @@
   height: 100%;
   color: var(--text-primary, #213342);
 }
+.knowledge-inline-citation {
+  border: 0;
+  background: transparent;
+  color: var(--accent, #287f90);
+  font: inherit;
+  font-size: 0.85em;
+  cursor: pointer;
+  padding: 0 2px;
+}
 .knowledge-panel header,
 .knowledge-actions {
   display: flex;

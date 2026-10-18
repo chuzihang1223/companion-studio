@@ -155,6 +155,20 @@ async def evaluate(payload):
     state.work_state.trace_recorder = state.trace_recorder
     state.runtime_registry.trace_recorder = state.trace_recorder
     store.start()
+    if case.case_id.startswith("KB-"):
+        from app.services.evaluation.knowledge_cases import run_case
+
+        try:
+            return await run_case(app, store, case, payload, workspace)
+        finally:
+            if getattr(state, "knowledge", None):
+                await state.knowledge.close()
+            if getattr(state, "workflows", None):
+                await state.workflows.close()
+            await state.recovery.close()
+            await state.runtime_registry.close()
+            await store.stop()
+            engine.dispose()
     if case.case_id.startswith("WF-"):
         from app.services.evaluation.workflow_cases import run_case
 

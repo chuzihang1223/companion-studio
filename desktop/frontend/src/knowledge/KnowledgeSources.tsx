@@ -18,10 +18,12 @@ export function Sources({ rows, owner }: { rows: Citation[]; owner: Owner }) {
     <div className="knowledge-sources">
       {error && <p role="alert">{error}</p>}
       {rows.map((row) => (
-        <details key={row.chunk_id}>
+        <details key={row.chunk_id} data-knowledge-source={row.chunk_id}>
           <summary>
             {row.relative_path} · {locationLabel(row)} ·{' '}
-            {row.verification === 'source_hash_verified' ? '来源已核验' : '来源已变化或授权已撤销'}
+            {row.verification === 'source_hash_verified'
+              ? '检索时来源已核验'
+              : '来源已变化或授权已撤销'}
           </summary>
           {row.excerpt && <pre>{row.excerpt}</pre>}
           {row.verification === 'source_hash_verified' && (

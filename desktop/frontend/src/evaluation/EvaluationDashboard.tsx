@@ -170,6 +170,7 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
         dataset_id:
           ids && run ? (run.snapshot.dataset_id as 'studio-core' | 'recovery-core') : datasetId,
         case_ids: ids || (caseId ? [caseId] : []),
+        knowledge_mode: form.knowledgeMode,
         mode,
         model_role: role,
         repetitions,

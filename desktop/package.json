@@ -1,6 +1,6 @@
 {
   "name": "companion-studio",
-  "version": "0.2.0-workflow.1",
+  "version": "0.2.0-knowledge.1",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {

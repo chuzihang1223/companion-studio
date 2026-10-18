@@ -129,6 +129,9 @@ class AgentEvaluationEngine:
                 if self.registry.dataset_id == "workflow-core"
                 else None,
                 "dataset_sha256": self.registry.digest,
+                "knowledge_mode": options.knowledge_mode
+                if self.registry.dataset_id == "knowledge-core"
+                else None,
                 "case_ids": [c.case_id for c in cases],
                 "repetitions": options.repetitions,
                 "mode": options.mode.value,
@@ -154,6 +157,8 @@ class AgentEvaluationEngine:
                     if self.registry.dataset_id == "recovery-core"
                     else "workflow-fixture-v1"
                     if self.registry.dataset_id == "workflow-core"
+                    else "knowledge-fixture-v1"
+                    if self.registry.dataset_id == "knowledge-core"
                     else "mcp-fixture-v1",
                     "desktop_bridge": "simulated",
                     "process_isolation": True,
@@ -209,6 +214,7 @@ class AgentEvaluationEngine:
                             result = empty_result("BLOCKED", "MODEL_BUDGET_EXHAUSTED")
                         else:
                             payload = {
+                                "knowledge_mode": options.knowledge_mode,
                                 "dataset_id": self.registry.dataset_id,
                                 "case_id": case_id,
                                 "mode": options.mode.value,

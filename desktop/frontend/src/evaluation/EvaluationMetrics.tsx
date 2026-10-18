@@ -7,6 +7,7 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
   const recovery = m?.recovery;
   const mcp = m?.mcp;
   const workflow = m?.workflow;
+  const knowledge = m?.knowledge;
   const values = [
     ['有效评分 / 总任务', `${m?.valid_count ?? 0} / ${run?.total_cases ?? 0}`],
     [run?.mode === 'mock' ? 'Mock 回归通过率' : '评测通过率', rate(m?.success_rate)],
@@ -54,6 +55,22 @@ export default memo(function EvaluationMetrics({ run }: { run: EvaluationRun | n
         '流程校验 P50 / P95 ms',
         `${number(workflow.validation_p50_ms)} / ${number(workflow.validation_p95_ms)}`,
       ],
+    );
+  if (knowledge)
+    values.push(
+      ['检索模式（合成资料）', knowledge.actual_modes.join(' / ')],
+      ['Recall@K / MRR（合成）', `${rate(knowledge.recall_at_k)} / ${number(knowledge.mrr)}`],
+      ['来源核验准确率（合成）', rate(knowledge.citation_accuracy)],
+      ['引用覆盖率（合成）', rate(knowledge.citation_coverage)],
+      ['回答支持度（固定 Mock）', rate(knowledge.answer_groundedness)],
+      [
+        '检索 P50 / P95 ms',
+        `${number(knowledge.retrieval_p50_ms)} / ${number(knowledge.retrieval_p95_ms)}`,
+      ],
+      ['索引文档 / 秒', number(knowledge.index_documents_per_second)],
+      ['增量更新正确率', rate(knowledge.update_correctness)],
+      ['越权读取数', String(knowledge.unauthorized_access_count)],
+      ['记忆范围隔离率', rate(knowledge.memory_isolation)],
     );
   return (
     <>

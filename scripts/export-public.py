@@ -32,6 +32,15 @@ TREES = {
     "examples/agent-skills",
 }
 PUBLIC_DOCS = {
+    "KNOWLEDGE_BASELINE.md",
+    "KNOWLEDGE_ARCHITECTURE.md",
+    "KNOWLEDGE_COLLECTIONS.md",
+    "KNOWLEDGE_INDEXING.md",
+    "RAG_RETRIEVAL.md",
+    "RAG_CITATIONS.md",
+    "LONG_TERM_MEMORY.md",
+    "KNOWLEDGE_SECURITY.md",
+    "KNOWLEDGE_EVALUATION.md",
     "WORKFLOW_ARCHITECTURE.md",
     "WORKFLOW_SCHEMA.md",
     "WORKFLOW_VARIABLES.md",
@@ -127,6 +136,8 @@ LICENSE_ARCHIVE = (
 )
 LICENSE_ARCHIVE_SHA = "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc"
 SCREENSHOTS = {
+    "docs/screenshots/knowledge-search.png",
+    "docs/screenshots/knowledge-memory.png",
     "docs/screenshots/workflow-builder.png",
     "docs/screenshots/agent-skills.png",
     "docs/screenshots/mcp-evaluation.png",
