@@ -33,7 +33,9 @@ def test_filters_apply_before_candidate_limit_and_path_is_directory_boundary(cor
     (root / "docs").mkdir()
     (root / "docs-other").mkdir()
     (root / "docs-other" / "short.md").write_text("needle", encoding="utf-8")
-    (root / "docs" / "guide.md").write_text("needle " + " ".join(f"long_identifier_{i}" for i in range(35)), encoding="utf-8")
+    (root / "docs" / "guide.md").write_text(
+        "needle " + " ".join(f"long_identifier_{i}" for i in range(35)), encoding="utf-8"
+    )
     item = prepare(corpus)
     assert index(store, item["id"])["state"] == "COMPLETED"
     result = search(store, item, owner, "needle", file_types=[".md"], path_scope="docs")
