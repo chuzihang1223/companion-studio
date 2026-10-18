@@ -116,11 +116,15 @@ async def run_case(app, case, consent, timeout_seconds=60):
             )
         )
     recorder = app.state.trace_recorder
+    trace_task_id = str(uuid4())
+    # Register without an initial database read, so a short case deadline can
+    # still be correlated even if cancellation arrives before fixture startup.
+    recorder.create(trace_task_id, fixture.owner)
     status, code, passed, cancelled = "FAIL", None, False, False
     started = time.perf_counter()
     try:
         async with asyncio.timeout(timeout_seconds):
-            with await recorder.execution_scope(str(uuid4()), fixture.owner, None):
+            with await recorder.execution_scope(trace_task_id, fixture.owner, None):
                 fixture.fixture = await fixture.fixture_command("open")
                 await fixture.tool("focus_window")
                 outcome = await verify_case(fixture, int(case.case_id[-3:]))

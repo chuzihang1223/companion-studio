@@ -157,13 +157,16 @@ def test_native_case_deadline_cleanup_and_trace(tmp_path, monkeypatch, terminati
             monkeypatch.setattr(native_evaluation, "verify_case", verify)
             task = asyncio.create_task(
                 native_evaluation.run_case(
-                    app, SimpleNamespace(case_id="CU-001"), str(uuid4()), 0.1
+                    app,
+                    SimpleNamespace(case_id="CU-001"),
+                    str(uuid4()),
+                    0.1 if termination == "timeout" else 3,
                 )
             )
-            await started.wait()
             if termination in {"cancel", "cancel_cleanup"}:
+                await asyncio.wait_for(started.wait(), 2)
                 task.cancel()
-            value = await task
+            value = await asyncio.wait_for(task, 5)
             status = {
                 "cancel": "CANCELLED",
                 "timeout": "UNKNOWN",
