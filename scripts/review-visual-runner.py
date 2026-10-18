@@ -176,8 +176,10 @@ class Review:
         if self.profile:
             before = self.root / "profile-before.json"
             if before.exists():
-                raise ValueError("Use new evidence root; do not replace profile baseline")
-            before.write_text(json.dumps(self.snapshot()), encoding="utf-8")
+                if read(before) != self.snapshot():
+                    raise ValueError("Protected profile changed; retained original baseline")
+            else:
+                before.write_text(json.dumps(self.snapshot()), encoding="utf-8")
         self.step("B", "full-check", self.ps("scripts/check.ps1"))
         self.step(
             "A",

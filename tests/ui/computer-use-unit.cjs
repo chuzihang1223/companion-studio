@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   path = require('node:path'),
   { randomUUID } = require('node:crypto');
 const { ComputerUseCoordinator } = require('../../desktop/electron/computer-use.cjs');
+const project = path.resolve(__dirname, '../..');
 require('../electron/visual-locator.test.cjs');
 const owner = { conversation_id: randomUUID(), character_id: 'assistant' };
 const window = {
@@ -118,7 +119,7 @@ const registry = {
       '-ExecutionPolicy',
       'Bypass',
       '-File',
-      path.resolve('tests/windows/computer-verification.ps1'),
+      path.join(project, 'tests/windows/computer-verification.ps1'),
     ],
     { encoding: 'utf8', windowsHide: true },
   );
@@ -180,7 +181,7 @@ const registry = {
     handlers['computer-read']('main', 'state', { ...owner, url: 'https://unexpected.invalid' }),
     /ARGUMENT/,
   );
-  const src = fs.readFileSync(path.resolve('desktop/electron/preload.cjs'), 'utf8');
+  const src = fs.readFileSync(path.join(project, 'desktop/electron/preload.cjs'), 'utf8');
   assert.ok(src.includes('computer-action'));
   assert.ok(!src.includes('COMPANION_CONTROL_TOKEN'));
   void vm;
