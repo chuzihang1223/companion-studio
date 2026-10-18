@@ -406,6 +406,32 @@ async function run() {
     },
   );
   driver.report.knowledgeBenchmark = evaluated;
+  await driver.c.until(
+    "document.querySelector('.evaluation-progress')?.innerText.includes('COMPLETED')",
+  );
+  for (const format of ['JSON', 'CSV', 'MARKDOWN']) {
+    await driver.click('导出 ' + format, "document.querySelector('.evaluation-dashboard')");
+  }
+  const exports = fs
+    .readdirSync(path.join(driver.home, 'Exports'))
+    .filter((file) => file.startsWith('evaluation-' + evaluated.run_id));
+  driver.check(exports.length === 3, 'Knowledge Evaluation exports all three report formats');
+  const exported = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        driver.home,
+        'Exports',
+        exports.find((file) => file.endsWith('.json')),
+      ),
+      'utf8',
+    ),
+  );
+  driver.check(
+    exported.results.length === 28 &&
+      exported.results.every((row) => row.execution_status === 'PASS'),
+    'Export contains every actual Knowledge case result',
+  );
+  fs.writeFileSync(path.join(driver.home, 'knowledge-benchmark.json'), q(exported));
   driver.report.nativeDialogChoices = 'synthetic_only_in_test_main';
   await driver.close();
   driver.report.result = 'pass';
