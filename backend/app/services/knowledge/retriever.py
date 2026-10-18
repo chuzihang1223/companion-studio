@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import re
+import threading
 import time
 
 from sqlalchemy import bindparam, select, text
@@ -99,6 +100,9 @@ class HybridRetriever:
         self.providers = providers if providers is not None else {}
         self.citations = CitationResolver(store)
         self.vector = VectorStore(store)
+        # One shared instance serves Chat, tools, Workflows and desktop search.
+        # Reject bursts instead of queueing unbounded disk/vector work in threads.
+        self._query_slots = threading.BoundedSemaphore(4)
 
     def keyword(self, query, ids):
         words = query_terms(query.query)
@@ -125,6 +129,14 @@ class HybridRetriever:
             return [(row[0], float(row[1])) for row in db.execute(statement, parameters)]
 
     def search(self, query: SearchQuery, conversation_id, character_id, *, target=None):
+        if not self._query_slots.acquire(blocking=False):
+            raise KnowledgeError("KNOWLEDGE_QUERY_BUSY", 429)
+        try:
+            return self._search(query, conversation_id, character_id, target=target)
+        finally:
+            self._query_slots.release()
+
+    def _search(self, query: SearchQuery, conversation_id, character_id, *, target=None):
         started, deadline = time.perf_counter(), time.monotonic() + 12
         ids = [str(v) for v in query.collection_ids]
         event("RETRIEVAL_STARTED", collection_id=ids[0])

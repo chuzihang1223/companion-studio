@@ -1,6 +1,8 @@
 import asyncio
 import json
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
 from uuid import uuid4
 
 import httpx
@@ -24,6 +26,39 @@ def prepare(corpus):
     item = store.update(item["id"], 1, add_root=str(root))
     store.grant(owner, "assistant", [item["id"]])
     return item
+
+
+def test_search_burst_is_rejected_and_slots_released_after_errors(corpus, monkeypatch):
+    store, _, owner = corpus
+    retriever = HybridRetriever(store)
+    query = SearchQuery(query="needle", collection_ids=[str(uuid4())])
+    entered, release = Queue(), threading.Event()
+
+    def held(*args, **kwargs):
+        entered.put(True)
+        assert release.wait(5), "Test must release its own retrieval calls"
+        return {"results": []}
+
+    monkeypatch.setattr(retriever, "_search", held)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        calls = [pool.submit(retriever.search, query, owner, "assistant") for _ in range(4)]
+        try:
+            for _ in range(4):
+                entered.get(timeout=3)
+            with pytest.raises(KnowledgeError) as error:
+                retriever.search(query, owner, "assistant")
+            assert error.value.code == "KNOWLEDGE_QUERY_BUSY" and error.value.status == 429
+        finally:
+            release.set()
+        assert all(call.result()["results"] == [] for call in calls)
+
+    def broken(*args, **kwargs):
+        raise KnowledgeError("KNOWLEDGE_STALE_EVIDENCE")
+
+    monkeypatch.setattr(retriever, "_search", broken)
+    for _ in range(8):
+        with pytest.raises(KnowledgeError, match="KNOWLEDGE_STALE_EVIDENCE"):
+            retriever.search(query, owner, "assistant")
 
 
 def test_filters_apply_before_candidate_limit_and_path_is_directory_boundary(corpus):
