@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Text;
 
 public static class VisualWindow {
     [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left, Top, Right, Bottom; }
@@ -19,9 +20,16 @@ public static class VisualWindow {
     [DllImport("user32.dll")] static extern IntPtr WindowFromPoint(Point point);
     [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr h, uint flags);
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h,StringBuilder name,int size);
+    [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h,int index);
     [DllImport("shcore.dll")] static extern int GetDpiForMonitor(IntPtr monitor, int kind, out uint x, out uint y);
     [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
+    public static bool Password(long handle) {
+        if(handle==0)return false;
+        var name=new StringBuilder(256);GetClassName(new IntPtr(handle),name,256);
+        return name.ToString().ToLowerInvariant().Contains("edit") && (GetWindowLong(new IntPtr(handle),-16)&0x20)!=0;
+    }
 
     public static Dictionary<string, object> Geometry(long handle) {
         IntPtr h = new IntPtr(handle); Rect r;

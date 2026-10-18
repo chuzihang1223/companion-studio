@@ -24,7 +24,9 @@ def validate_config(node):
             "coding_model",
         }:
             fail()
-    if node.type in {"tool", "mcp_tool"} and not isinstance(c.get("arguments"), dict):
+    if node.type in {"tool", "mcp_tool", "computer_use"} and not isinstance(
+        c.get("arguments"), dict
+    ):
         fail()
     if node.type == "tool" and c.get("coding_mode", "virtual_only") not in {
         "virtual_only",

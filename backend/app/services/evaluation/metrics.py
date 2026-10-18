@@ -44,7 +44,7 @@ class MetricsCollector:
             "success_rate": counts["PASS"] / len(valid) if valid else None,
             "failure_rate": counts["FAIL"] / len(valid) if valid else None,
             "real_task_success_rate": counts["PASS"] / len(valid)
-            if valid and mode in {"live_model", "windows_gui"}
+            if valid and mode == "live_model"
             else None,
             "average_duration_ms": sum(times) / len(times) if times else None,
             "p50_ms": percentile(times, 0.5),

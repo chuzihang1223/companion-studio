@@ -92,6 +92,15 @@ class DesktopAppAgent {
     });
   }
   async perform(operation, args, session) {
+    if (operation.startsWith('visual_qa.')) {
+      if (!this.visualQA) throw Error('VISUAL_QA_UNAVAILABLE');
+      return this.visualQA.perform(operation.slice('visual_qa.'.length), args);
+    }
+    if (operation.startsWith('computer.')) {
+      if (!this.computerUse) throw Error('COMPUTER_UNAVAILABLE');
+      const { owner, ...arguments_ } = args;
+      return this.computerUse.execute(operation.slice('computer.'.length), arguments_, owner);
+    }
     const app = args.app || args.provider;
     this.audit('app-automation.log', operation, app || 'workspace');
     if (operation === 'system.status') return this.systemStatus();
@@ -262,6 +271,28 @@ class DesktopCommandPump {
   async handle(command) {
     let result = {},
       error = null;
+    let visualGuardBusy = false;
+    const visualGuard =
+      command.operation.startsWith('computer.') && command.arguments?.owner
+        ? setInterval(() => {
+            if (visualGuardBusy) return;
+            visualGuardBusy = true;
+            void this.state(command.session_id)
+              .then((state) => {
+                if (
+                  ['paused', 'waiting_user', 'cancelled', 'stopped', 'failed'].includes(
+                    state.status,
+                  ) ||
+                  !state.automation_enabled
+                )
+                  this.agent.computerUse?.stopOwner(command.arguments.owner);
+              })
+              .catch(() => this.agent.computerUse?.stopOwner(command.arguments.owner))
+              .finally(() => {
+                visualGuardBusy = false;
+              });
+          }, 500)
+        : null;
     const heartbeat = setInterval(() => {
       void this.agent.monitor
         .publish(command.session_id, 'heartbeat', '桌面操作仍在执行', {
@@ -285,6 +316,7 @@ class DesktopCommandPump {
       error = String(e.message || e);
     } finally {
       clearInterval(heartbeat);
+      clearInterval(visualGuard);
     }
     await fetch(this.url + '/api/desktop/result', {
       method: 'POST',

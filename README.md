@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-knowledge.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills、可视化工作流，以及本地知识库、引用与可控长期记忆；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-visual.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills、可视化工作流、本地知识库与可控长期记忆，以及受限 Windows UIA / OCR 视觉操作；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -13,6 +13,33 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 **[Download for Windows · v0.1.2](https://github.com/chuzihang1223/companion-studio/releases/download/v0.1.2/Companion-Studio-0.1.2-Setup.exe)** · [发布说明与 SHA256](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2)
 
 ## 系统架构与 Agent 实现
+
+### Visual Computer Use（本地审核分支）
+
+工作模式 →「模块」→「屏幕观察」。默认关闭；用户选择窗口并在原生确认框授权后，
+可读取 Windows UIA、按需预览受控窗口、本地识别中英文文字，并定位唯一控件后输入、点击或滚动。
+动作必须重新检查窗口、焦点和候选，再验证具体结果；不把事件发送成功当成任务完成。
+暂停、停止、接管会清除旧定位，结果未知的输入不会自动重试。
+
+例如：在项目自有测试窗口定位 `SampleInput`，输入 `Local QA 中文`；
+再定位 `ApplySample`，验证 `SampleResult` 等于输入内容。输出包含随机窗口/观察 ID、来源、
+验证状态及用时，不把原始 UIA、OCR、截图写入工具输出。真实 GUI 测试不需要模型。
+
+截图仅来自明确授权范围，默认在内存短期保留，不保存、不上传；密码区域遮罩，
+本地 OCR 检测到敏感内容或无法完成隐私检查时拒绝图片。隐私过滤有局限，仍应选择无私人资料的窗口。
+可选视觉模型复用原 Provider 和职责路由，需额外逐次确认传输和可能费用；结果只展示建议，不直接执行。
+浏览器 DOM 继续使用原浏览器工具，不借通用视觉工具控制外部浏览器。
+
+支持负坐标、DPI/显示器几何校验及受限窗口/区域/显示器采集；当前只实测单屏 150%。
+100%、125% 和显示器变化缺少真实环境时明确 BLOCKED；真实外部视觉质量未授权，标记 NOT_RUN。
+不支持 UAC、锁屏、终端、安全设置、密码管理器或私人聊天；不保证支持所有游戏/自绘程序。
+
+新增 24 项 Computer Use Benchmark、Workflow 节点和自动 QA Gates，复用原权限、Runtime、
+Trace、Recovery 与安装测试。GUI 断言通过率不等于真实 AI 成功率。
+[架构与操作](docs/COMPUTER_USE_ARCHITECTURE.md) · [UIA](docs/WINDOWS_UI_AUTOMATION.md) ·
+[截图隐私](docs/SCREEN_CAPTURE_PRIVACY.md) · [OCR / Vision](docs/OCR_AND_VISION.md) ·
+[安全](docs/COMPUTER_ACTION_SAFETY.md) · [恢复](docs/COMPUTER_USE_RECOVERY.md) ·
+[评测](docs/COMPUTER_USE_EVALUATION.md) · [自动 QA](docs/AUTOMATED_QUALITY_GATES.md)
 
 ```mermaid
 flowchart LR

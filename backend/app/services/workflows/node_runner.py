@@ -50,14 +50,17 @@ class WorkflowNodeRunner:
                     if tainted and (
                         node.type == "mcp_tool"
                         or node.type == "tool"
-                        and str(node.config.get("name", "")).startswith(("mcp.", "browser."))
+                        and str(node.config.get("name", "")).startswith(
+                            ("mcp.", "browser.", "computer.")
+                        )
+                        or node.type == "computer_use"
                     ):
                         raise WorkflowError("KNOWLEDGE_EXPORT_NOT_GRANTED", node.node_id)
                     for item in active_inputs:
                         check_port(
                             node.input_ports[item["target_port"]], item["output"], node.node_id
                         )
-                    if node.type in {"tool", "mcp_tool", "knowledge_search"}:
+                    if node.type in {"tool", "mcp_tool", "knowledge_search", "computer_use"}:
                         if self.scope(owner) != run.get("workspace"):
                             raise WorkflowError("WORKFLOW_WORKSPACE_CHANGED", node.node_id)
                         reservation = (

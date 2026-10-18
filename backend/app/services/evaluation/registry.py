@@ -15,6 +15,7 @@ class BenchmarkRegistry:
             "mcp-skills-core",
             "workflow-core",
             "knowledge-core",
+            "computer-use-core",
         }:
             raise ValueError("未知内置数据集")
         raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
@@ -23,7 +24,13 @@ class BenchmarkRegistry:
         self.cases = [BenchmarkCase.model_validate(row) for row in data["cases"]]
         self.by_id = {row.case_id: row for row in self.cases}
         expected = (
-            28 if dataset_id == "knowledge-core" else 16 if dataset_id == "recovery-core" else 20
+            24
+            if dataset_id == "computer-use-core"
+            else 28
+            if dataset_id == "knowledge-core"
+            else 16
+            if dataset_id == "recovery-core"
+            else 20
         )
         if len(self.by_id) != len(self.cases) or len(self.cases) != expected:
             raise ValueError("内置数据集测试项数量不符")
@@ -34,7 +41,9 @@ class BenchmarkRegistry:
         result = {
             "dataset_id": self.dataset_id,
             "dataset_version": self.version,
-            "title": "Studio Core · 20 项"
+            "title": "Visual Computer Use · 24 项（隔离 Windows GUI）"
+            if self.dataset_id == "computer-use-core"
+            else "Studio Core · 20 项"
             if self.dataset_id == "studio-core"
             else "Knowledge Core · 28 项"
             if self.dataset_id == "knowledge-core"

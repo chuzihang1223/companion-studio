@@ -3,6 +3,9 @@
 from app.services.recovery.types import RecoveryDecision
 
 READ_ONLY = {
+    "computer.observe",
+    "computer.find_element",
+    "computer.wait_for_state",
     "knowledge.collections",
     "knowledge.search",
     "knowledge.get_document",

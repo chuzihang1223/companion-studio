@@ -18,6 +18,15 @@ def file_hash(target):
 def resource_snapshot(context, call):
     """Read only the exact scoped file/draft. No project walk, no raw file bodies."""
     name, args = call["name"], call["arguments"]
+    if name.startswith("computer."):
+        return {
+            "kind": "computer",
+            "window_id": args["target_id"],
+            "observation_id": args.get("observation_id"),
+            "action_id": call["id"],
+            "side_effect_class": "READ_ONLY" if name in READ_ONLY else "NON_IDEMPOTENT",
+            "requires_fresh_observation": True,
+        }
     if name.startswith("knowledge."):
         from app.services.knowledge.runtime import snapshot
 

@@ -21,6 +21,7 @@ from app.services.workspace_paths import scoped_path
 from urllib.parse import quote, urlsplit
 
 from app.services.music_provider import LocalMusicProvider
+from app.services.computer_use.tools import definitions as computer_definitions
 from app.core.config import settings
 from app.services.application_catalog import application_ids
 
@@ -357,6 +358,9 @@ TOOLS = [
 ]
 
 
+TOOLS.extend(Tool(**definition) for definition in computer_definitions())
+
+
 class ToolRegistry:
     """统一管理工具描述与模型返回值，确定性本地调用也走相同解析入口。"""
 
@@ -377,7 +381,9 @@ class ToolRegistry:
         """
         text = user_text.lower()
         names: set[str] | None = None
-        if any(word in text for word in ("知识库", "知识检索", "knowledge", "检索资料")):
+        if any(word in text for word in ("屏幕观察", "视觉操作", "computer use", "观察窗口")):
+            names = {tool.name for tool in TOOLS if tool.name.startswith("computer.")}
+        elif any(word in text for word in ("知识库", "知识检索", "knowledge", "检索资料")):
             names = {
                 "knowledge.collections",
                 "knowledge.search",
@@ -550,6 +556,10 @@ class ToolRegistry:
                 or any(row["id"] == call_id for row in calls)
             ):
                 raise ValueError("工具调用编号无效")
+            if tool.name.startswith("computer."):
+                from app.services.computer_use.tools import validate
+
+                arguments = validate(tool.name.split(".", 1)[1], arguments)
             calls.append(
                 {
                     "id": call_id,

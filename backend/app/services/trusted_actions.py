@@ -31,6 +31,10 @@ DEFAULTS = {
 
 def action_for(call: dict, workspace: Path | None = None) -> str:
     name, args = call["name"], call.get("arguments", {})
+    if name.startswith("computer."):
+        from app.services.recovery.checkpoints import digest
+
+        return f"{name}:{args.get('target_id')}:{digest(args)}"
     if name.startswith("mcp."):
         from app.services.mcp_ext.contracts import digest
 
@@ -67,6 +71,13 @@ def action_for(call: dict, workspace: Path | None = None) -> str:
 
 
 def risk_for(action: str) -> str:
+    if action.startswith("computer."):
+        return (
+            "low"
+            if action.split(":", 1)[0]
+            in {"computer.observe", "computer.find_element", "computer.wait_for_state"}
+            else "high"
+        )
     if action == "skill.read_reference" or action in {
         "knowledge.collections",
         "knowledge.search",

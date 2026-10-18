@@ -33,6 +33,8 @@ class ComputerController {
     this.serial = Promise.resolve();
     this.worker = null;
     this.launchSeeds = new Map();
+    this.fixtureEntries = new Map();
+    this.visualRevocations = new Map();
   }
   /** 懒启动 Windows worker；只读取本安装版解包的自动化脚本。 */
   start() {
@@ -43,6 +45,7 @@ class ComputerController {
       [
         '-NoProfile',
         '-NonInteractive',
+        '-Mta',
         '-ExecutionPolicy',
         'Bypass',
         '-File',
@@ -66,6 +69,11 @@ class ComputerController {
       this.pending.delete(data.id);
       clearTimeout(slot.timer);
       data.error ? slot.reject(Error(data.error)) : slot.resolve(data.result);
+      if (slot.action === 'visual') {
+        clearTimeout(this.visualCleanup);
+        this.visualCleanup = setTimeout(() => this.clear_visual_memory(), 8100);
+        this.visualCleanup.unref();
+      }
     });
     this.worker.stderr.on('data', () =>
       this.audit(
@@ -75,6 +83,9 @@ class ComputerController {
       ),
     );
     const child = this.worker;
+    child.stdin.on('error', () => {
+      if (this.worker === child) this.stop();
+    });
     child.on('exit', () => {
       if (this.worker === child) this.worker = null;
       for (const [id, slot] of this.pending) {
@@ -94,9 +105,16 @@ class ComputerController {
   call(app, action, args = {}) {
     const run = async () => {
       await this.guard(action);
+      if (action === 'visual') {
+        for (const [nonce, until] of this.visualRevocations)
+          if (until < Date.now()) this.visualRevocations.delete(nonce);
+        if (this.visualRevocations.has(args.visual_nonce)) throw Error('COMPUTER_PAUSED');
+      }
       return new Promise((resolve, reject) => {
         const globalMedia = action === 'media_all';
-        const entry = globalMedia ? null : this.registry.detect(app);
+        const entry = globalMedia
+          ? null
+          : this.fixtureEntries.get(app) || this.registry.detect(app);
         if (entry && !entry.installed) return reject(Error(`${entry.name}未安装`));
         this.start();
         const id = ++this.sequence;
@@ -105,7 +123,14 @@ class ComputerController {
           this.stop();
           reject(Error('桌面控件读取超时'));
         }, 22000);
-        this.pending.set(id, { resolve, reject, timer, child: this.worker });
+        this.pending.set(id, {
+          resolve,
+          reject,
+          timer,
+          child: this.worker,
+          action,
+          visualNonce: args.visual_nonce,
+        });
         const seed = this.launchSeeds.get(app);
         const request = {
           ...args,
@@ -129,7 +154,7 @@ class ComputerController {
             entry?.launch_candidates?.some((row) => row.launch_type === 'launcher') || false,
           descendant_seed_ids: seed && Date.now() - seed.saved < 45000 ? [seed.pid] : [],
           descendant_seed_times: seed && Date.now() - seed.saved < 45000 ? [seed.created] : [],
-          capture: path.join(this.cache, `${app}.png`),
+          capture: action === 'visual' ? undefined : path.join(this.cache, `${app}.png`),
         };
         this.audit('computer-control.log', action, app);
         this.worker.stdin.write(JSON.stringify(request) + '\n');
@@ -222,7 +247,28 @@ class ComputerController {
     return this.call('system-media', 'media_all', { ...options, operation });
   }
   /** 结束本控制器拥有的 worker，不结束被操作的用户应用。 */
+  cancel_visual(nonce) {
+    // Also revoke queued calls not yet registered as pending. Recheck after
+    // guard and immediately before synchronous dispatch to close the pause race.
+    this.visualRevocations.set(nonce, Date.now() + 15 * 60000);
+    if (
+      [...this.pending.values()].some(
+        (slot) => slot.action === 'visual' && slot.visualNonce === nonce,
+      )
+    )
+      this.stop();
+  }
+  clear_visual_memory() {
+    if (!this.worker) return;
+    if (this.pending.size) {
+      this.visualCleanup = setTimeout(() => this.clear_visual_memory(), 1000);
+      this.visualCleanup.unref();
+      return;
+    }
+    this.worker.stdin.write(JSON.stringify({ id: 0, action: 'visual_clear' }) + '\n');
+  }
   stop() {
+    clearTimeout(this.visualCleanup);
     const child = this.worker;
     this.worker = null;
     child?.kill();

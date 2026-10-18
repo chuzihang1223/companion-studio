@@ -78,7 +78,7 @@ class EvaluationRepository:
                     id=run_id,
                     mode=options.mode.value,
                     total=len(cases) * options.repetitions,
-                    request_json=dumps(options.model_dump(mode="json")),
+                    request_json=dumps(options.model_dump(mode="json", exclude={"visual_consent"})),
                     snapshot_json=dumps(snapshot),
                 )
             )

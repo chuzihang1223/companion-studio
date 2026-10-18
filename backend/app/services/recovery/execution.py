@@ -102,6 +102,28 @@ class RecoveryExecution:
 
     async def observe(self, call):
         name = call["name"]
+        if name.startswith("computer."):
+            from app.services.computer_use.runtime import event
+
+            event("VISUAL_RECOVERY_STARTED")
+            result = await self.app.state.desktop_bridge.request(
+                "computer.observe",
+                {
+                    "target_id": call["arguments"]["target_id"],
+                    "owner": {
+                        "conversation_id": self.context.conversation_id,
+                        "character_id": self.context.character_id,
+                    },
+                },
+                self.context.work_session_id,
+                timeout=25,
+            )
+            event("VISUAL_RECOVERY_COMPLETED", result)
+            return {
+                key: result[key]
+                for key in ("verified", "status", "window_id", "observation_id", "duration_ms")
+                if key in result
+            }
         if name.startswith("browser."):
             return await self.app.state.desktop_bridge.request(
                 "browser.observe", {}, self.context.work_session_id, timeout=8
@@ -121,11 +143,19 @@ class RecoveryExecution:
         failure = self.classify(error, result, call["name"])
         observation = {}
         if failure.error_code in {
+            "UIA_ELEMENT_STALE",
+            "ELEMENT_AMBIGUOUS",
+            "WINDOW_IDENTITY_CHANGED",
+            "FOCUS_LOST",
+            "DPI_MAPPING_INVALID",
+            "DISPLAY_CHANGED",
+            "ACTION_STATE_UNKNOWN",
+            "POST_ACTION_VERIFICATION_FAILED",
             "DOM_CHANGED",
             "ELEMENT_NOT_FOUND",
             "PAGE_CHANGED",
             "VERIFICATION_FAILED",
-        }:
+        } or (call["name"].startswith("computer.") and failure.error_code == "TOOL_TIMEOUT"):
             try:
                 observation = await self.observe(call)
             except (TimeoutError, ValueError, RuntimeError):

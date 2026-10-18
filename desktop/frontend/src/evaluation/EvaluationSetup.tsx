@@ -2,7 +2,12 @@ import type { Dataset, EvaluationMode, ModelChoice } from './types';
 
 export type EvaluationForm = {
   datasetId:
-    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
+    | 'studio-core'
+    | 'recovery-core'
+    | 'mcp-skills-core'
+    | 'workflow-core'
+    | 'knowledge-core'
+    | 'computer-use-core';
   mode: EvaluationMode;
   role: string;
   caseId: string;
@@ -56,7 +61,7 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
               change({
                 datasetId: e.target.value as EvaluationForm['datasetId'],
                 caseId: '',
-                mode: 'mock',
+                mode: e.target.value === 'computer-use-core' ? 'windows_gui' : 'mock',
                 consent: false,
               })
             }
@@ -65,6 +70,9 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             <option value="recovery-core">Recovery Core · 16 项</option>
             <option value="mcp-skills-core">MCP & Skills Core · 20 项</option>
             <option value="workflow-core">Workflow Core · 20 项</option>
+            <option value="computer-use-core">
+              Visual Computer Use · 24 项（需隔离 Windows GUI）
+            </option>
             <option value="knowledge-core">Knowledge Core · 28 项（本地合成资料）</option>
           </select>
         </label>
@@ -151,8 +159,9 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
       </div>
       {form.mode === 'windows_gui' && (
         <p role="status">
-          此候选尚未接入专用交互式 Fixture 桥，对应任务将记录
-          BLOCKED；不会操作你的应用或已登录账号。
+          {form.datasetId === 'computer-use-core'
+            ? '需在专用隔离审核档案中授权项目自有测试窗口；默认正式档案会记录 BLOCKED。不会操作私人应用或已登录账号。'
+            : '此测试集尚无专用交互式 Fixture 桥，Windows GUI 用例将记录 BLOCKED。'}
         </p>
       )}
       {form.mode === 'live_model' && (

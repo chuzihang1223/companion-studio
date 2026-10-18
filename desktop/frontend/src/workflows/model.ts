@@ -2,6 +2,12 @@ import type { NodeType, WorkflowDefinition, WorkflowNode, WorkflowEdge } from '.
 
 export const nodeTypes: Array<{ type: NodeType; title: string; group: string; help: string }> = [
   {
+    type: 'computer_use',
+    title: 'Computer Use · 视觉操作',
+    group: 'Agent 与工具',
+    help: '仅操作屏幕观察中已授权的窗口。参数使用 target_id、目标描述或 AutomationId、输入文本与验证条件；输入前需要新观察的候选 ID。保持原权限与检查点。',
+  },
+  {
     type: 'knowledge_search',
     title: '知识检索',
     group: 'Agent 与工具',
@@ -75,6 +81,7 @@ export const nodeTypes: Array<{ type: NodeType; title: string; group: string; he
   },
 ];
 const defaults: Record<NodeType, Record<string, unknown>> = {
+  computer_use: { action: 'observe', arguments: { target_id: '' } },
   knowledge_search: { query: '项目如何启动？', collection_ids: [], top_k: 5, mode: 'keyword' },
   manual_trigger: {},
   input: { name: 'text', type: 'string', required: true },

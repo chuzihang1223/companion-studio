@@ -1,4 +1,5 @@
 export type NodeType =
+  | 'computer_use'
   | 'knowledge_search'
   | 'manual_trigger'
   | 'input'

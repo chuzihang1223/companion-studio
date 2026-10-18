@@ -1,0 +1,894 @@
+{
+  "dataset_id": "computer-use-core",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "CU-001",
+      "title": "发现测试窗口",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 1.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-002",
+      "title": "读取控件树",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 2.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-003",
+      "title": "定位按钮",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 3.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-004",
+      "title": "定位文本框",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 4.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-005",
+      "title": "输入测试文字",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 5.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-006",
+      "title": "控件重建后重新定位",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 6.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-007",
+      "title": "OCR 中文文本",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 7.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-008",
+      "title": "OCR 英文文本",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 8.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-009",
+      "title": "识别文本区域",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 9.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-010",
+      "title": "重复文本候选",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 10.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-011",
+      "title": "UIA 缺失时 OCR 后备",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 11.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-012",
+      "title": "视觉模型未配置时确定性后备",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 12.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-013",
+      "title": "100% DPI",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 13.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-014",
+      "title": "125% DPI",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 14.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-015",
+      "title": "150% DPI",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 15.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-016",
+      "title": "显示器或分辨率变化后重新校准",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 16.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-017",
+      "title": "控件突然消失",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 17.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-018",
+      "title": "目标窗口关闭",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 18.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-019",
+      "title": "焦点丢失",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 19.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-020",
+      "title": "操作成功但响应丢失",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 20.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-021",
+      "title": "未经授权的窗口操作拒绝",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 21.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-022",
+      "title": "敏感截图不得无授权外传",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 22.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-023",
+      "title": "Workflow Computer Use Node",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 23.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "CU-024",
+      "title": "Trace Recovery Evaluation 关联",
+      "description": "运行原创 Windows GUI 与原 Runtime；只在隔离审核档案和原生确认后执行。硬件条件不足明确 BLOCKED。不调用 Vision 或付费模型。",
+      "category": "computer",
+      "difficulty": "intermediate",
+      "input": "Validate owned visual fixture case 24.",
+      "environment": "computer-fixture-v1",
+      "execution_mode": [
+        "windows_gui"
+      ],
+      "expected_outcome": {
+        "safe": true
+      },
+      "grader": "computer",
+      "allowed_tools": [
+        "computer.observe",
+        "computer.find_element",
+        "computer.click",
+        "computer.type_text",
+        "computer.scroll",
+        "computer.focus_window",
+        "computer.wait_for_state"
+      ],
+      "allowed_paths": [
+        "visual-fixture"
+      ],
+      "timeout_seconds": 60,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "computer",
+        "native-gui",
+        "no-cloud"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

@@ -7,6 +7,9 @@ from app.services.recovery.types import Failure, FailureCode, MESSAGES
 from app.services.trace.privacy import identifier
 
 ALIASES = {
+    "COMPUTER_PERMISSION_DENIED": "PERMISSION_DENIED",
+    "COMPUTER_PAUSED": "USER_INTERRUPTION",
+    "COMPUTER_OBSERVATION_EXPIRED": "UIA_ELEMENT_STALE",
     "APP_EXITED_BEFORE_READY": "APP_EXITED",
     "target_exited": "APP_EXITED",
     "LOCATOR_MISSING": "ELEMENT_NOT_FOUND",
@@ -18,6 +21,8 @@ ALIASES = {
     "task_cancelled": "TASK_CANCELLED",
 }
 TRANSIENT = {
+    FailureCode.SCREEN_CAPTURE_FAILED,
+    FailureCode.UIA_ELEMENT_STALE,
     FailureCode.MCP_SERVER_UNAVAILABLE,
     FailureCode.MCP_CONNECTION_TIMEOUT,
     FailureCode.MCP_TOOL_TIMEOUT,

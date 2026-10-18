@@ -2,6 +2,22 @@
 
 interface Window {
   desktopAPI?: {
+    computerQAConsent: () => Promise<string>;
+    computerQAFixture: (
+      options: Record<string, unknown>,
+    ) => Promise<{ fixture_id: string; target_id: string; verified: boolean }>;
+    computerVision: (options: Record<string, unknown>) => Promise<unknown>;
+    computerRead: (
+      operation: 'state' | 'windows',
+      options: Record<string, unknown>,
+    ) => Promise<import('./computer/types').State | import('./computer/types').Choice[]>;
+    computerControl: (
+      operation: 'enable' | 'control',
+      options: Record<string, unknown>,
+    ) => Promise<import('./computer/types').State>;
+    computerAction: (
+      options: import('./computer/types').Owner & import('./computer/types').Action,
+    ) => Promise<import('./computer/types').Result>;
     readKnowledge: <K extends keyof import('./knowledge/types').Reads>(
       operation: K,
       options?: Record<string, unknown>,

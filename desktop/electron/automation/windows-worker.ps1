@@ -54,10 +54,13 @@ function OCR-Chunks($Ocr){
   };$groups
  })
 }
+. (Join-Path $PSScriptRoot 'visual-observation.ps1')
+. (Join-Path $PSScriptRoot 'visual-actions.ps1')
 while($null -ne ($line=[Console]::ReadLine())){
  try{
   $request=$line|ConvertFrom-Json
-  if($request.action -eq 'media_all'){$result=Read-Media 'all' $request.operation $request.session_id ([bool]$request.allow_browser) ([double]$request.position)}
+  if($request.action -eq 'visual_clear'){$now=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();foreach($key in @($script:visualFrames.Keys)){if($now-$script:visualFrames[$key].created_ms -ge 8000){$script:visualFrames.Remove($key)}};$result=@{cleared=$true}}
+  elseif($request.action -eq 'media_all'){$result=Read-Media 'all' $request.operation $request.session_id ([bool]$request.allow_browser) ([double]$request.position)}
   elseif($request.action -eq 'media'){$result=Read-Media $request.app $request.operation}
   else{
    if($request.action -eq 'launch_entry'){
@@ -80,6 +83,7 @@ while($null -ne ($line=[Console]::ReadLine())){
     if($handle -notin $windows){throw 'Window does not belong to authorized executable'}
     $pointer=[IntPtr]$handle
     switch($request.action){
+     'visual'{$result=Invoke-VisualAction $request $handle}
      'state'{$result=Window-State $handle}
      'focus'{if([CompanionWindows]::Locked()){throw 'desktop_locked: Windows desktop is locked'};if(-not [CompanionWindows]::Focus($pointer)){throw ([CompanionWindows]::LastFocusFailure+': Windows did not focus target')};$result=Window-State $handle}
      'inspect'{$result=@{window=(Window-State $handle);elements=@(Inspect-Tree $pointer)};if($env:COMPANION_TEST_DIAGNOSTICS -eq '1'){$result.tree_diagnostics=$script:treeDiagnostics}}
@@ -167,5 +171,6 @@ while($null -ne ($line=[Console]::ReadLine())){
    }
   }
   [Console]::WriteLine((@{id=$request.id;result=$result}|ConvertTo-Json -Depth 12 -Compress))
- }catch{[Console]::WriteLine((@{id=$request.id;error=$_.Exception.Message}|ConvertTo-Json -Compress))}
+  if($request.action -eq 'visual'){$script:visualControls=@{};$result=$null;$request=$null;$line=$null}
+ }catch{$message=$_.Exception.Message;if($request.action -eq 'visual'){$code=[regex]::Match($message,'\b(?:COMPUTER_[A-Z_]+|SCREEN_CAPTURE_[A-Z_]+|UIA_ELEMENT_STALE|ELEMENT_[A-Z_]+|WINDOW_[A-Z_]+|FOCUS_LOST|DESKTOP_LOCKED|DPI_MAPPING_INVALID|DISPLAY_CHANGED|OCR_[A-Z_]+)\b').Value;$message=if($code){$code}else{'COMPUTER_ACTION_FAILED'}};[Console]::WriteLine((@{id=$request.id;error=$message}|ConvertTo-Json -Compress))}
 }

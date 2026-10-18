@@ -8,6 +8,16 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class FailureCode(StrEnum):
+    SCREEN_CAPTURE_FAILED = "SCREEN_CAPTURE_FAILED"
+    UIA_ELEMENT_STALE = "UIA_ELEMENT_STALE"
+    ELEMENT_AMBIGUOUS = "ELEMENT_AMBIGUOUS"
+    WINDOW_IDENTITY_CHANGED = "WINDOW_IDENTITY_CHANGED"
+    FOCUS_LOST = "FOCUS_LOST"
+    DPI_MAPPING_INVALID = "DPI_MAPPING_INVALID"
+    DISPLAY_CHANGED = "DISPLAY_CHANGED"
+    VISION_MODEL_UNAVAILABLE = "VISION_MODEL_UNAVAILABLE"
+    ACTION_STATE_UNKNOWN = "ACTION_STATE_UNKNOWN"
+    POST_ACTION_VERIFICATION_FAILED = "POST_ACTION_VERIFICATION_FAILED"
     MCP_SERVER_UNAVAILABLE = "MCP_SERVER_UNAVAILABLE"
     MCP_CONNECTION_TIMEOUT = "MCP_CONNECTION_TIMEOUT"
     MCP_AUTH_REQUIRED = "MCP_AUTH_REQUIRED"
@@ -48,6 +58,16 @@ class FailureCode(StrEnum):
 
 
 MESSAGES = {
+    FailureCode.SCREEN_CAPTURE_FAILED: "窗口截图失败，未复制其他桌面内容。",
+    FailureCode.UIA_ELEMENT_STALE: "控件已变化，请重新观察定位。",
+    FailureCode.ELEMENT_AMBIGUOUS: "存在多个或不确定候选，未自动点击。",
+    FailureCode.WINDOW_IDENTITY_CHANGED: "窗口身份或位置已变化，操作已停止。",
+    FailureCode.FOCUS_LOST: "目标窗口失去焦点，未继续输入。",
+    FailureCode.DPI_MAPPING_INVALID: "坐标映射发生变化，未点击旧位置。",
+    FailureCode.DISPLAY_CHANGED: "显示器布局已变化，需要重新观察。",
+    FailureCode.VISION_MODEL_UNAVAILABLE: "未配置已授权的视觉模型，本地 UIA/OCR 仍可用。",
+    FailureCode.ACTION_STATE_UNKNOWN: "操作结果未知，禁止自动重复。",
+    FailureCode.POST_ACTION_VERIFICATION_FAILED: "动作可能已发生，但预期结果未通过验证。",
     FailureCode.MCP_SERVER_UNAVAILABLE: "MCP 服务器不可用；其他工具可继续使用。",
     FailureCode.MCP_CONNECTION_TIMEOUT: "MCP 连接超时，未重放工具调用。",
     FailureCode.MCP_AUTH_REQUIRED: "MCP 服务器需要重新授权。",

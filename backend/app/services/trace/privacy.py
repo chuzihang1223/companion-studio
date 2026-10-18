@@ -14,6 +14,9 @@ SENSITIVE = re.compile(
     r"(?i)(sk[-_]|gh[pousr]_|github_pat_|bearer|password|secret|token|api.?key|[a-z]:[\\/]|https?://|@|\\\\)"
 )
 NUMBERS = {
+    "element_count",
+    "ocr_count",
+    "candidate_count",
     "document_count",
     "chunk_count",
     "result_count",
@@ -47,6 +50,7 @@ BOOLEANS = {
     "queued",
 }
 ENUMS = {
+    "source": {"uia", "ocr", "dom", "vision"},
     "strategy": {
         "retry_read",
         "stop",
@@ -63,6 +67,7 @@ ENUMS = {
         "safe_resume",
     },
     "step": {
+        "受控视觉操作",
         "启动应用",
         "检测应用",
         "观察应用",
@@ -158,6 +163,9 @@ def metadata(value: object) -> dict:
         elif key == "external_tool_id" and identifier(item):
             result[key] = item
         elif key in {
+            "window_id",
+            "observation_id",
+            "action_id",
             "collection_id",
             "document_id",
             "chunk_id",

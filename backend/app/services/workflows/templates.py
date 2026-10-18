@@ -4,6 +4,10 @@ from app.services.workflows.contracts import Definition, Node, Edge
 
 
 TEMPLATES = {
+    "visual-desktop-automation": (
+        "Visual Desktop Automation",
+        "MIT 原创示例：先在屏幕观察中选择窗口获得 target_id；批准后用新观察定位，执行并核验。模板不授予窗口或截图权限。",
+    ),
     "project-knowledge-assistant": (
         "项目知识助手",
         "在当前会话授权的知识库中检索，核对来源后用已授权模型回答；模板本身不授予目录或模型传输权限。",
@@ -62,7 +66,130 @@ def make_template(template_id, catalog):
             )
         return key
 
-    if template_id == "project-knowledge-assistant":
+    if template_id == "visual-desktop-automation":
+        target = {"$ref": "inputs.target_id"}
+        add(
+            "approve",
+            "human_approval",
+            "确认受控窗口与预期结果",
+            {
+                "message": "仅操作已授权的测试窗口。检查按钮身份与预期状态；不支持支付、凭据或私人聊天。"
+            },
+            "start",
+        )
+        add(
+            "focus",
+            "computer_use",
+            "聚焦已授权测试窗口",
+            {"action": "focus_window", "arguments": {"target_id": target}},
+            "approve",
+        )
+        add(
+            "observe",
+            "computer_use",
+            "观察授权窗口",
+            {"action": "observe", "arguments": {"target_id": target}},
+            "focus",
+        )
+        add(
+            "find_input",
+            "computer_use",
+            "定位测试输入框",
+            {
+                "action": "find_element",
+                "arguments": {
+                    "target_id": target,
+                    "locator": {
+                        "description": "Sample input",
+                        "automation_id": "SampleInput",
+                        "source": "uia",
+                    },
+                },
+            },
+            "observe",
+        )
+        add(
+            "type_input",
+            "computer_use",
+            "填写合成文字",
+            {
+                "action": "type_text",
+                "arguments": {
+                    "target_id": target,
+                    "observation_id": {"$ref": "nodes.find_input.output.observation_id"},
+                    "candidate_id": {"$ref": "nodes.find_input.output.candidates.0.candidate_id"},
+                    "text": "Local QA",
+                },
+            },
+            "find_input",
+        )
+        add(
+            "find",
+            "computer_use",
+            "定位唯一按钮",
+            {
+                "action": "find_element",
+                "arguments": {
+                    "target_id": target,
+                    "locator": {
+                        "description": "Apply sample",
+                        "automation_id": "ApplySample",
+                        "source": "uia",
+                    },
+                },
+            },
+            "type_input",
+        )
+        add(
+            "click",
+            "computer_use",
+            "执行并验证",
+            {
+                "action": "click",
+                "arguments": {
+                    "target_id": target,
+                    "observation_id": {"$ref": "nodes.find.output.observation_id"},
+                    "candidate_id": {"$ref": "nodes.find.output.candidates.0.candidate_id"},
+                    "verification": {
+                        "kind": "text_equals",
+                        "automation_id": "SampleResult",
+                        "expected": "Local QA",
+                    },
+                },
+            },
+            "find",
+        )
+        add(
+            "verify",
+            "computer_use",
+            "重新读取真实状态",
+            {
+                "action": "wait_for_state",
+                "arguments": {
+                    "target_id": target,
+                    "verification": {
+                        "kind": "text_equals",
+                        "automation_id": "SampleResult",
+                        "expected": "Local QA",
+                    },
+                },
+            },
+            "click",
+        )
+        add(
+            "report",
+            "output",
+            "验证摘要",
+            {"value": {"$ref": "nodes.verify.output"}, "format": "json"},
+            "verify",
+        )
+        inputs = {
+            "type": "object",
+            "properties": {"target_id": {"type": "string"}},
+            "required": ["target_id"],
+            "additionalProperties": False,
+        }
+    elif template_id == "project-knowledge-assistant":
         add(
             "question",
             "input",

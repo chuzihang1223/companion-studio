@@ -51,7 +51,7 @@ class WorkflowRuntimeBridge:
             executor.bind(session)
             character_id = "assistant"
             knowledge = getattr(self.app.state, "knowledge", None)
-            if call["name"].startswith("knowledge.") and knowledge:
+            if call["name"].startswith(("knowledge.", "computer.")) and knowledge:
                 with knowledge.store.sessions() as db:
                     character_id = knowledge.store.conversation(
                         db, run["conversation_id"]

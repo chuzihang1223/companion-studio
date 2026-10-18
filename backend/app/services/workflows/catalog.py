@@ -90,7 +90,7 @@ class WorkflowCatalog:
         result = definition.model_copy(deep=True)
         registry = ToolRegistry()
         for node in result.nodes:
-            if node.type in {"tool", "knowledge_search"}:
+            if node.type in {"tool", "knowledge_search", "computer_use"}:
                 normalized = tool_node(node)
                 tool = registry.by_api_name.get(
                     str(normalized.config.get("name", "")).replace(".", "_")

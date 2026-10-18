@@ -20,6 +20,9 @@ def engine(request):
     value = getattr(request.app.state, "evaluation", None)
     if value is None:
         raise HTTPException(503, "评测服务不可用")
+    # Native QA Trace lives in this isolated host profile, not worker.db. History
+    # remains readable after a restart even before another run is started.
+    value.native_app = request.app
     return value
 
 
@@ -46,6 +49,7 @@ async def datasets(request: Request):
                 "mcp-skills-core",
                 "workflow-core",
                 "knowledge-core",
+                "computer-use-core",
             )
         ]
     }
@@ -54,7 +58,12 @@ async def datasets(request: Request):
 @router.get("/datasets/{dataset_id}")
 async def dataset(
     dataset_id: Literal[
-        "studio-core", "recovery-core", "mcp-skills-core", "workflow-core", "knowledge-core"
+        "studio-core",
+        "recovery-core",
+        "mcp-skills-core",
+        "workflow-core",
+        "knowledge-core",
+        "computer-use-core",
     ],
     request: Request,
 ):
@@ -169,7 +178,14 @@ def read_trace(value, run_id, attempt_id, operation, cursor, limit, trace_id=Non
     row = value.repository.attempt(run_id, attempt_id)
     if not row["trace_id"] or not row["conversation_id"]:
         raise LookupError("该评测无 Trace")
-    with value.environment.trace_repository(run_id, attempt_id) as repo:
+    from contextlib import nullcontext
+
+    context = (
+        nullcontext(value.native_app.state.trace_repository)
+        if row["result"].get("host_trace") and value.native_app
+        else value.environment.trace_repository(run_id, attempt_id)
+    )
+    with context as repo:
         scopes = row["result"].get("trace_scopes") or [row]
         if operation == "list":
             traces = [

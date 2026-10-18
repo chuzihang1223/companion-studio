@@ -68,6 +68,7 @@ class AgentEvaluationEngine:
         self.pauses = {}
         self.subscribers = defaultdict(set)
         self.lock = asyncio.Lock()
+        self.native_app = None
 
     async def initialize(self):
         await asyncio.to_thread(self.repository.recover)
@@ -81,6 +82,7 @@ class AgentEvaluationEngine:
 
     async def start(self, options, app):
         async with self.lock:
+            self.native_app = app
             self.registry = BenchmarkRegistry(options.dataset_id)
             cases = self.registry.select(options.case_ids)
             model_config = None
@@ -110,8 +112,10 @@ class AgentEvaluationEngine:
                 }
                 if model_config
                 else {
-                    "provider": "fixture",
-                    "model_id": "deterministic-mock",
+                    "provider": "none" if options.dataset_id == "computer-use-core" else "fixture",
+                    "model_id": "not-used-native-fixture"
+                    if options.dataset_id == "computer-use-core"
+                    else "deterministic-mock",
                     "temperature": None,
                     "max_tokens": None,
                     "timeout_seconds": options.timeout_seconds,
@@ -159,9 +163,18 @@ class AgentEvaluationEngine:
                     if self.registry.dataset_id == "workflow-core"
                     else "knowledge-fixture-v1"
                     if self.registry.dataset_id == "knowledge-core"
+                    else "visual-wpf-fixture-v1"
+                    if self.registry.dataset_id == "computer-use-core"
                     else "mcp-fixture-v1",
-                    "desktop_bridge": "simulated",
-                    "process_isolation": True,
+                    "desktop_bridge": "original-native-worker"
+                    if self.registry.dataset_id == "computer-use-core"
+                    and options.mode == Mode.WINDOWS
+                    else "simulated",
+                    "process_isolation": not (
+                        self.registry.dataset_id == "computer-use-core"
+                        and options.mode == Mode.WINDOWS
+                    ),
+                    "isolated_profile_required": self.registry.dataset_id == "computer-use-core",
                 },
             }
             run = await asyncio.to_thread(self.repository.create, options, cases, snapshot)
@@ -205,9 +218,28 @@ class AgentEvaluationEngine:
                         if options.mode not in case.execution_mode:
                             result = empty_result("BLOCKED", "MODE_NOT_APPLICABLE")
                         elif options.mode == Mode.WINDOWS:
-                            result = empty_result(
-                                "BLOCKED", "INTERACTIVE_FIXTURE_BRIDGE_UNAVAILABLE"
-                            )
+                            if options.dataset_id == "computer-use-core":
+                                from app.services.computer_use.native_evaluation import run_case
+
+                                value = await run_case(
+                                    self.native_app,
+                                    case,
+                                    options.visual_consent,
+                                    min(case.timeout_seconds, options.timeout_seconds),
+                                )
+                                result, links = value["result"], value["links"]
+                                if (
+                                    value.get("cancelled")
+                                    or result["completion_status"] == "CANCELLED"
+                                ):
+                                    await asyncio.to_thread(
+                                        self.repository.finish, run_id, attempt_id, result, links
+                                    )
+                                    raise asyncio.CancelledError
+                            else:
+                                result = empty_result(
+                                    "BLOCKED", "INTERACTIVE_FIXTURE_BRIDGE_UNAVAILABLE"
+                                )
                         elif options.mode == Mode.LIVE and (
                             remaining_requests <= 0 or remaining_tokens <= 0
                         ):

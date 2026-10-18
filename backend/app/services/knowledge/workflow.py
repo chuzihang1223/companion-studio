@@ -3,7 +3,9 @@
 
 def tool_node(node):
     if node.type != "knowledge_search":
-        return node
+        from app.services.computer_use.workflow import tool_node as computer_node
+
+        return computer_node(node)
     return node.model_copy(
         update={
             "type": "tool",

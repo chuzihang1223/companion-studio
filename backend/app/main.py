@@ -219,6 +219,9 @@ app.include_router(recovery_router)
 app.include_router(extensions_router)
 app.include_router(workflows_router)
 app.include_router(knowledge_router)
+from app.api.computer_use import router as computer_use_router
+
+app.include_router(computer_use_router)
 app.include_router(music_router)
 app.include_router(appearance_router)
 app.include_router(attachments_router)

@@ -45,6 +45,7 @@ module.exports = ({
           'mcp-skills-core',
           'workflow-core',
           'knowledge-core',
+          'computer-use-core',
         ].includes(dataset)
       )
         throw Error('未知内置数据集');
@@ -94,9 +95,16 @@ module.exports = ({
       'token_budget',
       'live_consent',
       'knowledge_mode',
+      'visual_consent',
     ];
     if (Object.keys(options).some((key) => !allowed.includes(key)))
       throw Error('不支持外部命令或目录');
+    if (
+      options.dataset_id === 'computer-use-core' &&
+      options.mode === 'windows_gui' &&
+      !options.visual_consent
+    )
+      throw Error('VISUAL_QA_CONSENT_REQUIRED');
     return request('/api/evaluation/runs', options);
   });
   ipcMain.handle('evaluation-control', (event, runId, action) => {

@@ -166,9 +166,15 @@ export default memo(function EvaluationDashboard({ visible }: { visible: boolean
     setError('');
     setNotice('');
     try {
+      const effectiveDataset =
+        ids && run ? (run.snapshot.dataset_id as typeof datasetId) : datasetId;
+      const visualConsent =
+        effectiveDataset === 'computer-use-core' && mode === 'windows_gui'
+          ? await window.desktopAPI!.computerQAConsent()
+          : undefined;
       const created = await api.startEvaluation({
-        dataset_id:
-          ids && run ? (run.snapshot.dataset_id as 'studio-core' | 'recovery-core') : datasetId,
+        ...(visualConsent ? { visual_consent: visualConsent } : {}),
+        dataset_id: effectiveDataset,
         case_ids: ids || (caseId ? [caseId] : []),
         knowledge_mode: form.knowledgeMode,
         mode,

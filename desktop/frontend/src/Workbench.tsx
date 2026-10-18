@@ -24,6 +24,7 @@ import './workbench.css';
 import './workspace-grid.css';
 const WorkflowBuilder = lazy(() => import('./workflows/WorkflowBuilder'));
 const KnowledgePanel = lazy(() => import('./knowledge/KnowledgePanel'));
+const VisualObserver = lazy(() => import('./computer/VisualObserver'));
 
 type Props = {
   characterId: string;
@@ -216,6 +217,18 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'visual_observer')
+      return (
+        <Suspense fallback={<p>正在打开屏幕观察…</p>}>
+          <VisualObserver
+            key={conversationId || 'none'}
+            conversationId={conversationId}
+            characterId={characterId}
+            visible={visible && moduleVisible}
+            onTrace={() => restore('trace')}
+          />
+        </Suspense>
+      );
     if (id === 'knowledge')
       return (
         <Suspense fallback={<p>正在打开知识库…</p>}>

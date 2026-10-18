@@ -1,7 +1,13 @@
 export type EvaluationMode = 'mock' | 'sandbox' | 'windows_gui' | 'live_model';
 export type EvaluationOptions = {
+  visual_consent?: string;
   dataset_id?:
-    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
+    | 'studio-core'
+    | 'recovery-core'
+    | 'mcp-skills-core'
+    | 'workflow-core'
+    | 'knowledge-core'
+    | 'computer-use-core';
   case_ids?: string[];
   mode?: EvaluationMode;
   model_role?: string;
@@ -163,7 +169,12 @@ export type Comparison = {
 };
 export type EvaluationQuery = {
   dataset_id?:
-    'studio-core' | 'recovery-core' | 'mcp-skills-core' | 'workflow-core' | 'knowledge-core';
+    | 'studio-core'
+    | 'recovery-core'
+    | 'mcp-skills-core'
+    | 'workflow-core'
+    | 'knowledge-core'
+    | 'computer-use-core';
   trace_id?: string;
   run_id?: string;
   attempt_id?: string;

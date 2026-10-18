@@ -17,6 +17,7 @@ export type ModuleId =
   | 'evaluation'
   | 'workflow_builder'
   | 'knowledge'
+  | 'visual_observer'
   | 'permissions';
 export type ModuleDefinition = {
   id: ModuleId;
@@ -51,6 +52,7 @@ const definitions: Array<[ModuleId, string, IconName, 'main' | 'side']> = [
   ['evaluation', 'Agent Evaluation · 评测', 'activity', 'main'],
   ['workflow_builder', 'Visual Workflow · 流程设计', 'workflow', 'main'],
   ['knowledge', '本地知识与记忆', 'folder', 'main'],
+  ['visual_observer', '屏幕观察 · Visual Observer', 'eye', 'main'],
 ];
 export const WorkspaceModuleRegistry = Object.fromEntries(
   definitions.map(([id, title, icon, defaultDock]) => [

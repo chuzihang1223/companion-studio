@@ -60,3 +60,17 @@ def test_invalid_mapping_rejects_infinite_nan_outside_and_disconnected_display()
         image_to_physical(Rectangle(x=95, y=0, width=10, height=10), box, 100, 100)
     with pytest.raises(ComputerUseError):
         intersect(box, Rectangle(x=100, y=100, width=10, height=10))
+
+
+def test_user_text_and_verification_preserve_spaces_and_newlines():
+    text = "  Local text\n"
+    value = ExplicitAction.model_validate(
+        payload(
+            "type_text",
+            observation_id=str(uuid4()),
+            candidate_id=str(uuid4()),
+            text=text,
+            verification={"kind": "text_equals", "automation_id": "result", "expected": text},
+        )
+    )
+    assert value.arguments.text == text and value.arguments.verification.expected == text

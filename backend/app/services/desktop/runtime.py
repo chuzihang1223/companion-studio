@@ -293,6 +293,17 @@ class AgentTaskRuntime:
         """
         name, args = call["name"], call["arguments"]
         session, work = context.work_session_id, self.app.state.work_state
+        if name.startswith("computer."):
+            from app.services.computer_use.runtime import execute
+
+            return await self.step(
+                context,
+                "受控视觉操作",
+                lambda: execute(self.app, context, call),
+                handle,
+                max_attempts=2 if name in READ_ONLY else 1,
+                operation_name=name,
+            )
         if name.startswith("knowledge."):
             from app.services.knowledge.runtime import execute
             from app.services.knowledge.contracts import KnowledgeError

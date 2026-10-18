@@ -228,6 +228,14 @@ class CheckpointManager:
                     from app.services.knowledge.runtime import references
 
                     summary["knowledge_refs"] = references(result)
+                if row.tool_name.startswith("computer."):
+                    from app.services.trace.privacy import uuid_value
+
+                    for key in ("window_id", "observation_id", "action_id"):
+                        if uuid_value(result.get(key)):
+                            summary[key] = uuid_value(result[key])
+                    if result.get("status") in {"SUCCESS", "FAILED", "UNKNOWN", "NEEDS_REVIEW"}:
+                        summary["verification_status"] = result["status"]
                 row.result_json = encoded(summary)
             if permission:
                 row.permission_state = permission

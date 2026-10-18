@@ -75,6 +75,13 @@ contextBridge.exposeInMainWorld('desktopAPI', {
     return () => ipcRenderer.removeListener('work-files-changed', listener);
   },
   getBackendUrl: () => ipcRenderer.invoke('backend-url'),
+  computerRead: (operation, options) => ipcRenderer.invoke('computer-read', operation, options),
+  computerControl: (operation, options) =>
+    ipcRenderer.invoke('computer-control', operation, options),
+  computerAction: (options) => ipcRenderer.invoke('computer-action', options),
+  computerVision: (options) => ipcRenderer.invoke('computer-vision', options),
+  computerQAConsent: () => ipcRenderer.invoke('computer-qa-consent'),
+  computerQAFixture: (options) => ipcRenderer.invoke('computer-qa-fixture', options),
   workbenchLayout: (key, value) => ipcRenderer.invoke('workbench-layout', key, value),
   getVirtualDocument: (session, id) => ipcRenderer.invoke('virtual-document-get', session, id),
   editVirtualDocument: (session, id, content) =>

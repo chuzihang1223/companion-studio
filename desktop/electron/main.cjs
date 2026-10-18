@@ -36,6 +36,8 @@ let mainWindow = null;
 let workspaceBrowser = null;
 let desktopPump = null;
 let mediaService = null;
+let computerUse = null;
+let visualQA = null;
 const browserWindows = new Set();
 const guardedPartitions = new Set();
 const rendererSessions = new (require('./renderer-session-registry.cjs').RendererSessionRegistry)();
@@ -383,6 +385,14 @@ const stopWorkflowSubscriptions = require('./workflows.cjs')({
 });
 app.on('before-quit', stopWorkflowSubscriptions);
 require('./knowledge.cjs')({ ipcMain, requireMainWindow, request: privateBackend, dialog, shell });
+require('./computer-use-ipc.cjs')({
+  ipcMain,
+  requireMainWindow,
+  request: privateBackend,
+  dialog,
+  getComputer: () => computerUse,
+  getQA: () => visualQA,
+});
 // 目录切换先关闭旧观察器；revision 防止较慢的旧请求重新接管当前目录。
 let projectWatcher = null,
   projectWatchTimer = null,
@@ -892,6 +902,13 @@ if (haveLock)
         },
       );
       const { MediaSessionService } = require('./media-session-service.cjs');
+      const { ComputerUseCoordinator } = require('./computer-use.cjs');
+      computerUse = new ComputerUseCoordinator(desktopAgent.controller, knownApps, (scope) =>
+        privateBackend('/api/computer/owner', scope),
+      );
+      desktopAgent.computerUse = computerUse;
+      visualQA = new (require('./visual-qa.cjs').VisualQA)(computerUse, paths);
+      desktopAgent.visualQA = visualQA;
       mediaService = new MediaSessionService({
         controller: desktopAgent.controller,
         registry: knownApps,
@@ -914,6 +931,8 @@ app.on('before-quit', () => {
   projectWatcher?.close();
   clearTimeout(projectWatchTimer);
   mediaService?.stop();
+  computerUse?.close();
+  visualQA?.stop();
   desktopPump?.stop();
   backendManager.stopBackend();
 });
