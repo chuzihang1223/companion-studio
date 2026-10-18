@@ -51,7 +51,7 @@ class Review:
 
     def save(self):
         required = {
-            "A": {"source-history-audit"},
+            "A": {"source-history-audit", "independent-review"},
             "B": {
                 "full-check",
                 *{
@@ -342,6 +342,16 @@ class Review:
 
     def final(self):
         self.step(
+            "A",
+            "independent-review",
+            [
+                sys.executable,
+                "scripts/review-visual-runner.py",
+                "--validate-independent-review",
+                str(self.root / "independent-review.json"),
+            ],
+        )
+        self.step(
             "G",
             "release-audit",
             [
@@ -372,6 +382,27 @@ class Review:
 
 
 def validate(args):
+    if args.validate_independent_review:
+        value = read(Path(args.validate_independent_review))
+        assert value["status"] == "PASS" and value["open_p1_p2"] == []
+        source = Path(__file__).resolve().parents[1]
+        reviewed = value["runtime"]["reviewed_revision"]
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", reviewed, "HEAD"], cwd=source, check=True
+        )
+        later = subprocess.check_output(
+            ["git", "diff", "--name-only", reviewed, "HEAD"], cwd=source, text=True
+        ).splitlines()
+        assert all(
+            name.startswith(("scripts/", "tests/", "docs/")) or name == "README.md"
+            for name in later
+        ), "Product changed after independent review"
+        print(
+            json.dumps(
+                {"status": "PASS", "reviewed_revision": reviewed, "later_qa_or_docs_only": later}
+            )
+        )
+        return True
     if args.validate_performance:
         value = read(Path(args.validate_performance))
         assert value["frames"] > 10 and value["frame_gap_p95_ms"] > 0
@@ -426,6 +457,7 @@ def main():
     parser.add_argument("--build-id", default="studio-0.2.0-visual.1-review")
     parser.add_argument("--protected-profile")
     parser.add_argument("--validate-performance")
+    parser.add_argument("--validate-independent-review")
     parser.add_argument("--validate-consistency")
     args = parser.parse_args()
     if validate(args):
