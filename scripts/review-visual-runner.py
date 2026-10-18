@@ -200,6 +200,14 @@ class Review:
 
     def gui(self, installed=False):
         home = self.root / ("installed-gui" if installed else "source-gui")
+        base = home
+        attempt = 1
+        while home.exists():
+            attempt += 1
+            home = base.with_name(base.name + f"-{attempt}")
+        self.report.setdefault("gui_evidence", {})["installed" if installed else "source"] = str(
+            home.relative_to(self.source)
+        )
         exe = (
             self.delivery / "win-unpacked/CompanionStudio.exe"
             if installed

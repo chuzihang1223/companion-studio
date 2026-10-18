@@ -18,6 +18,6 @@
 
 输入使用 ValuePattern 后核验值；点击后重新读取具体控件是否存在/消失或文字是否等于预期；滚动核验 ScrollPattern 状态变化。状态区分 SUCCESS、FAILED、UNKNOWN、NEEDS_REVIEW。发送鼠标事件成功不算验证通过。
 
-焦点在 Win32/控件调用前复核；Windows 焦点仍是共享状态，不宣称原子隔离。其他程序抢焦点时输入停止，Unknown/Needs Review 暂停并要求重新观察。操作超时先观察原窗口，不无条件重按提交。
+焦点在 Win32/控件调用前复核。审批会让本软件占据前台，仅当前台 PID 精确属于本次 Studio 主进程时，原 worker 可以恢复已授权目标焦点并重新校验；不会从第三方应用抢焦点。Windows 焦点仍是共享状态，不宣称原子隔离。其他程序抢焦点时输入停止，Unknown/Needs Review 暂停并要求重新观察。操作超时先观察原窗口，不无条件重按提交。
 
 Stop/Take Over 只撤销本窗口任务及自有 worker，不关闭被操作的用户应用，不停止别的产品版本或会话。Replay 只读，Checkpoint 不提供永久坐标能力。重启后所有授权需重新取得。
