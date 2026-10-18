@@ -90,6 +90,10 @@ async function run() {
     !JSON.stringify(first).includes('data:image') && !JSON.stringify(first).includes('SampleInput'),
     'Raw screenshot and UI text stay outside model/tool persistence',
   );
+  await driver.c.evaluate(
+    "document.querySelector('.visual-observer').scrollIntoView({block:'center'});true",
+  );
+  await driver.screenshot('visual-observer-active');
   // Exercise the module's visible controls, not a mock component.
   await driver.field('.visual-observer [aria-label="目标说明"]', 'Sample input');
   await driver.field('.visual-observer [aria-label="AutomationId"]', 'SampleInput');
