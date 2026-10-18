@@ -178,6 +178,9 @@ async function run() {
     driver.report.localModelRequests === configurationRequests,
     'Creating, indexing and local search send no model requests',
   );
+  await driver.c.evaluate(
+    "document.querySelector('.knowledge-sources')?.scrollIntoView({block:'center'});true",
+  );
   await driver.screenshot('knowledge-search');
   await driver.m.evaluate('globalThis.__knowledgeDialog.approved=false;true');
   await driver.click('授权检索片段给当前模型', "document.querySelector('.knowledge-panel')");
@@ -245,6 +248,9 @@ async function run() {
   await driver.click('保存修改', "document.querySelector('.knowledge-memory')");
   await driver.c.until(
     "document.querySelector('.knowledge-memory article')?.innerText.includes('给出来源')",
+  );
+  await driver.c.evaluate(
+    "document.querySelector('.knowledge-memory article')?.scrollIntoView({block:'center'});true",
   );
   await driver.screenshot('knowledge-memory');
   const beforeRestart = driver.report.localModelRequests;
