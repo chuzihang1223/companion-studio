@@ -1,6 +1,7 @@
 """Run original checks, build and installed GUI with identity-bound evidence."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -178,7 +179,10 @@ class Review(Evidence):
         )
 
     def installer(self):
-        test = self.source / ".cache/installer-tests" / (self.build_id + "-qa")
+        # Keep nested NSIS/runtime resources below classic Windows path limits.
+        # Identity remains in the report and manifest, independent of folder names.
+        token = hashlib.sha256(self.build_id.encode()).hexdigest()[:12]
+        test = self.source / ".cache/installer-tests" / token
         self.step(
             "F",
             "installer-dryrun",
@@ -221,6 +225,13 @@ class Review(Evidence):
             ("knowledge", "knowledge-e2e.cjs"),
         ]:
             home = self.root / ("regression-" + name)
+            base, attempt = home, 1
+            while home.exists():
+                attempt += 1
+                home = base.with_name(base.name + f"-{attempt}")
+            self.report.setdefault("regression_evidence", {})[name] = str(
+                home.relative_to(self.source)
+            )
             self.step(
                 "B",
                 "installed-" + name,

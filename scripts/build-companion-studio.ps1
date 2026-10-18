@@ -171,7 +171,11 @@ foreach ($relative in @($setupName,'win-unpacked\CompanionStudio.exe','win-unpac
   if (-not (Test-Path -LiteralPath $file)) { throw ('Artifact missing: '+$relative) }
   $artifacts[$relative] = @{bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()}
 }
-$manifest = @{checks_skipped=[bool]$SkipTests;build=$info;source_hashes=$sourceHashes;artifacts=$artifacts;backend_health=$healthReport;profile_imported=$false;external_model_requests=0}
+$programInventory = Join-Path $build 'program-inventory.json'
+& $python -B (Join-Path $PSScriptRoot 'program_inventory.py') --root (Join-Path $delivery 'win-unpacked') --report $programInventory
+if ($LASTEXITCODE -ne 0) { throw 'Full program inventory failed' }
+$programFiles = (Get-Content -LiteralPath $programInventory -Raw | ConvertFrom-Json).files
+$manifest = @{checks_skipped=[bool]$SkipTests;build=$info;source_hashes=$sourceHashes;artifacts=$artifacts;program_files=$programFiles;backend_health=$healthReport;profile_imported=$false;external_model_requests=0}
 [IO.File]::WriteAllText((Join-Path $delivery 'build-manifest.json'),($manifest|ConvertTo-Json -Depth 8),$utf8)
 [IO.File]::WriteAllText((Join-Path $root 'latest.json'),(@{build_root=$build;delivery=$delivery;build_id=$BuildId}|ConvertTo-Json),$utf8)
 [IO.File]::WriteAllText((Join-Path $delivery 'SHA256SUMS.txt'),($artifacts[$setupName].sha256+'  '+$setupName+[Environment]::NewLine),$utf8)

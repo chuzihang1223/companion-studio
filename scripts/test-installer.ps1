@@ -23,10 +23,12 @@ if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitPr
 # 仅允许公开项目自身 .cache/installer-tests 下的新目录；所有备份与测试
 # 档案保留，不把测试清理扩大到正式安装目录或其他产品的注册信息。
 $project = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$python = Join-Path $project '.venv\Scripts\python.exe'
+if (-not (Test-Path -LiteralPath $python)) { throw 'Locked Python environment is required for full program resource verification' }
 $cacheRoot = [IO.Path]::GetFullPath((Join-Path $project '.cache')).TrimEnd('\')
 $testsRoot = [IO.Path]::GetFullPath((Join-Path $cacheRoot 'installer-tests')).TrimEnd('\')
 $testId = [Guid]::NewGuid().ToString('N')
-if (-not $TestRoot) { $TestRoot = Join-Path $testsRoot ('installation-' + $testId) }
+if (-not $TestRoot) { $TestRoot = Join-Path $testsRoot $testId.Substring(0,12) }
 $testRootPath = [IO.Path]::GetFullPath($TestRoot).TrimEnd('\')
 
 function Assert-NewTestRoot([string]$Candidate) {
@@ -139,6 +141,21 @@ $backupRoot = Join-Path $testRootPath 'Backup'
 $reportPath = Join-Path $testRootPath 'installer-test-report.json'
 $snapshotRoot = Join-Path $testRootPath 'InstalledSnapshot'
 $snapshotFolder = Join-Path $snapshotRoot 'win-unpacked'
+$inventoryTool = Join-Path $PSScriptRoot 'program_inventory.py'
+# Read-only, including DryRun. Reject a path that PS5/NSIS may enumerate partly
+# before touching registration, shortcuts or the existing installation.
+$expectedProgram = & $python -B $inventoryTool --root (Join-Path $deliveryRoot 'win-unpacked') --json
+if ($LASTEXITCODE -ne 0) { throw 'Cannot enumerate expected program resources' }
+$expectedProgram = $expectedProgram | ConvertFrom-Json
+$checkedFolders = @($testFolder)
+if ($PreserveInstalledSnapshot) { $checkedFolders += $snapshotFolder }
+foreach ($folder in $checkedFolders) {
+  foreach ($property in $expectedProgram.files.PSObject.Properties) {
+    if (($folder.Length + 1 + $property.Name.Length) -gt 245) {
+      throw 'Installer test path is too deep for complete Windows PowerShell resource verification; choose a shorter TestRoot'
+    }
+  }
+}
 $regExe = (Get-Command reg.exe -ErrorAction Stop).Source
 if ($RunUI) { $nodeExe = (Get-Command node -ErrorAction Stop).Source }
 foreach ($path in $registryPaths) {
@@ -216,6 +233,11 @@ function Save-InstalledSnapshot {
     }
   }
   Assert-SnapshotPath $testFolder $testRootPath
+  # Full-tree comparison uses long-path-safe Python enumeration. A partial PS5
+  # listing must never turn a missing dependency or license into "verified".
+  $inventoryTool = Join-Path $PSScriptRoot 'program_inventory.py'
+  & $python -B $inventoryTool --root (Join-Path $deliveryRoot 'win-unpacked') --compare $testFolder --allow-uninstaller --report (Join-Path $testRootPath 'installed-resources.json')
+  if ($LASTEXITCODE -ne 0) { throw 'Installed resources differ from the full delivery tree' }
   $privateDirectories = @('userdata','cache','uiprofile','legacyarchive','privatearchive',
     'voice_profiles','logs','profile','profiles','__pycache__','.pytest_cache','.venv')
   $privateFiles = @('api-keys.json','fish-key.json','fish-settings.json','api-presets.json',
@@ -302,8 +324,8 @@ function Save-InstalledSnapshot {
     throw 'Installed snapshot build manifest copy mismatch'
   }
   $report.installed_snapshot.manifest_sha256 = $manifestHash
-  # 每个复制文件的摘要仅证明枚举与复制一致；构建清单只覆盖三项核心
-  # 文件。完整快照仍须单独执行公开产物审计，不能把此清单称为安全认证。
+  # Copy hashes are paired with the full delivery comparison below. This is
+  # content consistency, not a malware or code-signing certification.
   $inventoryPath = Join-Path $snapshotRoot 'installed-program-manifest.json'
   $inventory = [ordered]@{product='Companion Studio';version=$manifest.build.version;
     build_id=$manifest.build.build_id;build_manifest_sha256=$manifestHash;
@@ -313,6 +335,8 @@ function Save-InstalledSnapshot {
   [IO.File]::WriteAllText($inventoryPath,($inventory | ConvertTo-Json -Depth 6),$utf8)
   $report.installed_snapshot.inventory_sha256 = (Get-FileHash -LiteralPath $inventoryPath -Algorithm SHA256).Hash.ToLowerInvariant()
   $report.installed_snapshot.files = $files.Count
+  & $python -B $inventoryTool --root (Join-Path $deliveryRoot 'win-unpacked') --compare $snapshotFolder --report (Join-Path $snapshotRoot 'full-resource-inventory.json')
+  if ($LASTEXITCODE -ne 0) { throw 'Installed snapshot omitted or changed a program resource' }
   $report.installed_snapshot.verified = $true
   Save-TestReport
 }
@@ -423,6 +447,8 @@ try {
   }
   $installationStarted = $true
   & (Join-Path $PSScriptRoot 'install-companion-studio.ps1') -Delivery $deliveryRoot -ProductHome $testProductHome -DesktopDirectory $desktopDirectory -BackendPort $BackendPort -CurrentUserOnly
+  & $python -B $inventoryTool --root (Join-Path $deliveryRoot 'win-unpacked') --compare $testFolder --allow-uninstaller --report (Join-Path $testRootPath 'installed-resources.json')
+  if ($LASTEXITCODE -ne 0) { throw 'Installation omitted or changed a program resource' }
   $report.installation_verified = $true
   foreach ($path in $registryPaths) {
     if (-not (Assert-TestRegistration $path)) { throw 'Installer did not register its isolated destination' }

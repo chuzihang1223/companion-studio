@@ -107,8 +107,14 @@ def test_artifact_digest_and_build_identity_are_checked(qa):
     source = qa.review.source
     delivery = source / "delivery"
     delivery.mkdir()
+    (delivery / "win-unpacked").mkdir()
     artifacts = {}
-    for name in ("Setup.exe", "app.asar", "backend.exe", "app.exe"):
+    for name in (
+        "Setup.exe",
+        "win-unpacked/app.asar",
+        "win-unpacked/backend.exe",
+        "win-unpacked/app.exe",
+    ):
         target = delivery / name
         target.write_bytes(b"fixture-only")
         artifacts[name] = {"sha256": qa.module.sha(target)}
@@ -117,12 +123,13 @@ def test_artifact_digest_and_build_identity_are_checked(qa):
         "build": {"source_revision": "one", "build_id": "one", "version": "one"},
         "artifacts": artifacts,
         "source_hashes": {},
+        "program_files": qa.module.inventory(delivery / "win-unpacked"),
     }
     (delivery / "build-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     assert qa.module.artifact_key(source, delivery, manifest["build"])
     with pytest.raises(ValueError, match="Build does not belong"):
         qa.module.artifact_key(source, delivery, {**manifest["build"], "build_id": "another"})
-    (delivery / "app.asar").write_bytes(b"changed")
+    (delivery / "win-unpacked/app.asar").write_bytes(b"changed")
     with pytest.raises(ValueError, match="Artifact digest mismatch"):
         qa.module.artifact_key(source, delivery, manifest["build"])
 

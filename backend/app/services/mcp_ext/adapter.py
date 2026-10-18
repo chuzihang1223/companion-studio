@@ -114,10 +114,14 @@ class MCPToolAdapter:
                 raise MCPError(code)
             if row.get("output_schema") and result["structured_data"] is not None:
                 from jsonschema import Draft202012Validator, ValidationError
+                from jsonschema_specifications import REGISTRY
+                from referencing.exceptions import Unresolvable
 
                 try:
-                    Draft202012Validator(row["output_schema"]).validate(result["structured_data"])
-                except ValidationError:
+                    Draft202012Validator(row["output_schema"], registry=REGISTRY).validate(
+                        result["structured_data"]
+                    )
+                except (ValidationError, Unresolvable):
                     raise MCPError() from None
             result["protocol_success"] = True
             if call["side_effect_class"] != "READ_ONLY":

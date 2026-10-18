@@ -8,6 +8,8 @@ from pathlib import Path
 import subprocess
 import time
 
+from program_inventory import inventory
+
 
 REQUIRED = {
     "A": {"source-history-audit", "independent-review"},
@@ -86,6 +88,11 @@ def artifact_key(source, delivery, identity):
         observed[name] = sha(safe_file(delivery, name))
         require(observed[name] == details["sha256"], "Artifact digest mismatch")
     require(len(observed) >= 4, "Missing core artifacts")
+    require(
+        bool(manifest.get("program_files"))
+        and inventory(delivery / "win-unpacked") == manifest["program_files"],
+        "Full program resources differ from build manifest",
+    )
     for name, digest in manifest["source_hashes"].items():
         require(sha(safe_file(source, name)) == digest, "Build/source content mismatch")
     return hashlib.sha256(
@@ -290,6 +297,9 @@ class Evidence:
             "Installed snapshot path outside QA",
         )
         manifest = read(self.delivery / "build-manifest.json")
+        require(
+            inventory(program) == manifest["program_files"], "Installed program resources differ"
+        )
         for name, details in manifest["artifacts"].items():
             relative = name.replace("\\", "/")
             if relative.startswith("win-unpacked/"):

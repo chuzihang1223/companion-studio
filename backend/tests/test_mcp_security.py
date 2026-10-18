@@ -15,6 +15,24 @@ from app.services.trusted_actions import TrustedActionStore, action_for, risk_fo
 from test_mcp_connection import host, config
 
 
+def test_missing_packaged_meta_schema_fails_without_remote_retrieval(monkeypatch):
+    import urllib.request
+    import jsonschema.validators
+    from jsonschema_specifications import REGISTRY
+    from app.services.mcp_ext import registry
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Schema validation attempted remote retrieval")
+
+    monkeypatch.setattr(urllib.request, "urlopen", forbidden)
+    validate_schema({"type": "object", "properties": {"text": {"type": "string"}}})
+    incomplete = REGISTRY.remove("https://json-schema.org/draft/2020-12/meta/format-annotation")
+    monkeypatch.setattr(registry, "SPECIFICATIONS", incomplete)
+    monkeypatch.setattr(jsonschema.validators, "SPECIFICATIONS", incomplete)
+    with pytest.raises(MCPError, match="MCP_SCHEMA_UNSUPPORTED"):
+        validate_schema({"type": "object"})
+
+
 def test_authenticated_metadata_cannot_echo_credentials_into_sqlite(tmp_path):
     async def run():
         manager = host(tmp_path)

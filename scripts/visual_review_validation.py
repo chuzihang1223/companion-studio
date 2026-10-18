@@ -23,11 +23,30 @@ def validate(args, review_class):
             "backend/tests/test_visual_review_evidence.py",
             "docs/AUTOMATED_QUALITY_GATES.md",
             "docs/COMPUTER_USE_EVALUATION.md",
+            "scripts/program_inventory.py",
+            "scripts/test-installer.ps1",
+            "scripts/build-companion-studio.ps1",
+            "backend/tests/test_program_inventory.py",
         }
         require(required.issubset(hashes), "QA review does not cover current gate implementation")
         require(
             all(sha(safe_file(source, name)) == digest for name, digest in hashes.items()),
             "QA implementation changed after independent review",
+        )
+        followup = value.get("packaging_schema", {})
+        product_hashes = followup.get("source_hashes", {})
+        require(
+            followup.get("status") == "PASS"
+            and {
+                "backend/app/services/mcp_ext/registry.py",
+                "backend/app/services/mcp_ext/adapter.py",
+                "backend/tests/test_mcp_security.py",
+            }.issubset(product_hashes),
+            "Offline schema followup review missing",
+        )
+        require(
+            all(sha(safe_file(source, name)) == digest for name, digest in product_hashes.items()),
+            "Product followup changed after review",
         )
         reviewed = value["runtime"]["reviewed_revision"]
         subprocess.run(
@@ -40,6 +59,7 @@ def validate(args, review_class):
             all(
                 name.startswith(("scripts/", "tests/", "docs/", "backend/tests/"))
                 or name == "README.md"
+                or name in product_hashes
                 for name in later
             ),
             "Product changed after independent review",

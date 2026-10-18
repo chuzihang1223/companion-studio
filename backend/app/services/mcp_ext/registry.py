@@ -6,6 +6,8 @@ import json
 import re
 
 from jsonschema import Draft202012Validator, ValidationError, SchemaError
+from jsonschema_specifications import REGISTRY as SPECIFICATIONS
+from referencing.exceptions import Unresolvable
 
 from app.services.mcp_ext.contracts import MCPError, RISKS, bounded_json, digest
 from app.services.mcp_ext.events import emit
@@ -32,8 +34,16 @@ def validate_schema(schema):
 
     walk(schema)
     try:
-        Draft202012Validator.check_schema(schema)
-    except SchemaError:
+        # The classmethod's default registry may fetch missing meta-schemas.
+        # A packaged resource omission must fail locally, never block on URLs.
+        validator = Draft202012Validator(
+            Draft202012Validator.META_SCHEMA,
+            registry=SPECIFICATIONS,
+            format_checker=Draft202012Validator.FORMAT_CHECKER,
+        )
+        for error in validator.iter_errors(schema):
+            raise SchemaError.create_from(error)
+    except (SchemaError, Unresolvable):
         raise MCPError("MCP_SCHEMA_UNSUPPORTED") from None
 
 
@@ -142,8 +152,8 @@ class ExternalToolRegistry:
         row = self.get(key)
         bounded_json(arguments, limit=16000)
         try:
-            Draft202012Validator(row["input_schema"]).validate(arguments)
-        except ValidationError:
+            Draft202012Validator(row["input_schema"], registry=SPECIFICATIONS).validate(arguments)
+        except (ValidationError, Unresolvable):
             raise MCPError("MCP_ARGUMENT_INVALID") from None
         return {
             "id": call_id,
