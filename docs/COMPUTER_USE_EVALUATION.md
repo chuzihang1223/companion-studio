@@ -9,8 +9,8 @@ Fixture 是 MIT 原创 WPF 小程序，随源码/安装包提供，依靠 Window
 QA 启动器必须在**全新空档案**写入固定用途 marker，并在进程启动前设置 `COMPANION_VISUAL_QA_PROFILE=1`。正式档案不能通过 API 切成 QA。原生对话框取得短期 QA consent，只能打开固定 Fixture，调用仍经过真实 Runtime 和原 Windows worker。
 
 ```powershell
-# 在项目根目录；不启动正式用户档案
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/review-visual-computer-use.ps1
+# 在项目根目录；正式档案只做摘要保护，不会启动或复制到测试
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/review-visual-computer-use.ps1 -ProtectedProfile '<本产品正式目录>\UserData'
 ```
 
 每项执行有自身/批次截止时间，取消当前项记录 CANCELLED 并保留 Trace，未启动项 NOT_RUN。清理失败是 FAIL，不能保留此前 PASS 分数。Native 快照明确原生 bridge 与隔离档案，不冒充 worker.db 进程隔离。

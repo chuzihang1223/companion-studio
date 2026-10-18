@@ -14,6 +14,18 @@
 
 每次命令写入 gate_id、status、command、started_at、completed_at、exit_code、evidence_path、findings。汇总读取实际报告，不凭文件存在或文案声称 PASS；FAIL、BLOCKED、NOT_RUN 都保留。
 
+完整执行必须明确提供要保护的本产品正式档案，入口在运行耗时检查前验证参数：
+
+```powershell
+.\scripts\review-visual-computer-use.ps1 -Phase all -ProtectedProfile '<本产品正式目录>\UserData'
+```
+
+每条证据绑定干净的 Git 修订、源码目录、版本、BuildId、正式档案规范路径；安装相关检查还绑定 manifest 与真实发行文件摘要。旧修订、旧构建的结果保留为历史，不计入当前门。每次尝试在启动前保存 NOT_RUN，失败或中断覆盖该标签的旧 PASS；只有所有必需项均为 PASS 才通过。禁止以优化模式 Python 执行审核，校验不依赖可被优化删除的 assert。
+
+档案保护只计算文件摘要，基线摘要与规范路径一同绑定，不能切换到内容相同的另一目录。`source-gui` 使用本仓库锁定 Electron；安装测试先运行真实安装后的程序，随后从卸载前保留、核对发行核心摘要的安装副本执行 Computer Use 及 Skill 01–06 GUI 回归。安装阶段不会回退到源码 Electron。
+
+独立 QA 复审报告同时记录被审查入口、证据聚合、校验器及边界测试的源码摘要；最终门会重新核对，修改这些实现后必须更新复审证据。
+
 默认执行不使用付费模型，不发送私人图片，不写正式聊天库，不改变 DPI 或系统安全设置。安装测试会按原隔离脚本备份/恢复必要安装注册信息，只操作自有测试进程。代码签名、缺少的物理显示条件和外部视觉模型不能被模拟测试替代。
 
 `READY_FOR_RELEASE_REVIEW` 只是适用门通过的受限候选，不代表获得公开发布许可；关键安全或安装问题则 BLOCKED，缺少尚可执行证据则 INCOMPLETE。独立 review 与复测的结论一同保存。默认不推送、打标签、合并 main 或发布 Release。
