@@ -277,8 +277,10 @@ async function run() {
   memories = (await read('memories', { ...scope, scope: 'CONVERSATION', owner_id: owner }))
     .memories;
   driver.check(
-    memories.length === 1 && memories[0].content.includes('给出来源'),
-    'Restart preserves edited scoped memory',
+    memories.length === 1 &&
+      memories[0].content.includes('给出来源') &&
+      memories[0].enabled === false,
+    'Restart preserves edited scoped memory and its disabled status',
   );
   const response = await fetch(driver.base + '/api/conversations', {
     method: 'POST',
