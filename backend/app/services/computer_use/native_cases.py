@@ -206,6 +206,9 @@ async def verify_case(f, index):
             current = service.repository.run(run["run_id"], f.owner)
             if current["state"] == "WAITING_PERMISSION":
                 pending = next(n["pending"] for n in current["nodes"] if n.get("pending"))
+                # Reproduce a real approval click foregrounding Studio, rather
+                # than keeping the fixture conveniently focused throughout QA.
+                await f.fixture_command("foreground_studio")
                 service.approve(run["run_id"], f.owner, pending["approval_id"], True)
             if current["state"] in {"COMPLETED", "FAILED", "CANCELLED", "NEEDS_REVIEW"}:
                 return current["state"] == "COMPLETED"

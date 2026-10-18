@@ -52,7 +52,20 @@ class Review:
     def save(self):
         required = {
             "A": {"source-history-audit"},
-            "B": {"full-check"},
+            "B": {
+                "full-check",
+                *{
+                    f"installed-{name}"
+                    for name in (
+                        "trace",
+                        "evaluation",
+                        "recovery",
+                        "extensions",
+                        "workflow",
+                        "knowledge",
+                    )
+                },
+            },
             "C": {"computer-security-tests", "computer-main-security"},
             "D": {"source-gui", "installed-gui"},
             "E": {"source-performance", "installed-performance"},
@@ -303,6 +316,27 @@ class Review:
         )
         shutil.copyfile(test / "installer-test-report.json", self.root / "installer-result.json")
         self.gui(installed=True)
+        report = read(self.root / "installer-result.json")
+        exe = Path(report["installed_snapshot"]["program"]) / "CompanionStudio.exe"
+        for name, filename in [
+            ("trace", "trace-viewer-e2e.cjs"),
+            ("evaluation", "evaluation-e2e.cjs"),
+            ("recovery", "recovery-e2e.cjs"),
+            ("extensions", "extensions-e2e.cjs"),
+            ("workflow", "workflow-e2e.cjs"),
+            ("knowledge", "knowledge-e2e.cjs"),
+        ]:
+            home = self.root / ("regression-" + name)
+            self.step(
+                "B",
+                "installed-" + name,
+                [self.node, "tests/ui/" + filename],
+                env={
+                    "COMPANION_TEST_SOURCE": "",
+                    "COMPANION_TEST_EXE": str(exe),
+                    "COMPANION_TEST_HOME": str(home),
+                },
+            )
 
     def final(self):
         self.step(

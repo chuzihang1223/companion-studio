@@ -84,7 +84,8 @@ async function run() {
   await driver.launch();
   const info = await driver.c.evaluate('window.desktopAPI.appInfo()');
   driver.check(
-    info.version === '0.2.0-knowledge.1' && info.packaged === !driver.source,
+    info.version === require('../../desktop/package.json').version &&
+      info.packaged === !driver.source,
     'Actual candidate identity and package boundary',
     { version: info.version, packaged: info.packaged },
   );

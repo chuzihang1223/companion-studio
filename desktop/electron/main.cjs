@@ -907,7 +907,7 @@ if (haveLock)
         privateBackend('/api/computer/owner', scope),
       );
       desktopAgent.computerUse = computerUse;
-      visualQA = new (require('./visual-qa.cjs').VisualQA)(computerUse, paths);
+      visualQA = new (require('./visual-qa.cjs').VisualQA)(computerUse, paths, () => mainWindow);
       desktopAgent.visualQA = visualQA;
       mediaService = new MediaSessionService({
         controller: desktopAgent.controller,

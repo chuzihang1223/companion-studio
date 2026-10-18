@@ -7,11 +7,12 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Review-profile-only original fixture. No caller supplies a program, script,
  * path or coordinates. The real controller and normal window grant are reused. */
 class VisualQA {
-  constructor(computer, paths) {
+  constructor(computer, paths, ownerWindow = () => null) {
     this.computer = computer;
     this.paths = paths;
     this.consents = new Map();
     this.instances = new Map();
+    this.ownerWindow = ownerWindow;
   }
   authorize() {
     if (process.env.COMPANION_VISUAL_QA_PROFILE !== '1')
@@ -71,6 +72,15 @@ class VisualQA {
       await this.computer.controller.call(instance.app, 'close', {
         handle: instance.window.handle,
       });
+      return { verified: true };
+    }
+    if (operation === 'foreground_studio') {
+      const window = this.ownerWindow();
+      if (!window || window.isDestroyed()) throw Error('VISUAL_QA_UI_UNAVAILABLE');
+      window.show();
+      window.focus();
+      await wait(100);
+      if (!window.isFocused()) throw Error('VISUAL_QA_UI_FOCUS_FAILED');
       return { verified: true };
     }
     if (operation === 'blur') {

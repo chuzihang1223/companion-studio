@@ -96,6 +96,38 @@ def test_scheduler_cancel_stops_queue_even_if_cleanup_failed(tmp_path, monkeypat
     asyncio.run(run())
 
 
+def test_native_deadline_cancels_its_original_workflow_child(tmp_path, monkeypatch):
+    from workflow_fixture import start, graph
+
+    async def run():
+        async with host(tmp_path) as (app, _, _):
+            monkeypatch.setattr(native_evaluation, "enabled", lambda: True)
+
+            async def fixture(*args):
+                return {"target_id": str(uuid4()), "fixture_id": str(uuid4()), "verified": True}
+
+            async def tool(*args):
+                return {"verified": True}
+
+            async def verify(f, *args):
+                key = start(
+                    app, f.owner, graph("human_approval", {"message": "Synthetic approval"})
+                )
+                f.workflow_runs.append(key)
+                await asyncio.sleep(60)
+
+            monkeypatch.setattr(native_evaluation.NativeComputerCase, "fixture_command", fixture)
+            monkeypatch.setattr(native_evaluation.NativeComputerCase, "tool", tool)
+            monkeypatch.setattr(native_evaluation, "verify_case", verify)
+            value = await native_evaluation.run_case(
+                app, SimpleNamespace(case_id="CU-023"), str(uuid4()), 0.2
+            )
+            assert value["result"]["completion_status"] == "UNKNOWN"
+            assert not app.state.workflows.tasks and not app.state.workflows.approvals
+
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize("termination", ["timeout", "cancel", "cleanup", "cancel_cleanup"])
 def test_native_case_deadline_cleanup_and_trace(tmp_path, monkeypatch, termination):
     async def run():

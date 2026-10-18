@@ -98,8 +98,11 @@ async function run() {
   await driver.click('定位元素', "document.querySelector('.visual-observer')");
   await idle();
   await driver.field('.visual-observer [aria-label="视觉输入内容"]', 'Local QA');
-  await driver.m.evaluate(
-    "(()=>{const w=require('electron').BrowserWindow.getAllWindows().find(w=>!w.isDestroyed());w.show();w.focus();return true})()",
+  driver.check(
+    await driver.m.evaluate(
+      "(()=>{const w=require('electron').BrowserWindow.getAllWindows().find(w=>!w.isDestroyed());w.show();w.focus();return w.isFocused()})()",
+    ),
+    'Native Studio is foregrounded before approved input',
   );
   await driver.click('输入并验证', "document.querySelector('.visual-observer')");
   await idle();
@@ -113,8 +116,11 @@ async function run() {
   await driver.field('.visual-observer [aria-label="预期文字"]', 'Local QA');
   await driver.click('定位元素', "document.querySelector('.visual-observer')");
   await idle();
-  await driver.m.evaluate(
-    "(()=>{const w=require('electron').BrowserWindow.getAllWindows().find(w=>!w.isDestroyed());w.show();w.focus();return true})()",
+  driver.check(
+    await driver.m.evaluate(
+      "(()=>{const w=require('electron').BrowserWindow.getAllWindows().find(w=>!w.isDestroyed());w.show();w.focus();return w.isFocused()})()",
+    ),
+    'Native Studio is foregrounded before approved click',
   );
   await driver.click('点击并验证', "document.querySelector('.visual-observer')");
   await idle();
