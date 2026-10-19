@@ -17,7 +17,9 @@ async function run() {
   );
   await driver.launch();
   driver.check(
-    (await driver.c.evaluate('window.desktopAPI.appInfo()')).version === '0.2.0-visual.1',
+    (await driver.c.evaluate('window.desktopAPI.appInfo()')).version ===
+      JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../desktop/package.json'), 'utf8'))
+        .version,
     'Actual visual candidate identity',
   );
   await driver.m.evaluate(

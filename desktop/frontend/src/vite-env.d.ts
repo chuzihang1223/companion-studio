@@ -2,6 +2,22 @@
 
 interface Window {
   desktopAPI?: {
+    readSchedules: <K extends keyof import('./scheduling/types').Reads>(
+      operation: K,
+      options?: Record<string, unknown>,
+    ) => Promise<import('./scheduling/types').Reads[K]>;
+    controlSchedules: (
+      operation: import('./scheduling/types').Operation,
+      options?: Record<string, unknown>,
+    ) => Promise<unknown>;
+    schedulerBackground: (options?: {
+      enabled?: boolean;
+      hide?: boolean;
+    }) => Promise<import('./scheduling/types').Background>;
+    schedulerNavigation: () => Promise<import('./scheduling/types').Navigation | null>;
+    onSchedulerNavigate: (
+      callback: (target: import('./scheduling/types').Navigation) => void,
+    ) => () => void;
     computerQAConsent: () => Promise<string>;
     computerQAFixture: (
       options: Record<string, unknown>,

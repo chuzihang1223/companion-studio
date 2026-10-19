@@ -40,6 +40,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
         self.recovery = WorkflowCheckpointAdapter(app, self.repository)
         self.tasks, self.approvals, self.pauses = {}, {}, {}
         self.closing = False
+        self.interrupting = set()
         from app.services.evaluation.engine import build_identity
 
         self.build_identity = build_identity()
@@ -60,7 +61,18 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             return None  # New Work conversations need no pre-existing Agent operation.
         return selected.get("workspace_root")
 
-    def start(self, workflow_id, version_id, conversation_id, inputs, renderer_id):
+    def start(
+        self,
+        workflow_id,
+        version_id,
+        conversation_id,
+        inputs,
+        renderer_id,
+        *,
+        run_id=None,
+        schedule_occurrence_id=None,
+        schedule_lease_token=None,
+    ):
         workspace = self.scope(conversation_id)
         if self.repository.get(workflow_id)["definition"]["status"] == "ARCHIVED":
             raise WorkflowError("WORKFLOW_ARCHIVED", status=409)
@@ -76,7 +88,14 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             raise WorkflowError("WORKFLOW_QUEUE_FULL", status=409)
         snapshot = execution_snapshot(self.app, definition, self.build_identity)
         run_id = self.repository.create_run(
-            definition, version_id, conversation_id, inputs, renderer_id
+            definition,
+            version_id,
+            conversation_id,
+            inputs,
+            renderer_id,
+            run_id=run_id,
+            schedule_occurrence_id=schedule_occurrence_id,
+            schedule_lease_token=schedule_lease_token,
         )
         session = self.app.state.work_state.create(
             "Workflow · " + definition.name, conversation_id, [], workspace
@@ -159,7 +178,16 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
                     )
                     emit("WORKFLOW_VALIDATED", run)
                     async with asyncio.timeout(
-                        max(
+                        min(
+                            self.app.state.scheduler.remaining_timeout(run),
+                            max(
+                                0.05,
+                                definition.budget.max_duration_seconds
+                                - run.get("active_ms", 0) / 1000,
+                            ),
+                        )
+                        if run.get("schedule_occurrence_id")
+                        else max(
                             0.05,
                             definition.budget.max_duration_seconds - run.get("active_ms", 0) / 1000,
                         )
@@ -191,7 +219,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
         except BaseException as error:
             state = (
                 "INTERRUPTED"
-                if self.closing
+                if self.closing or run_id in self.interrupting
                 else "CANCELLED"
                 if isinstance(error, asyncio.CancelledError)
                 else "NEEDS_REVIEW"
@@ -201,7 +229,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             )
             code = (
                 "PROCESS_RESTARTED"
-                if self.closing
+                if self.closing or run_id in self.interrupting
                 else "CANCELLED"
                 if state == "CANCELLED"
                 else "TIMEOUT"
@@ -217,13 +245,13 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             self.app.state.work_state.emit(
                 run["work_session_id"],
                 "task_interrupted"
-                if self.closing
+                if self.closing or run_id in self.interrupting
                 else "task_cancelled"
                 if state == "CANCELLED"
                 else "task_failed",
                 {"summary": "工作流未完成", "run_id": run_id, "code": code},
                 status="interrupted"
-                if self.closing
+                if self.closing or run_id in self.interrupting
                 else "cancelled"
                 if state == "CANCELLED"
                 else "failed",

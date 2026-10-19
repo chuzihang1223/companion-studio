@@ -43,6 +43,11 @@ class WorkflowRuntimeBridge:
             raise WorkflowError("PERMISSION_DENIED", node.node_id)
         call["risk_level"] = risk
         call["requires_confirmation"] = not trusted_actions.allowed(action)
+        if run.get("schedule_occurrence_id"):
+            from app.services.scheduling.permissions import ScheduledPermissionAdapter
+
+            if not ScheduledPermissionAdapter.safe(node):
+                call["requires_confirmation"] = True
         work = self.app.state.work_state
         session = work.create(
             "Workflow node · " + node.title, run["conversation_id"], [call], workspace
@@ -74,6 +79,7 @@ class WorkflowRuntimeBridge:
             context.retry_max_attempts = (
                 node.retry_policy.max_attempts if node.retry_policy.strategy == "safe_read" else 1
             )
+            context.workflow_run_id = run["run_id"]
             stored = {
                 "plan_id": task_id,
                 "character_id": context.character_id,
@@ -138,6 +144,9 @@ class WorkflowRuntimeBridge:
             async with self.app.state.runtime_registry.run(
                 context.task_id, context.conversation_id, session, context.renderer_id
             ):
+                guard = getattr(context, "scheduled_guard", None)
+                if guard:
+                    guard()
                 work.decide(session, approved)
                 _, details, verified = await runtime.run(context, approved)
                 if len(details) != 1 or details[0]["status"] != "done":
@@ -163,6 +172,8 @@ class WorkflowRuntimeBridge:
                 context.task_id,
                 "INTERRUPTED"
                 if self.app.state.workflows.closing
+                or getattr(context, "workflow_run_id", None)
+                in self.app.state.workflows.interrupting
                 else "CANCELLED"
                 if isinstance(error, asyncio.CancelledError)
                 else "NEEDS_REVIEW",

@@ -42,6 +42,11 @@ class WorkflowNodeRunner:
                     event="WORKFLOW_NODE_STARTED",
                 )
                 async with asyncio.timeout(node.timeout):
+                    if run.get("schedule_occurrence_id"):
+                        scheduler = getattr(self.app.state, "scheduler", None)
+                        if not scheduler:
+                            raise WorkflowError("SCHEDULE_RUNTIME_UNAVAILABLE", node.node_id)
+                        scheduler.authorize_node(run, node)
                     from app.services.knowledge.runtime import workflow_provenance
 
                     tainted, refs = workflow_provenance(self.app, compiled, run, node)
@@ -82,6 +87,13 @@ class WorkflowNodeRunner:
                             ),
                             limit=16000,
                         )
+                        if (
+                            run.get("schedule_occurrence_id")
+                            and node.type == "tool"
+                            and node.config.get("name") == "knowledge.search"
+                            and arguments.get("mode", "keyword") != "keyword"
+                        ):
+                            raise WorkflowError("SCHEDULE_KEYWORD_SEARCH_REQUIRED", node.node_id)
                         agent, pending = self.bridge.prepare(
                             run, node, arguments, run.get("workspace")
                         )
@@ -99,6 +111,11 @@ class WorkflowNodeRunner:
                         if pending["call"]["requires_confirmation"]:
                             await self.wait_permission(run, node, row, pending)
                             approved = {pending["call"]["id"]}
+                        if run.get("schedule_occurrence_id"):
+                            self.app.state.scheduler.authorize_node(run, node)
+                            agent.scheduled_guard = lambda: self.app.state.scheduler.authorize_node(
+                                run, node
+                            )
                         self.repository.change(
                             run_id,
                             owner,
@@ -129,6 +146,10 @@ class WorkflowNodeRunner:
                             },
                         )
                     else:
+                        if run.get("schedule_occurrence_id"):
+                            context["scheduled_guard"] = lambda: (
+                                self.app.state.scheduler.authorize_node(run, node)
+                            )
                         if node.type in {"llm_agent", "agent_skill"}:
                             if run["model_calls"] >= compiled.definition.budget.max_model_calls:
                                 raise WorkflowError("WORKFLOW_MODEL_BUDGET", node.node_id)
@@ -177,7 +198,7 @@ class WorkflowNodeRunner:
             )
             state = (
                 "INTERRUPTED"
-                if self.closing
+                if self.closing or run_id in self.interrupting
                 else "CANCELLED"
                 if isinstance(error, asyncio.CancelledError)
                 else "FAILED"
@@ -206,7 +227,16 @@ class WorkflowNodeRunner:
             if (
                 not routed
                 or isinstance(error, asyncio.CancelledError)
-                or code in {"PERMISSION_DENIED", "MCP_SIDE_EFFECT_UNKNOWN"}
+                or code
+                in {
+                    "PERMISSION_DENIED",
+                    "MCP_SIDE_EFFECT_UNKNOWN",
+                    "SIDE_EFFECT_UNCERTAIN",
+                    "ACTION_STATE_UNKNOWN",
+                    "SCHEDULE_PERMISSION_REQUIRED",
+                    "SCHEDULE_EXECUTION_REVOKED",
+                    "SCHEDULE_DEPENDENCY_CHANGED",
+                }
             ):
                 raise
         finally:
@@ -224,7 +254,7 @@ class WorkflowNodeRunner:
                     self.app.state.checkpoint_manager.settle(
                         agent.task_id,
                         "INTERRUPTED"
-                        if self.closing
+                        if self.closing or run_id in self.interrupting
                         else "CANCELLED"
                         if record["state"] == "CANCELLED"
                         else "NEEDS_REVIEW",

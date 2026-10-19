@@ -55,6 +55,8 @@ import MessageItem from './MessageItem';
 import MusicCenter from './MediaCenterPage';
 import Workbench from './Workbench';
 import KnowledgePanel from './knowledge/KnowledgePanel';
+import ScheduledTasks from './scheduling/ScheduledTasks';
+import type { Navigation as SchedulerNavigation } from './scheduling/types';
 import AppSettings from './AppSettings';
 import CharacterPage from './CharacterPage';
 import FirstRunGuide from './FirstRunGuide';
@@ -140,6 +142,30 @@ export default function AppV3() {
     musicOpen ? 'music' : agentMode === 'agent' ? 'work' : 'chat',
   );
   const presence = usePresence();
+  const [schedulerTarget, setSchedulerTarget] = useState<SchedulerNavigation | null>(null);
+  useEffect(() => {
+    setSchedulerTarget(null);
+  }, [activeId]);
+  const schedulerNavigateRef = useRef((target: SchedulerNavigation) => {
+    setSchedulerTarget(target);
+    setPanel('schedules');
+  });
+  schedulerNavigateRef.current = (target) => {
+    setSchedulerTarget(target);
+    setPanel('schedules');
+  };
+  useEffect(() => {
+    const api = window.desktopAPI;
+    if (!api?.onSchedulerNavigate) return;
+    const stop = api.onSchedulerNavigate((target) => schedulerNavigateRef.current(target));
+    void api
+      .schedulerNavigation()
+      .then((target) => {
+        if (target) schedulerNavigateRef.current(target);
+      })
+      .catch(() => {});
+    return stop;
+  }, []);
   const [agentStatus, setAgentStatus] = useState('');
   const [desktopActionStatus, setDesktopActionStatus] = useState('');
   const [agentDetails, setAgentDetails] = useState<Record<string, AgentResult['tools']>>({});
@@ -2003,6 +2029,17 @@ export default function AppV3() {
         />
 
         <FirstRunGuide refresh={panel} onConfigure={() => setPanel('settings')} />
+        {panel === 'schedules' && (
+          <ScheduledTasks
+            conversationId={activeId}
+            navigation={schedulerTarget}
+            visible
+            onBack={() => {
+              setSchedulerTarget(null);
+              setPanel(null);
+            }}
+          />
+        )}
         {panel === 'knowledge' && (
           <KnowledgePanel
             key={activeId || 'knowledge'}

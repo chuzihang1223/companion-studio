@@ -12,8 +12,8 @@
     },
     {
       "path": "licenses/inventory.json",
-      "sha256": "0d73e7effc3f1f7fe716777b3c2c64e593a5f5d1cb9d99d32dcf3195f1d8d0ff",
-      "bytes": 59438
+      "sha256": "f5155c8bb8b7d2911b3f38901d52a3680988234361937f0fda770b1953999adc",
+      "bytes": 60137
     },
     {
       "path": "licenses/MPL-2.0.txt",
@@ -519,6 +519,16 @@
       "path": "licenses/python/typing-inspection-0.4.4/licenses/LICENSE",
       "sha256": "804b59b25f2c31bd278f9202a19ae49a3945aa2664387e2d0a128c7cacc61ec3",
       "bytes": 1090
+    },
+    {
+      "path": "licenses/python/tzdata-2026.5/licenses/LICENSE",
+      "sha256": "df58f69ea88683035d720b5375bcef0cf5aeaa98a1d098d572e0992c378deb46",
+      "bytes": 625
+    },
+    {
+      "path": "licenses/python/tzdata-2026.5/licenses/licenses/LICENSE_APACHE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
     },
     {
       "path": "licenses/python/uvicorn-0.53.0/licenses/LICENSE.md",

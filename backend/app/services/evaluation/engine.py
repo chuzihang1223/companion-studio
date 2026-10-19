@@ -157,6 +157,8 @@ class AgentEvaluationEngine:
                     "python": platform.python_version(),
                     "fixture": "studio-fixture-v1"
                     if self.registry.dataset_id == "studio-core"
+                    else "scheduler-fixture-v1"
+                    if self.registry.dataset_id == "scheduler-core"
                     else "recovery-fixture-v1"
                     if self.registry.dataset_id == "recovery-core"
                     else "workflow-fixture-v1"

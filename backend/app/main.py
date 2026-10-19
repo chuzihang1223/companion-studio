@@ -58,10 +58,12 @@ from app.api.workflows import router as workflows_router
 from app.services.workflows.coordinator import WorkflowCoordinator
 from app.services.knowledge.service import KnowledgeService
 from app.api.knowledge import router as knowledge_router
+from app.api.schedules import router as schedules_router
+from app.services.scheduling.coordinator import DurableScheduler
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def services_lifespan(app: FastAPI):
     import asyncio
 
     migrate(engine)
@@ -161,22 +163,29 @@ async def lifespan(app: FastAPI):
         import logging
 
         logging.getLogger(__name__).warning("knowledge_initialization_unavailable")
+    app.state.scheduler = None
+    try:
+        if app.state.workflows:
+            app.state.scheduler = DurableScheduler(app)
+            app.state.scheduler.start()
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("scheduler_initialization_unavailable")
     try:
         yield
     finally:
-        if app.state.knowledge:
-            await app.state.knowledge.close()
-        if app.state.workflows:
-            await app.state.workflows.close()
-        if app.state.recovery:
-            await app.state.recovery.close()
-        if app.state.evaluation:
-            await app.state.evaluation.close()
+        from app.core.shutdown import close_service
+
+        for name in ("scheduler", "knowledge", "workflows", "recovery", "evaluation"):
+            value = getattr(app.state, name, None)
+            if value:
+                await close_service(value.close, name)
         runtime_watchdog.cancel()
         await asyncio.gather(runtime_watchdog, return_exceptions=True)
-        await app.state.runtime_registry.close()
+        await close_service(app.state.runtime_registry.close, "runtime_registry")
         if app.state.mcp_connections:
-            await app.state.mcp_connections.close()
+            await close_service(app.state.mcp_connections.close, "mcp_connections")
         tasks = list(getattr(app.state, "live_voice_tasks", set()))
         for task in tasks:
             task.cancel()
@@ -184,18 +193,28 @@ async def lifespan(app: FastAPI):
             import asyncio
 
             await asyncio.gather(*tasks, return_exceptions=True)
-        app.state.desktop_bridge.close()
-        await app.state.voice_jobs.stop()
-        app.state.native_player.stop()
-        app.state.voice_client.stop()
-        await app.state.fish_voice.aclose()
+        await close_service(app.state.desktop_bridge.close, "desktop_bridge")
+        await close_service(app.state.voice_jobs.stop, "voice_jobs")
+        await close_service(app.state.native_player.stop, "native_player")
+        await close_service(app.state.voice_client.stop, "voice_client")
+        await close_service(app.state.fish_voice.aclose, "fish_voice")
         if trace_store:
-            await trace_store.stop()
+            await close_service(trace_store.stop, "trace_store")
 
 
 from app.api.presence import router as presence_router
 from app.api.voice_pcm import router as voice_pcm_router
 from app.api.virtual_documents import router as virtual_documents_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.core.profile_lock import profile_owner
+
+    with profile_owner(settings.data_root):
+        async with services_lifespan(app):
+            yield
+
 
 app = FastAPI(title=os.getenv("COMPANION_APP_NAME", "Companion Studio") + " API", lifespan=lifespan)
 app.add_middleware(
@@ -219,6 +238,7 @@ app.include_router(recovery_router)
 app.include_router(extensions_router)
 app.include_router(workflows_router)
 app.include_router(knowledge_router)
+app.include_router(schedules_router)
 from app.api.computer_use import router as computer_use_router
 
 app.include_router(computer_use_router)

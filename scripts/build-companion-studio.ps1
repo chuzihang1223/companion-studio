@@ -103,7 +103,7 @@ $characters = Join-Path $build 'characters'
 New-Item -ItemType Directory -Path $characters | Out-Null
 Copy-Item -LiteralPath (Join-Path $project 'characters\assistant.json') -Destination $characters
 $backend = Join-Path $build 'backend'
-$arguments = @('-m','PyInstaller','--noconfirm','--clean','--onedir','--noconsole','--hidden-import','_cffi_backend','--name','companion-backend',
+$arguments = @('-m','PyInstaller','--noconfirm','--clean','--onedir','--noconsole','--hidden-import','_cffi_backend','--collect-data','tzdata','--name','companion-backend',
   '--paths',(Join-Path $project 'backend'),'--add-data',($characters+';characters'),
   '--add-data',($frontend+';desktop/frontend/dist'),
   '--add-data',((Join-Path $appStage 'electron\build-info.json')+';.'),

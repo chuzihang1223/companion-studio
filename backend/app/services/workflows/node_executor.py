@@ -153,8 +153,11 @@ class NodeExecutor:
             except KnowledgeError as error:
                 raise WorkflowError(error.code, node.node_id) from None
             service = GroundedService(knowledge, service, sources, owner, character_id, None)
+            service.dispatch_guard = context.get("scheduled_guard")
         # 热切换可能改变后续节点的实际模型；同时记录实际服务，不能只看运行起点的快照。
         context["observed_model"] = model_metadata(service)
+        if context.get("scheduled_guard"):
+            context["scheduled_guard"]()
         result = await service.chat(prompt)
         if not isinstance(result, str) or len(result) > min(
             config.get("max_characters", 16000), 32000

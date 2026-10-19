@@ -46,6 +46,8 @@ SPDX_FALLBACK = {
     "python-dotenv": "BSD-3-Clause",
     "pywin32-ctypes": "BSD-3-Clause",
     "sqlalchemy": "MIT",
+    # tzdata 2026.5 has legacy License metadata and includes both Apache notices.
+    "tzdata": "Apache-2.0",
 }
 
 

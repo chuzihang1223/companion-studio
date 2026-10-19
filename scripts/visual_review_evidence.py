@@ -151,8 +151,14 @@ class Evidence:
             else:
                 current.append(row)
         gates = []
-        for gate, required in REQUIRED.items():
-            latest = {row["label"]: row for row in current if row["gate_id"] == gate}
+        for gate, required in getattr(self, "required_gates", REQUIRED).items():
+            latest = {
+                row["label"]: row
+                for row in current
+                if row["gate_id"] == gate
+                or getattr(self, "shared_gate_evidence", False)
+                and row["label"] in required
+            }
             statuses = {row["status"] for row in latest.values()}
             status = (
                 "FAIL"

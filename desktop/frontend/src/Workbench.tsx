@@ -25,6 +25,7 @@ import './workspace-grid.css';
 const WorkflowBuilder = lazy(() => import('./workflows/WorkflowBuilder'));
 const KnowledgePanel = lazy(() => import('./knowledge/KnowledgePanel'));
 const VisualObserver = lazy(() => import('./computer/VisualObserver'));
+const ScheduledTasks = lazy(() => import('./scheduling/ScheduledTasks'));
 
 type Props = {
   characterId: string;
@@ -217,6 +218,8 @@ export default function Workbench({
     }
   }
   function content(id: ModuleId, moduleVisible = true): ReactNode {
+    if (id === 'scheduled_tasks')
+      return <ScheduledTasks conversationId={conversationId} visible={visible && moduleVisible} />;
     if (id === 'visual_observer')
       return (
         <Suspense fallback={<p>正在打开屏幕观察…</p>}>

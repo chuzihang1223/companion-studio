@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-type Page = 'settings' | 'character' | 'knowledge' | null;
+type Page = 'settings' | 'character' | 'knowledge' | 'schedules' | null;
 const fromHash = (): Page =>
   location.hash === '#/settings'
     ? 'settings'
@@ -7,7 +7,9 @@ const fromHash = (): Page =>
       ? 'character'
       : location.hash === '#/knowledge'
         ? 'knowledge'
-        : null;
+        : location.hash === '#/schedules'
+          ? 'schedules'
+          : null;
 /** Page changes leave the mounted Chat/Work session and background task intact. */
 export function usePageNavigation(base: string) {
   const [page, setState] = useState<Page>(fromHash),

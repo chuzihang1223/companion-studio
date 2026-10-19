@@ -81,6 +81,16 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   computerAction: (options) => ipcRenderer.invoke('computer-action', options),
   computerVision: (options) => ipcRenderer.invoke('computer-vision', options),
   computerQAConsent: () => ipcRenderer.invoke('computer-qa-consent'),
+  readSchedules: (operation, options) => ipcRenderer.invoke('scheduler-read', operation, options),
+  controlSchedules: (operation, options) =>
+    ipcRenderer.invoke('scheduler-control', operation, options),
+  schedulerBackground: (options) => ipcRenderer.invoke('scheduler-background', options),
+  schedulerNavigation: () => ipcRenderer.invoke('scheduler-navigation'),
+  onSchedulerNavigate: (callback) => {
+    const listener = (_event, target) => callback(target);
+    ipcRenderer.on('scheduler-navigate', listener);
+    return () => ipcRenderer.removeListener('scheduler-navigate', listener);
+  },
   computerQAFixture: (options) => ipcRenderer.invoke('computer-qa-fixture', options),
   workbenchLayout: (key, value) => ipcRenderer.invoke('workbench-layout', key, value),
   getVirtualDocument: (session, id) => ipcRenderer.invoke('virtual-document-get', session, id),

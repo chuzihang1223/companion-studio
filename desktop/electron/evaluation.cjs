@@ -46,6 +46,7 @@ module.exports = ({
           'workflow-core',
           'knowledge-core',
           'computer-use-core',
+          'scheduler-core',
         ].includes(dataset)
       )
         throw Error('未知内置数据集');

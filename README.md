@@ -2,7 +2,7 @@
 
 **0.1.2 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.2.0-visual.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills、可视化工作流、本地知识库与可控长期记忆，以及受限 Windows UIA / OCR 视觉操作；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
+> 本开发分支为 **0.2.0-scheduler.1 本地审核版**，包含 Agent Trace、只读回放、Evaluation、安全检查点续接、MCP / Agent Skills、可视化工作流、本地知识库与可控长期记忆，受限 Windows UIA / OCR 视觉操作，以及定时工作流、条件监控和明确启用的托盘后台模式；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，v0.1.2 不包含这些候选功能。请在独立档案测试本分支，勿覆盖正式版数据。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -13,6 +13,29 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 **[Download for Windows · v0.1.2](https://github.com/chuzihang1223/companion-studio/releases/download/v0.1.2/Companion-Studio-0.1.2-Setup.exe)** · [发布说明与 SHA256](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2)
 
 ## 系统架构与 Agent 实现
+
+### Scheduled Agent（本地审核分支）
+
+工作模式 →「模块」→「定时任务」，选择工作会话，绑定已发布的固定工作流版本。
+支持一次性、每五分钟起的固定间隔、每天、每周，以及授权项目文件变化／指定工作流状态变化。
+保存前可预览实际时区时间和权限；历史关联原 Workflow、Trace 和检查点，不另建执行器。
+
+例如：把一个只进行文本转换的已发布工作流安排在一分钟后，输出一个本地运行记录，
+包含计划时间、实际开始、状态和原 Trace。若工作流包含模型、应用控制、MCP 或视觉操作，
+先等待本次确认，继续遵守原工具权限；定时任务本身不授予未来权限。
+
+默认关闭窗口即退出。明确开启托盘模式后，隐藏窗口仍可执行符合当前权限的任务；
+完全退出、关机或睡眠期间不能按时运行。可选跳过、恢复后最多补一次或等待审核，
+旧任务过期和积压受到限制。每天／每周按时区日历计算；DST 缺失时跳过、重复时只执行一次。
+通知只含状态与时间，系统投递不等于用户已读。没有 Windows 自启、系统服务或 7×24 保证。
+
+条件来源需显式授权，文件监控只读有界元数据，默认 24 小时有效。
+后台知识检索仅支持固定 keyword；Hybrid / Vector 请在前台使用。
+[架构](docs/SCHEDULED_AGENT_ARCHITECTURE.md) · [数据与配额](docs/SCHEDULER_SCHEMA.md) ·
+[时间](docs/SCHEDULER_TIMEZONES.md) · [监控](docs/SCHEDULER_CONDITION_WATCH.md) ·
+[安全](docs/SCHEDULER_SECURITY.md) · [恢复](docs/SCHEDULER_RECOVERY.md) ·
+[后台模式](docs/SCHEDULER_BACKGROUND_MODE.md) · [30 项评测](docs/SCHEDULER_EVALUATION.md) ·
+[自动审核](docs/SCHEDULER_AUTOMATED_QA.md)
 
 ### Visual Computer Use（本地审核分支）
 

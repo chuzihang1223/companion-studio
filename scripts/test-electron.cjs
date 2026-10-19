@@ -23,6 +23,7 @@ const tests = [
   'workflow-unit.cjs',
   'knowledge-unit.cjs',
   'computer-use-unit.cjs',
+  'scheduler-unit.cjs',
 ];
 
 for (const test of tests) {

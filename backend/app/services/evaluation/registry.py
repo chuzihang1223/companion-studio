@@ -16,6 +16,7 @@ class BenchmarkRegistry:
             "workflow-core",
             "knowledge-core",
             "computer-use-core",
+            "scheduler-core",
         }:
             raise ValueError("未知内置数据集")
         raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
@@ -24,7 +25,9 @@ class BenchmarkRegistry:
         self.cases = [BenchmarkCase.model_validate(row) for row in data["cases"]]
         self.by_id = {row.case_id: row for row in self.cases}
         expected = (
-            24
+            30
+            if dataset_id == "scheduler-core"
+            else 24
             if dataset_id == "computer-use-core"
             else 28
             if dataset_id == "knowledge-core"
@@ -41,7 +44,9 @@ class BenchmarkRegistry:
         result = {
             "dataset_id": self.dataset_id,
             "dataset_version": self.version,
-            "title": "Visual Computer Use · 24 项（隔离 Windows GUI）"
+            "title": "Scheduled Agent · 30 项（隔离合成数据）"
+            if self.dataset_id == "scheduler-core"
+            else "Visual Computer Use · 24 项（隔离 Windows GUI）"
             if self.dataset_id == "computer-use-core"
             else "Studio Core · 20 项"
             if self.dataset_id == "studio-core"

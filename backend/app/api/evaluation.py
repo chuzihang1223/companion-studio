@@ -50,6 +50,7 @@ async def datasets(request: Request):
                 "workflow-core",
                 "knowledge-core",
                 "computer-use-core",
+                "scheduler-core",
             )
         ]
     }
@@ -64,6 +65,7 @@ async def dataset(
         "workflow-core",
         "knowledge-core",
         "computer-use-core",
+        "scheduler-core",
     ],
     request: Request,
 ):

@@ -163,6 +163,8 @@ def metadata(value: object) -> dict:
         elif key == "external_tool_id" and identifier(item):
             result[key] = item
         elif key in {
+            "schedule_id",
+            "occurrence_id",
             "window_id",
             "observation_id",
             "action_id",

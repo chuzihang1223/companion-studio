@@ -182,8 +182,19 @@ class WorkflowRepository:
             db.commit()
         return self.get(workflow_id)
 
-    def create_run(self, definition, version_id, conversation_id, inputs, renderer_id):
-        key = str(uuid4())
+    def create_run(
+        self,
+        definition,
+        version_id,
+        conversation_id,
+        inputs,
+        renderer_id,
+        *,
+        run_id=None,
+        schedule_occurrence_id=None,
+        schedule_lease_token=None,
+    ):
+        key = run_id or str(uuid4())
         body = {
             "run_id": key,
             "workflow_id": definition.workflow_id,
@@ -203,7 +214,32 @@ class WorkflowRepository:
             "trace_id": None,
             "work_session_id": None,
         }
+        if schedule_occurrence_id:
+            body["schedule_occurrence_id"] = schedule_occurrence_id
         with self.factory() as db:
+            if schedule_occurrence_id:
+                from sqlalchemy import text
+                from app.models.schedules import ScheduledOccurrenceRow, ScheduledRunRow
+
+                db.execute(text("BEGIN IMMEDIATE"))
+                occurrence = db.get(ScheduledOccurrenceRow, schedule_occurrence_id)
+                scheduled = db.get(ScheduledRunRow, occurrence.run_id) if occurrence else None
+                if (
+                    not occurrence
+                    or not scheduled
+                    or occurrence.owner_id != conversation_id
+                    or occurrence.status != "CLAIMED"
+                    or occurrence.workflow_run_id
+                    or occurrence.lease_token != schedule_lease_token
+                    or json.loads(scheduled.body)["workflow_run_id"] != key
+                    or json.loads(occurrence.body)["definition"]["workflow_version_id"]
+                    != version_id
+                ):
+                    raise WorkflowError("SCHEDULE_DISPATCH_CONFLICT", status=409)
+                # The occurrence binding and original WorkflowRun become visible
+                # in one transaction, before launch can execute a single node.
+                occurrence.workflow_run_id = key
+                scheduled.body = encoded(json.loads(scheduled.body) | {"task_id": body["task_id"]})
             db.add(
                 WorkflowRunRow(
                     id=key,

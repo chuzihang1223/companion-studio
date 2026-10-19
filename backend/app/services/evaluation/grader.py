@@ -54,6 +54,10 @@ def grade_knowledge(case, observation, traces):
 
 class EvaluationGrader:
     def grade(self, case, observation, traces):
+        if case.grader == "scheduler":
+            from app.services.evaluation.scheduler_grader import grade_scheduler
+
+            return grade_scheduler(case, observation, traces)
         if case.grader == "knowledge":
             return grade_knowledge(case, observation, traces)
         if case.grader == "workflow":

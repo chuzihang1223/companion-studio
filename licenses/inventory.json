@@ -1188,6 +1188,29 @@
       ]
     },
     {
+      "name": "tzdata",
+      "version": "2026.5",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "Apache-2.0",
+      "upstream": [
+        "https://github.com/python/tzdata",
+        "https://tzdata.python.org"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/tzdata-2026.5/licenses/LICENSE",
+          "sha256": "df58f69ea88683035d720b5375bcef0cf5aeaa98a1d098d572e0992c378deb46",
+          "bytes": 625
+        },
+        {
+          "path": "licenses/python/tzdata-2026.5/licenses/licenses/LICENSE_APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        }
+      ]
+    },
+    {
       "name": "uvicorn",
       "version": "0.53.0",
       "ecosystem": "PyPI",

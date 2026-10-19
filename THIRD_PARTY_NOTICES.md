@@ -60,6 +60,7 @@ This inventory records the actual dependency versions in the build environment. 
 | truststore | 0.10.5 | runtime | MIT | [Files](licenses/python/truststore-0.10.5/licenses/LICENSE) |
 | typing_extensions | 4.16.0 | runtime | PSF-2.0 | [Files](licenses/python/typing-extensions-4.16.0/licenses/LICENSE) |
 | typing-inspection | 0.4.4 | runtime | MIT | [Files](licenses/python/typing-inspection-0.4.4/licenses/LICENSE) |
+| tzdata | 2026.5 | runtime | Apache-2.0 | [Files](licenses/python/tzdata-2026.5/licenses/LICENSE) |
 | uvicorn | 0.53.0 | runtime | BSD-3-Clause | [Files](licenses/python/uvicorn-0.53.0/licenses/LICENSE.md) |
 | wsproto | 1.3.2 | runtime | MIT | [Files](licenses/python/wsproto-1.3.2/licenses/LICENSE) |
 | certifi-corresponding-source | 2026.7.22 | MPL corresponding source | MPL-2.0 | [Files](licenses/source/certifi-2026.7.22/certifi/__init__.py) |

@@ -8,6 +8,30 @@ from app.services.trace.scope import current_trace, span_scope
 
 
 class WorkflowControls:
+    async def interrupt(self, run_id, owner):
+        """Persist an owned shutdown interruption without cancelling unrelated workflows."""
+        run = self.repository.run(run_id, owner)
+        self.interrupting.add(run_id)
+        task_ids = {run["task_id"]} | {
+            node["recovery_task_id"] for node in run["nodes"] if node.get("recovery_task_id")
+        }
+        self.app.state.runtime_registry.interrupting.update(task_ids)
+        context = getattr(self.app.state.trace_recorder, "contexts", {}).get(run["task_id"])
+        if context:
+            context.terminal = ("interrupted", None)
+        try:
+            task = self.tasks.get(run_id)
+            if task:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            else:
+                self.repository.change(
+                    run_id, owner, {"state": "INTERRUPTED", "error_code": "PROCESS_RESTARTED"}
+                )
+        finally:
+            self.interrupting.discard(run_id)
+            self.app.state.runtime_registry.interrupting.difference_update(task_ids)
+
     async def wait_permission(self, run, node, row, details):
         key = str(uuid4())
         future = asyncio.get_running_loop().create_future()

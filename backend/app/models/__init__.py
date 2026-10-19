@@ -27,3 +27,13 @@ from .workflows import (
     WorkflowNodeRow,
     WorkflowRunEvent,
 )
+from .schedules import (  # noqa: F401 - additive scheduler tables
+    ScheduleRow,
+    ScheduledOccurrenceRow,
+    ScheduledRunRow,
+    SchedulerLeaseRow,
+    SchedulerStateRow,
+    SchedulerSourceRow,
+    SchedulerEventRow,
+    SchedulerNotificationRow,
+)

@@ -125,6 +125,7 @@ class GroundedService:
         self.config = getattr(service, "config", None)
         self.target = model_target(service)
         self.context, self.allowed = RAGContextBuilder().build(results)
+        self.dispatch_guard = None
 
     def __getattr__(self, name):
         return getattr(self.service, name)
@@ -166,6 +167,8 @@ class GroundedService:
         import asyncio
 
         prompt = await asyncio.to_thread(self.prompt, messages)
+        if self.dispatch_guard:
+            self.dispatch_guard()
         result = await self.service.chat(prompt)
         clean = CitationFilter(self.allowed).feed(result, final=True)
         self.record()
@@ -179,6 +182,8 @@ class GroundedService:
         import asyncio
 
         prompt = await asyncio.to_thread(self.prompt, messages)
+        if self.dispatch_guard:
+            self.dispatch_guard()
         filter = CitationFilter(self.allowed)
         async for value in self.service.stream_chat(prompt):
             clean = filter.feed(value)

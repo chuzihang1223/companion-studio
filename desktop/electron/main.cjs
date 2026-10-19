@@ -38,6 +38,9 @@ let desktopPump = null;
 let mediaService = null;
 let computerUse = null;
 let visualQA = null;
+let schedulerBackground = null;
+let schedulerDrained = false;
+let schedulerDrainPromise = null;
 const browserWindows = new Set();
 const guardedPartitions = new Set();
 const rendererSessions = new (require('./renderer-session-registry.cjs').RendererSessionRegistry)();
@@ -206,6 +209,12 @@ function createWindow() {
     mainWindow = null;
     for (const browser of browserWindows) if (!browser.isDestroyed()) browser.close();
     app.quit();
+  });
+  mainWindow.on('close', (event) => {
+    if (schedulerBackground?.hideOnClose()) {
+      event.preventDefault();
+      schedulerBackground.hide();
+    }
   });
   mainWindow.loadURL(page);
 }
@@ -384,6 +393,13 @@ const stopWorkflowSubscriptions = require('./workflows.cjs')({
   controlToken: backendManager.controlToken,
 });
 app.on('before-quit', stopWorkflowSubscriptions);
+require('./scheduler-ipc.cjs')({
+  ipcMain,
+  requireMainWindow,
+  dialog,
+  request: (...args) => privateBackend(args[0], args[1], args[2], 8000),
+  background: () => schedulerBackground,
+});
 require('./knowledge.cjs')({ ipcMain, requireMainWindow, request: privateBackend, dialog, shell });
 require('./computer-use-ipc.cjs')({
   ipcMain,
@@ -874,6 +890,19 @@ if (haveLock)
       }
       log('Backend healthy; opening window');
       createWindow();
+      const { SchedulerBackground } = require('./scheduler-background.cjs');
+      schedulerBackground = new SchedulerBackground({
+        Tray: require('electron').Tray,
+        Menu,
+        Notification: require('electron').Notification,
+        icon: path.join(__dirname, '..', 'assets', brand.icon),
+        userData: paths.userData,
+        request: (...args) => privateBackend(args[0], args[1], args[2], 8000),
+        window: () => mainWindow,
+        quit: () => app.quit(),
+        audit,
+      });
+      schedulerBackground.start();
       if (
         knownApps.discovery.originalVersion < 5 ||
         !knownApps.discovery.cache.scanned_at ||
@@ -927,7 +956,17 @@ if (haveLock)
 
 app.on('window-all-closed', () => app.quit());
 // 释放本实例拥有的资源；禁止按应用通用名称结束其他安装版/个人版进程。
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
+  if (schedulerBackground && !schedulerDrained) {
+    event.preventDefault();
+    schedulerBackground.quitting = true;
+    if (!schedulerDrainPromise)
+      schedulerDrainPromise = schedulerBackground.close().finally(() => {
+        schedulerDrained = true;
+        app.quit();
+      });
+    return;
+  }
   projectWatcher?.close();
   clearTimeout(projectWatchTimer);
   mediaService?.stop();

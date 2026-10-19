@@ -1,0 +1,966 @@
+{
+  "dataset_id": "scheduler-core",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "SCH-001",
+      "title": "创建一次性计划",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 1.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-002",
+      "title": "修改计划时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 2.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-003",
+      "title": "到期只触发一次",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 3.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-004",
+      "title": "每日时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 4.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-005",
+      "title": "每周时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 5.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-006",
+      "title": "固定间隔",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 6.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-007",
+      "title": "本地时区转UTC",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 7.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-008",
+      "title": "修改时区",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 8.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-009",
+      "title": "DST不存在时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 9.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-010",
+      "title": "DST重复时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 10.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-011",
+      "title": "时钟回拨",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 11.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-012",
+      "title": "三天漏执行合并",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 12.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-013",
+      "title": "新建文件",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 13.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-014",
+      "title": "修改文件",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 14.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-015",
+      "title": "连续事件去重",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 15.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-016",
+      "title": "状态False转True",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 16.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-017",
+      "title": "冷却时间",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 17.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-018",
+      "title": "来源撤销",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 18.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-019",
+      "title": "同时到期并发",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 19.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-020",
+      "title": "禁止同计划重叠",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 20.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-021",
+      "title": "队列容量",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 21.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-022",
+      "title": "中断后原恢复",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 22.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-023",
+      "title": "租约过期",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 23.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-024",
+      "title": "重复主实例",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 24.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-025",
+      "title": "未知副作用不重放",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 25.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-026",
+      "title": "本次授权过期",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 26.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-027",
+      "title": "MCP与Skill依赖失效",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 27.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-028",
+      "title": "原Workflow工具执行",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 28.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-029",
+      "title": "Computer Use未授权",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 29.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "SCH-030",
+      "title": "Trace恢复通知一致",
+      "description": "真实 SQLite、原 Workflow/Agent Runtime/Trace/Recovery 与可控时钟；合成资料，不代表真实AI质量或Windows通知验收。",
+      "category": "scheduler",
+      "difficulty": "intermediate",
+      "input": "Check synthetic scheduler case 30.",
+      "environment": "scheduler-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "scheduler",
+      "allowed_tools": [
+        "workspace.read",
+        "mcp"
+      ],
+      "allowed_paths": [
+        "fixture.txt"
+      ],
+      "timeout_seconds": 40,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "scheduler",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

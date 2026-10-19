@@ -259,6 +259,9 @@ class AgentTaskRuntime:
         recovery = self.executions.get(context.work_session_id)
 
         def permitted():
+            guard = getattr(context, "scheduled_guard", None)
+            if guard:
+                guard()
             if not recovery or not recovery.call:
                 return True
             call = recovery.call
@@ -269,11 +272,17 @@ class AgentTaskRuntime:
                 context.work_session_id,
             )
 
+        async def guarded_operation():
+            guard = getattr(context, "scheduled_guard", None)
+            if guard:
+                guard()
+            return await operation()
+
         return await run_step(
             self,
             context,
             title,
-            operation,
+            guarded_operation,
             handle,
             min(max_attempts, context.retry_max_attempts)
             if getattr(context, "retry_max_attempts", None) is not None

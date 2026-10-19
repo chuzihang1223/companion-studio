@@ -35,6 +35,7 @@ class RuntimeTaskRegistry:
         self.by_session: dict[str, str] = {}
         self.progress: dict[str, tuple[float, str | None]] = {}
         self.trace_recorder = None
+        self.interrupting: set[str] = set()
         with SessionLocal() as db:
             for row in db.scalars(select(RuntimeTask).where(RuntimeTask.status.not_in(TERMINAL))):
                 row.status = "interrupted"
@@ -126,8 +127,9 @@ class RuntimeTaskRegistry:
                 yield
             self.update(task_id, "completed")
         except asyncio.CancelledError:
-            self._trace(task_id, "cancelled")
-            self.update(task_id, "cancelled")
+            stage = "interrupted" if task_id in self.interrupting else "cancelled"
+            self._trace(task_id, stage)
+            self.update(task_id, stage)
             raise
         except TimeoutError:
             self._trace(task_id, "timeout")
