@@ -15,6 +15,7 @@ from scheduler_review_validation import (
     performance,
     independent,
     checked_profile,
+    regression_gui,
 )
 
 # Import the hyphenated original runner without changing its implementation or
@@ -150,13 +151,8 @@ class SchedulerReview(module.Review):
                 home.relative_to(self.source)
             )
 
-            def verify(folder=home):
-                report = read(folder / "report.json")
-                require(
-                    report.get("result") == "PASS"
-                    and report["realModelRequests"] == report["realVoiceRequests"] == 0,
-                    "Installed regression failed",
-                )
+            def verify(folder=home, kind=key):
+                regression_gui(folder, kind)
 
             self.step(
                 "A",

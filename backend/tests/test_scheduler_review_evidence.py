@@ -63,6 +63,74 @@ def test_newer_failure_is_retained_for_all_dependent_gates(scheduler_qa, status)
     )
 
 
+@pytest.mark.parametrize(
+    "kind", ["trace", "evaluation", "recovery", "workflow", "knowledge", "computer", "extensions"]
+)
+def test_original_regression_report_contracts(scheduler_qa, tmp_path, kind):
+    _, validation = scheduler_qa
+    labels = [
+        "Real SDK stdio discovers eight disabled tools",
+        "Twenty MCP/Skills benchmark cases pass in the actual candidate worker",
+        "Actual candidate HTTP fixture connects, discovers and reads a resource through Streamable HTTP",
+        "UI loads 1000 configured servers without starting any executable",
+    ]
+    report = {
+        "checks": [{"label": label, "passed": True} for label in labels],
+        "realModelRequests": 0,
+        "realVoiceRequests": 0,
+    }
+    if kind in {"trace", "evaluation", "recovery"}:
+        report["pass"] = True
+    elif kind != "extensions":
+        report["result"] = "PASS" if kind == "computer" else "pass"
+    filename = tmp_path / "report.json"
+    filename.write_text(json.dumps(report), encoding="utf-8")
+    validation.regression_gui(tmp_path, kind)
+    report["checks"][-1]["passed"] = False
+    filename.write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError, match="assertions"):
+        validation.regression_gui(tmp_path, kind)
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "error",
+        "failure",
+        "cleanupError",
+        "realModelRequests",
+        "realVoiceRequests",
+        "pass",
+        "result",
+        "checks",
+    ],
+)
+def test_regression_report_never_hides_failure(scheduler_qa, tmp_path, fault):
+    _, validation = scheduler_qa
+    report = {
+        "pass": True,
+        "checks": [{"label": str(i), "passed": True} for i in range(3)],
+        "realModelRequests": 0,
+        "realVoiceRequests": 0,
+    }
+    report[fault] = [] if fault == "checks" else False if fault == "pass" else 1
+    (tmp_path / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError):
+        validation.regression_gui(tmp_path, "trace")
+
+
+def test_extension_regression_requires_final_real_assertions(scheduler_qa, tmp_path):
+    _, validation = scheduler_qa
+    report = {
+        "checks": [{"label": str(i), "passed": True} for i in range(4)],
+        "realModelRequests": 0,
+        "realVoiceRequests": 0,
+    }
+    (tmp_path / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError, match="extension"):
+        validation.regression_gui(tmp_path, "extensions")
+
+
 def test_artifact_change_invalidates_installed_scheduler(scheduler_qa):
     review, _ = scheduler_qa
     old = next(r for r in review.report["steps"] if r["label"] == "installed-scheduler")

@@ -65,6 +65,60 @@ def full_results(source, root):
     shutil.copyfile(performance[0], root / "scheduler-performance.json")
 
 
+def regression_gui(home, kind):
+    """Respect the original seven harness contracts after the command exits zero."""
+    report = read(home / "report.json")
+    markers = {
+        "trace": ("pass", True),
+        "evaluation": ("pass", True),
+        "recovery": ("pass", True),
+        "workflow": ("result", "pass"),
+        "knowledge": ("result", "pass"),
+        "computer": ("result", "PASS"),
+    }
+    require(kind in {*markers, "extensions"}, "Unknown regression harness")
+    require(
+        not any(report.get(key) for key in ("error", "failure", "cleanupError")),
+        "Regression or cleanup error",
+    )
+    require(
+        ("pass" not in report or report["pass"] is True)
+        and ("result" not in report or report["result"] in {"pass", "PASS"}),
+        "Contradictory regression completion marker",
+    )
+    checks = report.get("checks", [])
+    require(
+        len(checks) >= 3 and all(row.get("passed") is True and row.get("label") for row in checks),
+        "Incomplete or failed regression assertions",
+    )
+    require(
+        all(
+            type(report.get(key)) is int and report[key] == 0
+            for key in ("realModelRequests", "realVoiceRequests")
+        ),
+        "Unexpected external regression request",
+    )
+    if kind == "extensions":
+        # This original harness records completion in stdout and exits zero;
+        # its JSON deliberately has no top-level pass/result field. Require its
+        # final load assertion plus actual stdio, HTTP and benchmark assertions.
+        required = {
+            "Real SDK stdio discovers eight disabled tools",
+            "Twenty MCP/Skills benchmark cases pass in the actual candidate worker",
+            "Actual candidate HTTP fixture connects, discovers and reads a resource through Streamable HTTP",
+            "UI loads 1000 configured servers without starting any executable",
+        }
+        require(
+            required.issubset({row["label"] for row in checks}), "Incomplete extension regression"
+        )
+    else:
+        key, expected = markers[kind]
+        require(
+            report.get(key) == expected and type(report.get(key)) is type(expected),
+            "Regression completion marker missing",
+        )
+
+
 def gui(home):
     report = read(home / "report.json")
     require(
