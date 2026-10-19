@@ -72,14 +72,26 @@ def test_measured_hundred_schedules_thousand_occurrences_and_idle_loop(tmp_path,
                 measurements.append((time.perf_counter() - start) * 1000)
             assert len(definitions) == 100
             key = definitions[0]["definition"]["schedule_id"]
-            dispatch, complete = [], []
+            dispatch, complete, queue = [], [], []
+            original_claim = scheduler.store.claim
+            queued_at = None
+
+            def observed_claim(*args, **kwargs):
+                result = original_claim(*args, **kwargs)
+                if result and queued_at is not None:
+                    queue.append((time.perf_counter() - queued_at) * 1000)
+                return result
+
+            monkeypatch.setattr(scheduler.store, "claim", observed_claim)
             for _ in range(10):
                 start = time.perf_counter()
                 row = scheduler.run_now(key, owner)
+                queued_at = time.perf_counter()
                 await scheduler.tick()
                 dispatch.append((time.perf_counter() - start) * 1000)
                 await run_to_completion(app, scheduler, owner, row["occurrence_id"])
                 complete.append((time.perf_counter() - start) * 1000)
+            monkeypatch.setattr(scheduler.store, "claim", original_claim)
             entered, release = asyncio.Event(), asyncio.Event()
             original = app.state.workflows.executor.execute
 
@@ -144,6 +156,9 @@ def test_measured_hundred_schedules_thousand_occurrences_and_idle_loop(tmp_path,
                 "history_1000_ms": history_ms,
                 "active_not_masked": final["status"] == "COMPLETED",
                 "manual_dispatch_samples": len(dispatch),
+                "queue_samples": len(queue),
+                "queue_empty_p50_ms": percentile(queue, 0.5),
+                "queue_empty_p95_ms": percentile(queue, 0.95),
                 "manual_dispatch_p50_ms": percentile(dispatch, 0.5),
                 "manual_dispatch_p95_ms": percentile(dispatch, 0.95),
                 "pure_completion_p50_ms": percentile(complete, 0.5),

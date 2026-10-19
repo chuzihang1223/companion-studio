@@ -75,7 +75,7 @@ def test_gui_validator_rejects_missing_real_wallclock_and_external_usage(schedul
     _, validation = scheduler_qa
     report = {
         "result": "PASS",
-        "checks": [{}] * 12,
+        "checks": [{"label": label, "passed": True} for label in validation.GUI_CHECKS],
         "realModelRequests": 0,
         "realVoiceRequests": 0,
         "localModelRequests": 0,
@@ -92,3 +92,77 @@ def test_gui_validator_rejects_missing_real_wallclock_and_external_usage(schedul
     (tmp_path / "report.json").write_text(json.dumps(report), encoding="utf-8")
     with pytest.raises(ValueError, match="Unexpected model"):
         validation.gui(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "failed-check",
+        "missing-check",
+        "nan",
+        "foreign-owner",
+        "foreign-occurrence",
+        "failed-notice",
+    ],
+)
+def test_forged_gui_evidence_is_rejected(scheduler_qa, tmp_path, fault):
+    _, validation = scheduler_qa
+    report = {
+        "result": "PASS",
+        "checks": [{"label": label, "passed": True} for label in validation.GUI_CHECKS],
+        "realModelRequests": 0,
+        "realVoiceRequests": 0,
+        "localModelRequests": 0,
+        "occurrence_id": "fixture-occurrence",
+        "workflow_run_id": "fixture-run",
+        "schedulerConversation": "fixture-owner",
+        "schedule_id": "fixture-schedule",
+        "trigger_delay_ms": 100,
+        "native_notifications": [
+            {
+                "occurrence_id": "fixture-occurrence",
+                "conversation_id": "fixture-owner",
+                "schedule_id": "fixture-schedule",
+                "kind": "COMPLETED",
+                "delivery": "SHOWN",
+            }
+        ],
+    }
+    if fault == "failed-check":
+        report["checks"][0]["passed"] = False
+    if fault == "missing-check":
+        report["checks"][0]["label"] = "Unrelated success"
+    if fault == "nan":
+        report["trigger_delay_ms"] = float("nan")
+    if fault == "foreign-owner":
+        report["native_notifications"][0]["conversation_id"] = "different-owner"
+    if fault == "foreign-occurrence":
+        report["native_notifications"][0]["occurrence_id"] = "different-occurrence"
+    if fault == "failed-notice":
+        report["native_notifications"][0]["delivery"] = "FAILED"
+    (tmp_path / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError):
+        validation.gui(tmp_path)
+
+
+def test_independent_domain_rejects_unrelated_report_and_missing_coverage(scheduler_qa, tmp_path):
+    _, validation = scheduler_qa
+    source = tmp_path
+    filename = source / "review.json"
+    filename.write_text("unrelated success text", encoding="utf-8")
+    item = {"report": {"path": "review.json", "sha256": validation.sha(filename)}}
+    with pytest.raises(ValueError):
+        validation.domain_report(source, "runtime", item, "revision")
+    report = {
+        "schema_version": 1,
+        "domain": "runtime",
+        "status": "PASS",
+        "open_p1_p2": [],
+        "reviewed_revision": "revision",
+        "source_hashes": {},
+        "commands": [],
+    }
+    filename.write_text(json.dumps(report), encoding="utf-8")
+    item["report"]["sha256"] = validation.sha(filename)
+    with pytest.raises(ValueError, match="coverage"):
+        validation.domain_report(source, "runtime", item, "revision")

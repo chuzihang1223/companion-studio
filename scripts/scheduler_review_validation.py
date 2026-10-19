@@ -1,10 +1,12 @@
 """Identity and content checks for scheduler-specific evidence. No optimized asserts."""
 
 from pathlib import Path
+import math
 import subprocess
 import xml.etree.ElementTree as ET
 
 from visual_review_evidence import read, require, safe_file, sha
+from scheduler_review_contracts import GUI_CHECKS, DOMAIN_FILES, domain_report
 
 
 GATES = {
@@ -68,6 +70,12 @@ def gui(home):
         report.get("result") == "PASS" and len(report.get("checks", [])) >= 12,
         "Incomplete scheduler GUI",
     )
+    checks = report["checks"]
+    require(
+        GUI_CHECKS.issubset({r.get("label") for r in checks})
+        and all(r.get("passed") is True for r in checks),
+        "Required GUI assertions missing or failed",
+    )
     require(
         report["realModelRequests"]
         == report["realVoiceRequests"]
@@ -78,8 +86,25 @@ def gui(home):
     require(
         report.get("occurrence_id") and report.get("workflow_run_id"), "Missing original run links"
     )
-    require(isinstance(report.get("trigger_delay_ms"), (int, float)), "Missing wall-clock delay")
-    require(report.get("native_notifications"), "Missing real native notification observation")
+    require(
+        type(report.get("trigger_delay_ms")) in {int, float}
+        and math.isfinite(report["trigger_delay_ms"])
+        and report["trigger_delay_ms"] >= 0,
+        "Missing finite wall-clock delay",
+    )
+    notices = [
+        n
+        for n in report.get("native_notifications", [])
+        if n.get("occurrence_id") == report["occurrence_id"]
+        and n.get("conversation_id") == report.get("schedulerConversation")
+        and n.get("schedule_id") == report.get("schedule_id")
+        and n.get("kind") == "COMPLETED"
+    ]
+    require(bool(notices), "Missing exact owner/schedule/occurrence notification")
+    require(
+        any(n.get("delivery") == "SHOWN" for n in notices),
+        "Native notification not shown; record delivery as blocked or failed",
+    )
 
 
 def performance(path):
@@ -111,6 +136,7 @@ def independent(source, path):
     required = {
         "scripts/review-scheduler-runner.py",
         "scripts/scheduler_review_validation.py",
+        "scripts/scheduler_review_contracts.py",
         "scripts/visual_review_evidence.py",
         "backend/tests/test_scheduler_review_evidence.py",
         "docs/SCHEDULER_AUTOMATED_QA.md",
@@ -138,6 +164,8 @@ def independent(source, path):
             require(
                 sha(safe_file(source, item["path"])) == item["sha256"], "Review evidence mismatch"
             )
+    for domain in DOMAIN_FILES:
+        domain_report(source, domain, value["reviews"][domain], value["reviewed_revision"])
 
 
 def checked_profile(review):

@@ -79,7 +79,7 @@ class WorkflowRuntimeBridge:
             context.retry_max_attempts = (
                 node.retry_policy.max_attempts if node.retry_policy.strategy == "safe_read" else 1
             )
-            context.workflow_run_id = run["run_id"]
+            context.workflow_run_id = run.get("run_id")
             stored = {
                 "plan_id": task_id,
                 "character_id": context.character_id,

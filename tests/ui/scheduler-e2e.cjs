@@ -100,6 +100,7 @@ async function run() {
   await driver.c.until("!!document.querySelector('[data-schedule-id]')");
   const definitions = (await read('schedules', { conversation_id: owner })).items;
   const schedule = definitions[0];
+  driver.report.schedule_id = schedule.definition.schedule_id;
   driver.report.scheduledUTC = schedule.next_due;
   driver.check(
     definitions.length === 1 && !!schedule.next_due,
