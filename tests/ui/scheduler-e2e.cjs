@@ -147,7 +147,7 @@ async function run() {
     'Original Workflow executed typed synthetic target',
   );
   await driver.c.until(
-    `window.desktopAPI.readSchedules('notifications',${q({ conversation_id: owner })}).then(r=>r.items.some(n=>n.occurrence_id===${q(occurrence.occurrence_id)}&&n.delivery!=='PENDING'))`,
+    `window.desktopAPI.readSchedules('notifications',${q({ conversation_id: owner })}).then(r=>r.items.some(n=>n.occurrence_id===${q(occurrence.occurrence_id)}&&['SHOWN','FAILED','UNAVAILABLE'].includes(n.delivery)))`,
     15000,
   );
   const notices = (await read('notifications', { conversation_id: owner })).items;

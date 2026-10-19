@@ -103,6 +103,8 @@ def test_gui_validator_rejects_missing_real_wallclock_and_external_usage(schedul
         "foreign-owner",
         "foreign-occurrence",
         "failed-notice",
+        "missing-scope",
+        "valid",
     ],
 )
 def test_forged_gui_evidence_is_rejected(scheduler_qa, tmp_path, fault):
@@ -113,16 +115,16 @@ def test_forged_gui_evidence_is_rejected(scheduler_qa, tmp_path, fault):
         "realModelRequests": 0,
         "realVoiceRequests": 0,
         "localModelRequests": 0,
-        "occurrence_id": "fixture-occurrence",
-        "workflow_run_id": "fixture-run",
-        "schedulerConversation": "fixture-owner",
-        "schedule_id": "fixture-schedule",
+        "occurrence_id": "11111111-1111-4111-8111-111111111111",
+        "workflow_run_id": "22222222-2222-4222-8222-222222222222",
+        "schedulerConversation": "33333333-3333-4333-8333-333333333333",
+        "schedule_id": "44444444-4444-4444-8444-444444444444",
         "trigger_delay_ms": 100,
         "native_notifications": [
             {
-                "occurrence_id": "fixture-occurrence",
-                "conversation_id": "fixture-owner",
-                "schedule_id": "fixture-schedule",
+                "occurrence_id": "11111111-1111-4111-8111-111111111111",
+                "conversation_id": "33333333-3333-4333-8333-333333333333",
+                "schedule_id": "44444444-4444-4444-8444-444444444444",
                 "kind": "COMPLETED",
                 "delivery": "SHOWN",
             }
@@ -140,7 +142,16 @@ def test_forged_gui_evidence_is_rejected(scheduler_qa, tmp_path, fault):
         report["native_notifications"][0]["occurrence_id"] = "different-occurrence"
     if fault == "failed-notice":
         report["native_notifications"][0]["delivery"] = "FAILED"
+    if fault == "missing-scope":
+        del report["schedulerConversation"], report["schedule_id"]
+        del (
+            report["native_notifications"][0]["conversation_id"],
+            report["native_notifications"][0]["schedule_id"],
+        )
     (tmp_path / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    if fault == "valid":
+        validation.gui(tmp_path)
+        return
     with pytest.raises(ValueError):
         validation.gui(tmp_path)
 

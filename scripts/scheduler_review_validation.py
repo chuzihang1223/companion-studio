@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import math
+from uuid import UUID
 import subprocess
 import xml.etree.ElementTree as ET
 
@@ -92,6 +93,13 @@ def gui(home):
         and report["trigger_delay_ms"] >= 0,
         "Missing finite wall-clock delay",
     )
+    for key in ("schedulerConversation", "schedule_id", "occurrence_id", "workflow_run_id"):
+        value = report.get(key)
+        try:
+            valid = isinstance(value, str) and str(UUID(value)) == value
+        except ValueError:
+            valid = False
+        require(valid, "Missing or invalid GUI scope UUID: " + key)
     notices = [
         n
         for n in report.get("native_notifications", [])
