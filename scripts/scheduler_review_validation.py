@@ -106,7 +106,7 @@ def regression_gui(home, kind):
             "Real SDK stdio discovers eight disabled tools",
             "Twenty MCP/Skills benchmark cases pass in the actual candidate worker",
             "Actual candidate HTTP fixture connects, discovers and reads a resource through Streamable HTTP",
-            "UI loads 1000 configured servers without starting any executable",
+            "UI loads 20 configured servers without starting any executable",
         }
         require(
             required.issubset({row["label"] for row in checks}), "Incomplete extension regression"

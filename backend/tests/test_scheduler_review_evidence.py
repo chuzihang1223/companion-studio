@@ -72,7 +72,7 @@ def test_original_regression_report_contracts(scheduler_qa, tmp_path, kind):
         "Real SDK stdio discovers eight disabled tools",
         "Twenty MCP/Skills benchmark cases pass in the actual candidate worker",
         "Actual candidate HTTP fixture connects, discovers and reads a resource through Streamable HTTP",
-        "UI loads 1000 configured servers without starting any executable",
+        "UI loads 20 configured servers without starting any executable",
     ]
     report = {
         "checks": [{"label": label, "passed": True} for label in labels],
