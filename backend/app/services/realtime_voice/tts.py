@@ -37,7 +37,17 @@ async def local_fallback_audio(provider, text, speed, on_pcm):
 async def chunked_synthesis(provider, queue, speed, on_pcm, cancellation=None):
     parts, rate, channels = [], None, None
     size = 0
-    while (text := await queue.get()) is not None:
+    while True:
+        if cancellation and cancellation.is_set():
+            raise asyncio.CancelledError()
+        try:
+            # A stopped text producer cannot send its end marker. Wake boundedly
+            # while idle, without cancelling an in-flight native request.
+            text = await asyncio.wait_for(queue.get(), 0.1)
+        except asyncio.TimeoutError:
+            continue
+        if text is None:
+            break
         plan = SpeechDirector().plan(user_message="", current_reply=text, expression="natural")
         if not plan.segments:
             continue

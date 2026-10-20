@@ -116,3 +116,26 @@ def test_repeated_cancel_keeps_native_request_owned_until_thread_acknowledges():
         assert finished.is_set()
 
     asyncio.run(run())
+
+
+def test_cancel_while_waiting_for_first_text_does_not_need_a_producer_end_marker():
+    class Native:
+        name = "synthetic-local"
+
+        def synthesize(self, *_args, **_kwargs):
+            pytest.fail("No text was queued")
+
+    async def run():
+        adapter = ConfiguredTTS(Native())
+
+        async def pcm(*_):
+            pytest.fail("No audio was generated")
+
+        task = asyncio.create_task(adapter.synthesize_live(asyncio.Queue(), 1, pcm))
+        await asyncio.sleep(0.01)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 1)
+        await adapter.close()
+
+    asyncio.run(run())
