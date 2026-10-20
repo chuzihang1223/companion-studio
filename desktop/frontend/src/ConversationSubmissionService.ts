@@ -10,6 +10,7 @@ export type Submission = {
   voiceContext?: import('./realtimeVoice/types').VoiceBinding;
   stillCurrent?: () => boolean;
   onVoiceReply?: (id: string) => void;
+  onVoiceState?: (identity: import('./realtimeVoice/types').VoiceIdentity) => void;
   conversationId: string | null;
   character: CharacterInfo;
   text: string;
@@ -341,6 +342,21 @@ export class ConversationSubmissionService {
                   ]
                 : rows.map((row) => (row.id === assistantDraft ? { ...row, id: replyId } : row)),
             );
+          } else if (item.event === 'voice_state' && request.voiceContext) {
+            const identity = item.data as unknown as import('./realtimeVoice/types').VoiceIdentity;
+            if (identity.generation_id === request.voiceContext.generation_id) {
+              request.onVoiceState?.(identity);
+              this.store.patch(id, {
+                voice_state: identity.turn_state === 'FAILED' ? 'failed' : 'idle',
+              });
+              this.rows(id, (rows) =>
+                rows.map((row) =>
+                  row.id === replyId
+                    ? { ...row, voice_status: identity.turn_state === 'FAILED' ? 'failed' : 'none' }
+                    : row,
+                ),
+              );
+            }
           } else if (item.event === 'text_delta') gate.push(String(item.data.text));
           else if (item.event === 'completed') {
             const previous = replyId;

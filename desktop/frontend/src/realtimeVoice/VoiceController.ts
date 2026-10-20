@@ -163,6 +163,19 @@ export class VoiceController {
     if (this.view.identity?.generation_id === binding.generation_id && this.submitted)
       this.replyId = id;
   }
+  generationEnded(identity: VoiceIdentity) {
+    const original = this.view.identity;
+    if (
+      this.submitted &&
+      original &&
+      identity.voice_session_id === original.voice_session_id &&
+      identity.turn_id === original.turn_id &&
+      identity.generation_id === original.generation_id
+    ) {
+      ++this.eventSequence;
+      this.patch({ identity });
+    }
+  }
   observe(event: 'playback_started' | 'playback_completed' | 'playback_failed', id: string) {
     if (!this.submitted || !this.view.identity || id !== this.replyId) return;
     const token = this.revision,

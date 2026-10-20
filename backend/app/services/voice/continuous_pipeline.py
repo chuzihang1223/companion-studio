@@ -110,6 +110,7 @@ class RealtimeVoicePipeline:
             chunker = IncrementalSpeechText(initial_chars=16, initial_limit=60)
         voice = self.payload.voice_enabled
         result, error = None, None
+        synthesis_failed = False
         sequence = 0
         audio_started, produced_seconds = None, 0.0
         director, previous_voice, segment_offset = SpeechDirector(), PreviousVoiceState(), 0
@@ -264,7 +265,7 @@ class RealtimeVoicePipeline:
                 getattr(self.app.state, "runtime_registry", None), "gates", {}
             ).get("voice")
             gate_acquired = False
-            nonlocal result
+            nonlocal result, synthesis_failed
             try:
                 if voice:
                     if voice_gate:
@@ -398,11 +399,13 @@ class RealtimeVoicePipeline:
                             )
                         )
                     except Exception as fallback_error:
+                        synthesis_failed = True
                         self.log("voice_failed", error=type(fallback_error).__name__)
                         await outgoing.put(
                             ("voice_error", {"detail": "云端和本地语音暂时不可用，请稍后重试。"})
                         )
                 else:
+                    synthesis_failed = True
                     self.log("voice_failed", error=type(exc).__name__)
                     await outgoing.put(
                         ("voice_error", {"detail": str(exc)[:180] or "语音生成失败。"})
@@ -492,6 +495,14 @@ class RealtimeVoicePipeline:
                             "detail": "回复已生成，但语音缓存未保存。请检查磁盘空间或缓存配额；不要重复执行任务。"
                         },
                     )
+            if voice_session and not sequence and not voice_turn.cancellation_token.is_set():
+                # Code/JSON/URLs can produce valid visible text and no spoken text.
+                # No player exists in that case, so it cannot report an ended event.
+                identity = self.app.state.realtime_voice.generation_without_playback(
+                    Scope(owner_id=self.payload.renderer_id, **binding.model_dump()),
+                    failed=bool(error or synthesis_failed or canonical.spoken.strip()),
+                )
+                yield "voice_state", {"message_id": self.reply_id, **identity}
             self.log(
                 "generation_done",
                 canonical_chars=len(canonical.text),

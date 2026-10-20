@@ -24,6 +24,14 @@ class ConversationRouter:
         """
         if mode == "chat":
             return "chat"
+        from app.services.agent_orchestration import requested
+
+        if requested(message) and re.search(
+            r"查询|查看|检查|列出|运行|启动|暂停|状态|\b(?:list|run|start|pause|status)\b",
+            message,
+            re.I,
+        ):
+            return "agent"
         if re.search(r"\bmcp\b|(?:\$|skill:)[a-z0-9][a-z0-9-]{0,63}", message, re.I):
             return "agent"
         from app.services.local_action_intent import LocalActionIntentResolver

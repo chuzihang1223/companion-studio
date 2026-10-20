@@ -22,6 +22,17 @@ from app.services.character.loader import CharacterLoader
 from app.services.llm.configuration import LLMConfig
 
 
+def test_explicit_orchestration_queries_route_to_tools_without_forcing_casual_chat():
+    from app.services.agent_router import ConversationRouter
+
+    router = ConversationRouter()
+    for text in ("查询定时任务", "查看工作流状态", "scheduler status"):
+        assert router.route(text, "agent") == "agent"
+        assert router.route(text, "auto") == "agent"
+        assert router.route(text, "chat") == "chat"
+    assert router.route("聊聊工作流", "agent") == "chat"
+
+
 def call(name, **arguments):
     return ToolRegistry().parse_calls(
         {

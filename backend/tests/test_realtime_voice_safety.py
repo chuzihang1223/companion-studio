@@ -75,3 +75,44 @@ def test_orphan_cache_counts_toward_quota_and_is_not_deleted(tmp_path, monkeypat
     with SessionLocal() as db, pytest.raises(ValueError, match="VOICE_CACHE_LIMIT"):
         cache.reserve(db, 1, "new-message")
     assert unknown.read_bytes() == b"0" * 20
+
+
+def test_repeated_cancel_keeps_native_request_owned_until_thread_acknowledges():
+    entered, released, finished = threading.Event(), threading.Event(), threading.Event()
+
+    class Native:
+        name = "synthetic-local"
+
+        def synthesize(self, text, control, cancel_event):
+            entered.set()
+            try:
+                assert released.wait(2), "test must release its owned thread"
+                assert cancel_event.is_set()
+                raise RuntimeError("synthetic cancellation acknowledged")
+            finally:
+                finished.set()
+
+    async def run():
+        adapter, queue = ConfiguredTTS(Native()), asyncio.Queue()
+        queue.put_nowait("Synthetic speech.")
+        queue.put_nowait(None)
+
+        async def pcm(*_):
+            pytest.fail("Cancelled speech must not emit PCM")
+
+        task = asyncio.create_task(adapter.synthesize_live(queue, 1, pcm))
+        try:
+            assert await asyncio.to_thread(entered.wait, 2)
+            task.cancel()
+            await asyncio.sleep(0.02)
+            task.cancel()
+            await asyncio.sleep(0.02)
+            assert not task.done() and not finished.is_set()
+        finally:
+            released.set()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            await adapter.close()
+        assert finished.is_set()
+
+    asyncio.run(run())

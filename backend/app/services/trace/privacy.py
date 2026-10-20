@@ -32,6 +32,7 @@ NUMBERS = {
     "dropped_events",
 }
 BOOLEANS = {
+    "actual_playback",
     "requires_permission",
     "side_effect",
     "executed",

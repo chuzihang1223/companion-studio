@@ -114,7 +114,17 @@ class ConfiguredTTS:
             self.cancellation.set()
             # Keep the original voice semaphore until the owned native request
             # acknowledges cancellation; late worker results cannot poison a new request.
-            await asyncio.gather(work, return_exceptions=True)
+            # Disconnect and explicit interrupt may cancel this task separately.
+            # Every cleanup await must stay shielded until the native thread exits.
+            while not work.done():
+                try:
+                    await asyncio.shield(work)
+                except asyncio.CancelledError:
+                    continue
+                except Exception:
+                    break
+            if not work.cancelled():
+                work.exception()  # Retrieve a native cancellation error without replacing ours.
             raise
 
     async def cancel(self):

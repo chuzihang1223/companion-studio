@@ -167,6 +167,17 @@ class VoiceSessionManager:
         record(session, "LLM_STREAM_STARTED")
         return session
 
+    def generation_without_playback(self, scope, *, failed=False):
+        """Close a silent/failed generation without inventing playback observations."""
+        session = self.owned(scope, turn=True)
+        turn = session.turn
+        turn.transition(T.FAILED if failed else T.COMPLETED)
+        session.state = S.ERROR if failed else S.IDLE
+        record(session, "VOICE_ERROR" if failed else "VOICE_NO_SPEECH", actual_playback=False)
+        if turn.trace:
+            turn.trace.finish(RuntimeError("VOICE_GENERATION_FAILED") if failed else None)
+        return session.identity()
+
     def event(self, payload):
         session = self.owned(payload, turn=True)
         turn = session.turn

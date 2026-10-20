@@ -49,6 +49,8 @@ Turn：CREATED → CAPTURING → FINAL_TRANSCRIPT → GENERATING → SYNTHESIZIN
 所有异步入口绑定会话、Turn、generation、conversation、character。取消先同步失效，
 再停止自己的轨道、ASR helper、LLM/TTS workers 和播放器；旧结果不可写回新轮次。
 原生 Index worker 必须确认取消后才释放原语音信号量，避免晚返回污染下次请求。
+连续中断也会等待该确认。纯代码、JSON、网址等过滤后无可朗读内容的有效回复以
+`VOICE_NO_SPEECH` 结束，记录 `actual_playback=false`，不伪造播放完成；应有文本却未产出音频时按失败结束。
 隐藏窗口、切换会话/角色、离开界面、设备断连及应用退出会停止输入。
 定时任务和托盘不能授予麦克风权限或自动开始录音。
 

@@ -1989,6 +1989,8 @@ export default function AppV3() {
                       stillCurrent: current,
                       onVoiceReply: (id: string) =>
                         realtimeVoiceRef.current?.bindReply(id, binding),
+                      onVoiceState: (identity: import('./realtimeVoice/types').VoiceIdentity) =>
+                        realtimeVoiceRef.current?.generationEnded(identity),
                     };
                     await submissionRef.current!.submit(request);
                   }}
