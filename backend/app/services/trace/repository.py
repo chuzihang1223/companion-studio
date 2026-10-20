@@ -80,12 +80,13 @@ class TraceRepository:
             self.store.metrics["last_query_ms"] = (time.perf_counter() - started) * 1000
 
     @staticmethod
-    def scope(db, conversation_id, work_session_id=None):
+    def scope(db, conversation_id, work_session_id=None, *, voice=False):
         conversation = db.get(Conversation, conversation_id)
         if (
             not conversation
             or conversation.is_deleted
-            or conversation.conversation_type not in {"work", "project"}
+            or not voice
+            and conversation.conversation_type not in {"work", "project"}
         ):
             raise LookupError("工作会话不存在")
         if work_session_id:
@@ -93,8 +94,8 @@ class TraceRepository:
             if not work or work.conversation_id != conversation_id:
                 raise LookupError("工作会话不存在")
 
-    def owned(self, db, trace_id, conversation_id, work_session_id=None):
-        self.scope(db, conversation_id, work_session_id)
+    def owned(self, db, trace_id, conversation_id, work_session_id=None, *, voice=False):
+        self.scope(db, conversation_id, work_session_id, voice=voice)
         row = db.get(AgentTrace, trace_id)
         if (
             not row
@@ -103,6 +104,15 @@ class TraceRepository:
             and row.work_session_id != work_session_id
         ):
             raise LookupError("执行轨迹不存在")
+        if voice and not db.scalar(
+            select(TraceEvent.id)
+            .where(
+                TraceEvent.trace_id == trace_id,
+                TraceEvent.event_type == "VOICE_SESSION_STARTED",
+            )
+            .limit(1)
+        ):
+            raise LookupError("语音轨迹不存在")
         if row.work_session_id:
             self.scope(db, conversation_id, row.work_session_id)
         if row.schema_version != 1:
@@ -121,10 +131,19 @@ class TraceRepository:
         until=None,
         cursor=0,
         limit=50,
+        voice=False,
     ):
         with self.read() as db:
-            self.scope(db, conversation_id, work_session_id)
+            self.scope(db, conversation_id, work_session_id, voice=voice)
             query = select(AgentTrace).where(AgentTrace.conversation_id == conversation_id)
+            if voice:
+                query = query.where(
+                    AgentTrace.id.in_(
+                        select(TraceEvent.trace_id).where(
+                            TraceEvent.event_type == "VOICE_SESSION_STARTED"
+                        )
+                    )
+                )
             if work_session_id:
                 query = query.where(AgentTrace.work_session_id == work_session_id)
             if task_id:
@@ -154,13 +173,17 @@ class TraceRepository:
                 "limit": limit,
             }
 
-    def detail(self, trace_id, conversation_id, work_session_id=None):
+    def detail(self, trace_id, conversation_id, work_session_id=None, *, voice=False):
         with self.read() as db:
-            return trace_dto(self.owned(db, trace_id, conversation_id, work_session_id))
+            return trace_dto(
+                self.owned(db, trace_id, conversation_id, work_session_id, voice=voice)
+            )
 
-    def events(self, trace_id, conversation_id, *, work_session_id=None, after=0, limit=200):
+    def events(
+        self, trace_id, conversation_id, *, work_session_id=None, after=0, limit=200, voice=False
+    ):
         with self.read() as db:
-            trace = self.owned(db, trace_id, conversation_id, work_session_id)
+            trace = self.owned(db, trace_id, conversation_id, work_session_id, voice=voice)
             rows = db.scalars(
                 select(TraceEvent)
                 .where(TraceEvent.trace_id == trace_id, TraceEvent.sequence > after)
@@ -227,9 +250,9 @@ class TraceRepository:
                 "limit": limit,
             }
 
-    def summary(self, trace_id, conversation_id, work_session_id=None):
+    def summary(self, trace_id, conversation_id, work_session_id=None, *, voice=False):
         with self.read() as db:
-            trace = self.owned(db, trace_id, conversation_id, work_session_id)
+            trace = self.owned(db, trace_id, conversation_id, work_session_id, voice=voice)
             spans = db.scalars(
                 select(TraceSpan)
                 .where(TraceSpan.trace_id == trace_id)

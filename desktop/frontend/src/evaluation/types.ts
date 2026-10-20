@@ -8,7 +8,8 @@ export type EvaluationOptions = {
     | 'workflow-core'
     | 'knowledge-core'
     | 'computer-use-core'
-    | 'scheduler-core';
+    | 'scheduler-core'
+    | 'voice-core';
   case_ids?: string[];
   mode?: EvaluationMode;
   model_role?: string;
@@ -176,7 +177,8 @@ export type EvaluationQuery = {
     | 'workflow-core'
     | 'knowledge-core'
     | 'computer-use-core'
-    | 'scheduler-core';
+    | 'scheduler-core'
+    | 'voice-core';
   trace_id?: string;
   run_id?: string;
   attempt_id?: string;

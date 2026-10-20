@@ -8,6 +8,7 @@ from io import BytesIO
 import os
 from pathlib import Path
 import re
+import tempfile
 import wave
 
 from sqlalchemy.orm import Session
@@ -53,7 +54,8 @@ def audio_file(row: MessageVoice) -> Path | None:
         and row.audio_path
         and re.fullmatch(r"voice_cache/fish/[0-9a-f]{64}\.wav", row.audio_path)
     )
-    if not (legacy or fish_cache):
+    realtime_cache = bool(row.audio_path == f"voice_cache/realtime/{row.message_id}.wav")
+    if not (legacy or fish_cache or realtime_cache):
         return None
     root = settings.data_root.resolve()
     target = (root / row.audio_path).resolve()
@@ -64,7 +66,8 @@ def index_audio_file(row: MessageVoice) -> Path | None:
     """Return supported cached voices; legacy ONNX files are not promoted."""
     return (
         audio_file(row)
-        if row.engine == "indextts-2.5-expressive" or (row.engine or "").startswith("fish-")
+        if row.engine in {"indextts-2.5-expressive", "windows-sapi"}
+        or (row.engine or "").startswith("fish-")
         else None
     )
 
@@ -77,6 +80,7 @@ def save_message_audio(
     expression: str = "natural",
     speed_factor: float = 1.0,
     reference_id: str | None = None,
+    realtime: bool = False,
 ) -> MessageVoice:
     """Each chunk is (base64 WAV, pause_before_ms, pause_after_ms)."""
     if not chunks:
@@ -92,21 +96,39 @@ def save_message_audio(
         joined.extend(_resample(samples, rate, target_rate))
         previous_pause = pause_after
     is_fish = engine_name.startswith("fish-")
-    audio_dir = settings.data_root / ("voice_cache/fish" if is_fish else "audio")
+    if realtime:
+        from app.services.realtime_voice.cache import reserve
+
+        audio_dir = reserve(db, len(joined) * 2 + 44, message.id)
+    else:
+        audio_dir = settings.data_root / ("voice_cache/fish" if is_fish else "audio")
     audio_dir.mkdir(parents=True, exist_ok=True)
     name = (
         hashlib.sha256(f"{reference_id or ''}|{message.id}".encode("utf-8")).hexdigest()
-        if is_fish
+        if is_fish and not realtime
         else message.id
     )
     final = audio_dir / f"{name}.wav"
     temporary = audio_dir / f"{name}.tmp"
+    descriptor = None
+    if realtime:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=name + "-", suffix=".tmp", dir=audio_dir
+        )
+        temporary = Path(temporary_name)
     try:
-        with wave.open(str(temporary), "wb") as writer:
-            writer.setnchannels(1)
-            writer.setsampwidth(2)
-            writer.setframerate(target_rate)
-            writer.writeframes(joined.tobytes())
+        if descriptor is not None:
+            with os.fdopen(descriptor, "wb") as stream, wave.open(stream, "wb") as writer:
+                writer.setnchannels(1)
+                writer.setsampwidth(2)
+                writer.setframerate(target_rate)
+                writer.writeframes(joined.tobytes())
+        else:
+            with wave.open(str(temporary), "wb") as writer:
+                writer.setnchannels(1)
+                writer.setsampwidth(2)
+                writer.setframerate(target_rate)
+                writer.writeframes(joined.tobytes())
         os.replace(temporary, final)
     finally:
         temporary.unlink(missing_ok=True)
@@ -119,10 +141,22 @@ def save_message_audio(
     ).hexdigest()
     row.error_code = None
     row.error_message = None
-    row.audio_path = f"{'voice_cache/fish' if is_fish else 'audio'}/{name}.wav"
+    row.audio_path = f"{'voice_cache/realtime' if realtime else 'voice_cache/fish' if is_fish else 'audio'}/{name}.wav"
     row.engine = engine_name
-    row.provider = "fish" if engine_name.startswith("fish-") else "indextts"
-    row.model = engine_name.removeprefix("fish-") if row.provider == "fish" else "indextts-2.5"
+    row.provider = (
+        "windows"
+        if engine_name == "windows-sapi"
+        else "fish"
+        if engine_name.startswith("fish-")
+        else "indextts"
+    )
+    row.model = (
+        engine_name.removeprefix("fish-")
+        if row.provider == "fish"
+        else "System.Speech"
+        if row.provider == "windows"
+        else "indextts-2.5"
+    )
     row.format = "wav"
     row.reference_id = reference_id if is_fish else None
     row.profile_version = PROFILE_VERSION

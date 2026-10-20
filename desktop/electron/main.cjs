@@ -40,6 +40,7 @@ let computerUse = null;
 let visualQA = null;
 let schedulerBackground = null;
 let schedulerDrained = false;
+let realtimeVoice = null;
 let schedulerDrainPromise = null;
 const browserWindows = new Set();
 const guardedPartitions = new Set();
@@ -203,6 +204,8 @@ function createWindow() {
   mainWindow.webContents.on('render-process-gone', (_event, detail) =>
     audit('ui.log', 'renderer_gone', detail.reason),
   );
+  mainWindow.webContents.on('render-process-gone', () => void realtimeVoice?.revoke());
+  mainWindow.on('hide', () => void realtimeVoice?.revoke());
   mainWindow.on('closed', () => {
     workspaceBrowser?.dispose();
     workspaceBrowser = null;
@@ -211,6 +214,7 @@ function createWindow() {
     app.quit();
   });
   mainWindow.on('close', (event) => {
+    void realtimeVoice?.revoke();
     if (schedulerBackground?.hideOnClose()) {
       event.preventDefault();
       schedulerBackground.hide();
@@ -343,6 +347,14 @@ async function privateBackend(route, body, method = 'POST', timeout = 15000) {
     );
   return result;
 }
+realtimeVoice = require('./realtime-voice.cjs')({
+  ipcMain,
+  requireMainWindow,
+  dialog,
+  rendererSessions,
+  getWindow: () => mainWindow,
+  request: (...args) => privateBackend(args[0], args[1], args[2], 30000),
+});
 require('./virtual-documents.cjs')({
   ipcMain,
   requireMainWindow,
@@ -867,8 +879,14 @@ if (haveLock)
   app.whenReady().then(async () => {
     try {
       Menu.setApplicationMenu(null);
-      session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) =>
-        callback(false),
+      session.defaultSession.setPermissionRequestHandler(
+        (contents, permission, callback, details) =>
+          callback(
+            realtimeVoice.allowed(contents, permission, details.requestingUrl, details, true),
+          ),
+      );
+      session.defaultSession.setPermissionCheckHandler((contents, permission, origin, details) =>
+        realtimeVoice.allowed(contents, permission, origin, details),
       );
       if (
         !isDev &&

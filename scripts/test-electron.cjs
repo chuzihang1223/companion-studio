@@ -24,6 +24,7 @@ const tests = [
   'knowledge-unit.cjs',
   'computer-use-unit.cjs',
   'scheduler-unit.cjs',
+  'realtime-voice-unit.cjs',
 ];
 
 for (const test of tests) {

@@ -67,6 +67,7 @@ export class BufferedAudioQueue {
   private prebuffer: AudioBuffer[] = [];
   private prebufferSeconds = 0;
   private segmentStarts = new Map<string, number>();
+  private nativeBufferedSeconds = 0;
   constructor(
     private id: string,
     private volume: number,
@@ -74,6 +75,7 @@ export class BufferedAudioQueue {
     private ended: () => void,
     private previousStop: Promise<unknown>,
     private initialBufferMs = 300,
+    private outputDevice = '',
   ) {
     this.done = new Promise((resolve) => (this.resolveDone = resolve));
   }
@@ -85,7 +87,8 @@ export class BufferedAudioQueue {
         if (this.stopped) return;
         this.rate = rate;
         this.channels = channels;
-        this.native = !!(await window.desktopAPI?.nativePcmCapability())?.supported;
+        this.native =
+          !this.outputDevice && !!(await window.desktopAPI?.nativePcmCapability())?.supported;
         if (this.stopped) return;
         if (this.native) {
           await window.desktopAPI!.startNativePcm({
@@ -108,6 +111,7 @@ export class BufferedAudioQueue {
               .desktopAPI!.nativeAudioStatus()
               .then((status) => {
                 if (this.stopped) return;
+                this.nativeBufferedSeconds = Number(status.buffered_seconds) || 0;
                 if (!this.started && status.position > 0.01) {
                   this.started = true;
                   this.observer('native-pcm-started');
@@ -119,6 +123,13 @@ export class BufferedAudioQueue {
           }, 40);
         } else {
           this.context = new AudioContext({ sampleRate: rate });
+          if (this.outputDevice) {
+            const context = this.context as AudioContext & {
+              setSinkId?: (id: string) => Promise<void>;
+            };
+            if (!context.setSinkId) throw Error('当前音频引擎不支持选择输出设备');
+            await context.setSinkId(this.outputDevice);
+          }
           this.gain = this.context.createGain();
           this.gain.gain.value = this.volume;
           this.gain.connect(this.context.destination);
@@ -138,6 +149,18 @@ export class BufferedAudioQueue {
         if (rate !== this.rate || channels !== this.channels) throw Error('音频流格式发生变化');
         const bytes = Uint8Array.from(atob(pcmBase64), (c) => c.charCodeAt(0));
         if (!bytes.length) return;
+        const waitingSince = performance.now();
+        while (
+          !this.stopped &&
+          (this.native
+            ? this.nativeBufferedSeconds > 8
+            : this.end - (this.context?.currentTime || 0) > 8)
+        ) {
+          if (performance.now() - waitingSince > 30000)
+            throw Error('播放缓冲等待超时，请停止后重试');
+          await new Promise((resolve) => window.setTimeout(resolve, 50));
+        }
+        if (this.stopped) return;
         if (this.native) {
           await window.desktopAPI!.feedNativePcm({
             pcm_base64: pcmBase64,

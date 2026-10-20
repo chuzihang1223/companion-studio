@@ -8,7 +8,8 @@ export type EvaluationForm = {
     | 'workflow-core'
     | 'knowledge-core'
     | 'computer-use-core'
-    | 'scheduler-core';
+    | 'scheduler-core'
+    | 'voice-core';
   mode: EvaluationMode;
   role: string;
   caseId: string;
@@ -71,6 +72,7 @@ export default function EvaluationSetup({ form, dataset, models, change }: Props
             <option value="recovery-core">Recovery Core · 16 项</option>
             <option value="mcp-skills-core">MCP & Skills Core · 20 项</option>
             <option value="workflow-core">Workflow Core · 20 项</option>
+            <option value="voice-core">Realtime Voice · 36 项（合成／设备项分开）</option>
             <option value="scheduler-core">Scheduled Agent · 30 项（本地合成数据）</option>
             <option value="computer-use-core">
               Visual Computer Use · 24 项（需隔离 Windows GUI）

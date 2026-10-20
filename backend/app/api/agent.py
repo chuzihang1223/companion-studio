@@ -10,7 +10,7 @@ from app.api.chat_stream_v4 import sse
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
-from app.schemas.chat import AttachmentInput
+from app.schemas.chat import AttachmentInput, VoiceContext
 
 from app.services.agent_router import ConversationRouter
 from app.services.desktop.lifecycle import TaskCancelled
@@ -39,6 +39,7 @@ class ExecuteRequest(BaseModel):
     voice_enabled: bool = True
     expression: Literal["restrained", "natural", "rich"] = "natural"
     speed_factor: float = Field(default=1.0, ge=0.9, le=1.1)
+    voice_context: VoiceContext | None = None
 
 
 class SelectApplicationRequest(BaseModel):
@@ -102,6 +103,28 @@ async def select_application(request: Request, payload: SelectApplicationRequest
 
 @router.post("/execute/stream")
 async def execute_stream(request: Request, payload: ExecuteRequest):
+    if payload.voice_context:
+        if not payload.voice_enabled:
+            raise HTTPException(409, "语音轮次必须使用本次选定的朗读设置")
+        from app.services.realtime_voice.contracts import Scope
+
+        stored = request.app.state.work_state.restore_plan(payload.plan_id)
+        pending = request.app.state.agent_service.pending.get(payload.plan_id)
+        try:
+            voice_session = request.app.state.realtime_voice.claim(
+                Scope(
+                    owner_id=pending.renderer_id if pending else (stored or {}).get("renderer_id"),
+                    **payload.voice_context.model_dump(),
+                ),
+                pending.conversation_id if pending else (stored or {}).get("conversation_id"),
+                pending.character_id if pending else (stored or {}).get("character_id"),
+            )
+            from app.services.realtime_voice.trace import record
+
+            record(voice_session, "VOICE_AGENT_LINKED", origin_task_id=payload.plan_id)
+        except (LookupError, ValueError) as exc:
+            raise HTTPException(409, "语音轮次已失效；任务没有通过本次入口启动") from exc
+
     async def events():
         stored = request.app.state.work_state.restore_plan(payload.plan_id)
         pending = request.app.state.agent_service.pending.get(payload.plan_id)
@@ -167,6 +190,8 @@ async def execute_stream(request: Request, payload: ExecuteRequest):
                 speed_factor=payload.speed_factor,
                 message=info["user_text"],
                 character_id=info["character_id"],
+                renderer_id=route["renderer_id"],
+                voice_context=payload.voice_context,
             )
             pipeline = RealtimeVoicePipeline(
                 request.app, speech_payload, info["message_id"], SessionLocal

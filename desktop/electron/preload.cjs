@@ -6,6 +6,20 @@ const { contextBridge, ipcRenderer } = require('electron');
  * 增减方法时同步 main.cjs handler、前端 vite-env.d.ts 与相关回归。
  */
 contextBridge.exposeInMainWorld('desktopAPI', {
+  realtimeVoiceCapabilities: () => ipcRenderer.invoke('realtime-voice-capabilities'),
+  readVoiceTraces: (operation, options) =>
+    ipcRenderer.invoke('realtime-voice-traces', operation, options),
+  realtimeVoiceStart: (body) => ipcRenderer.invoke('realtime-voice-start', body),
+  realtimeVoiceControl: (action, body) => {
+    if (!['begin', 'frame', 'finalize', 'interrupt', 'event', 'stop'].includes(action))
+      return Promise.reject(Error('无效语音操作'));
+    return ipcRenderer.invoke('realtime-voice-' + action, body);
+  },
+  onRealtimeVoiceRevoked: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('realtime-voice-revoked', listener);
+    return () => ipcRenderer.removeListener('realtime-voice-revoked', listener);
+  },
   readKnowledge: (operation, options) => ipcRenderer.invoke('knowledge-read', operation, options),
   controlKnowledge: (operation, options) =>
     ipcRenderer.invoke('knowledge-control', operation, options),

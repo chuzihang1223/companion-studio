@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,11 +19,19 @@ class ChatRequest(BaseModel):
     attachments: list[AttachmentInput] = Field(default_factory=list, max_length=4)
 
 
+class VoiceContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    voice_session_id: UUID
+    turn_id: UUID
+    generation_id: UUID
+
+
 class ChatStreamRequest(ChatRequest):
     expression: Literal["restrained", "natural", "rich"] = "natural"
     voice_enabled: bool = True
     voice_prefetch: bool = True
     speed_factor: float = Field(default=1.0, ge=0.9, le=1.1)
+    voice_context: VoiceContext | None = None
 
 
 class ChatResponse(BaseModel):

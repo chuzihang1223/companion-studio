@@ -23,6 +23,7 @@ class WorkflowCatalog:
                 }
                 for t in registry.by_api_name.values()
                 if t.name != "skill.read_reference"
+                and not t.name.startswith(("workflow.", "scheduler."))
             ],
             "mcp_tools": self.app.state.external_tools.listing()
             if self.app.state.external_tools
@@ -46,7 +47,11 @@ class WorkflowCatalog:
         if node.type == "tool":
             registry = ToolRegistry()
             tool = registry.by_api_name.get(str(config.get("name", "")).replace(".", "_"))
-            if not tool or tool.name == "skill.read_reference":
+            if (
+                not tool
+                or tool.name == "skill.read_reference"
+                or tool.name.startswith(("workflow.", "scheduler."))
+            ):
                 raise WorkflowError("WORKFLOW_TOOL_NOT_FOUND", node.node_id)
             if node.metadata.get("tool_schema_hash") not in {None, digest(tool.schema())}:
                 raise WorkflowError("WORKFLOW_TOOL_SCHEMA_CHANGED", node.node_id)
@@ -109,7 +114,7 @@ class WorkflowCatalog:
         name = node.config.get("name") if node.type == "tool" else node.config["tool_id"]
         if node.type == "tool":
             tool = registry.by_api_name.get(name.replace(".", "_"))
-            if not tool:
+            if not tool or tool.name.startswith(("workflow.", "scheduler.")):
                 raise WorkflowError("WORKFLOW_TOOL_NOT_FOUND", node.node_id)
             try:
                 Draft202012Validator(tool.schema()["function"]["parameters"]).validate(arguments)

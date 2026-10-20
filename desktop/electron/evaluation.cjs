@@ -47,6 +47,7 @@ module.exports = ({
           'knowledge-core',
           'computer-use-core',
           'scheduler-core',
+          'voice-core',
         ].includes(dataset)
       )
         throw Error('未知内置数据集');

@@ -302,6 +302,17 @@ class AgentTaskRuntime:
         """
         name, args = call["name"], call["arguments"]
         session, work = context.work_session_id, self.app.state.work_state
+        if name.startswith(("workflow.", "scheduler.")):
+            from app.services.agent_orchestration import execute
+
+            return await self.step(
+                context,
+                "工作流与定时任务",
+                lambda: execute(self.app, context, call),
+                handle,
+                max_attempts=1,
+                operation_name=name,
+            )
         if name.startswith("computer."):
             from app.services.computer_use.runtime import execute
 

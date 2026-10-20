@@ -1,0 +1,57 @@
+.realtime-voice-panel {
+  margin: 8px 0;
+  padding: 14px;
+  border: 1px solid var(--border, #abc7cc);
+  border-radius: 14px;
+  background: var(--panel, #fff);
+  max-height: 55vh;
+  overflow: auto;
+  color: var(--text, #172f40);
+}
+.realtime-voice-panel header,
+.voice-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.realtime-voice-panel header button {
+  margin-left: auto;
+}
+.realtime-voice-panel p,
+.realtime-voice-panel small,
+.voice-actions span {
+  font-size: 12px;
+  opacity: 0.8;
+}
+.voice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+}
+.voice-options label,
+.voice-transcript label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.voice-options select {
+  max-width: 200px;
+  padding: 5px;
+  border-radius: 6px;
+}
+.voice-actions {
+  margin: 10px 0;
+}
+.realtime-voice-panel button {
+  padding: 6px 10px;
+}
+.voice-transcript textarea {
+  width: 100%;
+  min-height: 60px;
+}
+.voice-transcript small {
+  display: block;
+  margin-top: 5px;
+}

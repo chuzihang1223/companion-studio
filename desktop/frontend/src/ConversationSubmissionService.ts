@@ -7,6 +7,9 @@ import { FirstSpeechGate } from './FirstSpeechGate';
 
 /** 提交时的角色、模式和附件快照，不从后续切换的可见页面重新取值。 */
 export type Submission = {
+  voiceContext?: import('./realtimeVoice/types').VoiceBinding;
+  stillCurrent?: () => boolean;
+  onVoiceReply?: (id: string) => void;
   conversationId: string | null;
   character: CharacterInfo;
   text: string;
@@ -38,6 +41,9 @@ export class ConversationSubmissionService {
   private gates = new Map<string, { id: string; gate: FirstSpeechGate }>();
   private audible = '';
   private creating = new Map<string, Promise<api.Conversation>>();
+  // Permission/candidate UI supplies only an approval, never a replacement of
+  // the original voice/character/consent snapshot. Cleared on execution/stop.
+  private pendingRequests = new Map<string, Submission>();
   constructor(
     private store: ConversationRuntimeStore,
     private playback: AudioPlaybackService,
@@ -64,6 +70,9 @@ export class ConversationSubmissionService {
       request.text,
       request.mode === 'chat' && request.autoWork ? 'auto' : request.mode,
     );
+    if (request.stillCurrent && !request.stillCurrent()) return request.conversationId;
+    if (request.voiceContext && route === 'agent' && request.mode === 'chat')
+      throw Error('请先切换到工作模式，再开启语音执行任务。');
     let id = request.conversationId;
     if (!id || (route === 'agent' && request.mode === 'chat')) {
       const key = request.character.id + ':' + route;
@@ -89,6 +98,7 @@ export class ConversationSubmissionService {
     const owner = id;
     if (!this.store.get(owner).messages)
       this.store.get(owner).messages = await this.sdk.loadConversation(owner);
+    if (request.stillCurrent && !request.stillCurrent()) return owner;
     void this.store
       .enqueue(owner, () => this.run({ ...request, conversationId: owner }, route))
       .catch((cause) => this.error(owner, cause));
@@ -96,6 +106,7 @@ export class ConversationSubmissionService {
     return owner;
   }
   private async run(request: Submission, route: 'chat' | 'agent') {
+    if (request.stillCurrent && !request.stillCurrent()) return;
     const id = request.conversationId!,
       ticket = crypto.randomUUID(),
       user = 'pending-user-' + ticket,
@@ -140,6 +151,10 @@ export class ConversationSubmissionService {
           request.attachments,
           request.folder,
         );
+        if (request.stillCurrent && !request.stillCurrent()) {
+          if (plan.work_session_id) await this.sdk.stopWorkSession(plan.work_session_id);
+          return;
+        }
         this.rows(id, () =>
           this.store.get(id).messages!.filter((row) => row.id !== user && row.id !== reply),
         );
@@ -165,6 +180,7 @@ export class ConversationSubmissionService {
               request.prefetch,
               request.attachments,
               signal,
+              request.voiceContext,
             ),
           false,
         );
@@ -189,24 +205,45 @@ export class ConversationSubmissionService {
         pending: { planId: plan.plan_id, calls: plan.calls, approved: [], conversationId: id },
         status: '等待操作授权',
       });
-    else await this.work(plan.plan_id, [], request);
+    else {
+      await this.work(plan.plan_id, [], request);
+      return;
+    }
+    if (this.pendingRequests.size >= 64 && !this.pendingRequests.has(plan.plan_id))
+      throw Error('待确认任务过多，请先停止旧任务');
+    this.pendingRequests.set(plan.plan_id, request);
   }
   approve(planId: string, approved: string[], request: Submission) {
+    const original = this.pendingRequests.get(planId);
+    if (original && original.conversationId !== request.conversationId) return;
+    request = original || request;
     const id = request.conversationId!;
+    if (request.stillCurrent && !request.stillCurrent()) {
+      this.error(id, Error('原语音会话已停止，请重新发起任务'));
+      return;
+    }
     this.store.patch(id, { pending: null });
     void this.store
       .enqueue(id, () => this.work(planId, approved, request))
       .catch((cause) => this.error(id, cause));
   }
   async select(planId: string, appId: string, request: Submission) {
+    const original = this.pendingRequests.get(planId);
+    if (original && original.conversationId !== request.conversationId) return;
+    request = original || request;
     const id = request.conversationId!;
+    if (request.stillCurrent && !request.stillCurrent())
+      throw Error('原语音会话已停止，请重新发起任务');
     this.store.patch(id, { apps: null });
     const plan = await this.sdk.selectApplication(planId, appId);
+    this.pendingRequests.delete(planId);
     void this.store
       .enqueue(id, () => this.applyPlan(plan, request))
       .catch((cause) => this.error(id, cause));
   }
   private async work(planId: string, approved: string[], request: Submission) {
+    this.pendingRequests.delete(planId);
+    if (request.stillCurrent && !request.stillCurrent()) return;
     const ticket = crypto.randomUUID(),
       id = request.conversationId!;
     if (this.hooks.visible(id)) {
@@ -226,6 +263,7 @@ export class ConversationSubmissionService {
           request.expression,
           request.speed,
           signal,
+          request.voiceContext,
         ),
       true,
     );
@@ -286,6 +324,7 @@ export class ConversationSubmissionService {
             );
           else if (item.event === 'assistant_started') {
             replyId = String(item.data.message_id);
+            request.onVoiceReply?.(replyId);
             gate.setMessageId(replyId);
             this.gates.set(ticket, { id: replyId, gate });
             this.rows(id, (rows) =>
@@ -352,6 +391,8 @@ export class ConversationSubmissionService {
   }
   /** 只取消目标会话，不因一个页面的停止操作中断其他后台会话。 */
   async stop(id: string) {
+    for (const [planId, request] of this.pendingRequests)
+      if (request.conversationId === id) this.pendingRequests.delete(planId);
     for (const context of this.requests.values())
       if (context.conversationId === id) {
         context.abort.abort();

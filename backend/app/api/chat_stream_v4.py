@@ -73,6 +73,19 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
                 or conversation.character_id != payload.character_id
             ):
                 raise HTTPException(status_code=404, detail="Conversation not found")
+            if payload.voice_context:
+                if not payload.voice_enabled:
+                    raise HTTPException(409, "语音轮次必须使用本次选定的朗读设置")
+                from app.services.realtime_voice.contracts import Scope
+
+                try:
+                    request.app.state.realtime_voice.claim(
+                        Scope(owner_id=payload.renderer_id, **payload.voice_context.model_dump()),
+                        conversation.id,
+                        payload.character_id,
+                    )
+                except (LookupError, ValueError) as exc:
+                    raise HTTPException(409, "语音轮次已失效，请重新输入") from exc
             previous = visible_messages(db, conversation)
             reply_target = next(
                 (row for row in previous if row.id == payload.reply_to_message_id), None

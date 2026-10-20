@@ -397,6 +397,7 @@ export async function* streamAgent(
   expression: ExpressionLevel,
   speedFactor: number,
   signal?: AbortSignal,
+  voiceContext?: import('./realtimeVoice/types').VoiceBinding,
 ): AsyncGenerator<ChatStreamEvent> {
   if (window.desktopAPI?.controlExtensions)
     await window.desktopAPI.controlExtensions('approve-plan', {
@@ -414,6 +415,7 @@ export async function* streamAgent(
         voice_enabled: voiceEnabled,
         expression,
         speed_factor: speedFactor,
+        voice_context: voiceContext,
       }),
     }),
   );
@@ -685,6 +687,7 @@ export async function* streamMessage(
   voicePrefetch = true,
   attachments: AttachmentInput[] = [],
   signal?: AbortSignal,
+  voiceContext?: import('./realtimeVoice/types').VoiceBinding,
 ): AsyncGenerator<ChatStreamEvent> {
   const renderer_id = await (await import('./RendererIdentity')).rendererIdentity();
   const response = await fetch(`${await backendUrl()}/api/chat/stream`, {
@@ -701,6 +704,7 @@ export async function* streamMessage(
       conversation_id: conversationId,
       reply_to_message_id: replyToMessageId,
       speed_factor: speedFactor,
+      voice_context: voiceContext,
       attachments: attachments.map(({ name, data_base64 }) => ({ name, data_base64 })),
     }),
   });

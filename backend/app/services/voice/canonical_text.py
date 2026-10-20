@@ -1,7 +1,7 @@
 """One normalized reply buffer; emotion directions never rewrite its body."""
 
 import unicodedata
-from .speech_filter import StreamingSpeechFilter, speakable_text
+from .speech_filter import StreamingCredentialFilter, StreamingSpeechFilter, speakable_text
 
 
 class CanonicalResponseText:
@@ -9,6 +9,7 @@ class CanonicalResponseText:
         self.text = ""
         self.pending = ""
         self.filter = StreamingSpeechFilter()
+        self.credentials = StreamingCredentialFilter()
         self.spoken = ""
 
     def feed(self, delta, final=False):
@@ -28,7 +29,7 @@ class CanonicalResponseText:
             "NFC", raw.replace("\r\n", "\n").replace("\r", "\n")
         ).replace("\x00", "")
         self.text += visible
-        speech = self.filter.feed(visible, final=final)
+        speech = self.credentials.feed(self.filter.feed(visible, final=final), final=final)
         self.spoken += speech
         return visible, speech
 

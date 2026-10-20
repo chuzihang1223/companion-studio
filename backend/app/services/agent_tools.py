@@ -22,6 +22,7 @@ from urllib.parse import quote, urlsplit
 
 from app.services.music_provider import LocalMusicProvider
 from app.services.computer_use.tools import definitions as computer_definitions
+from app.services.agent_orchestration import definitions as orchestration_definitions
 from app.core.config import settings
 from app.services.application_catalog import application_ids
 
@@ -359,6 +360,7 @@ TOOLS = [
 
 
 TOOLS.extend(Tool(**definition) for definition in computer_definitions())
+TOOLS.extend(Tool(**definition) for definition in orchestration_definitions())
 
 
 class ToolRegistry:
@@ -381,7 +383,13 @@ class ToolRegistry:
         """
         text = user_text.lower()
         names: set[str] | None = None
-        if any(word in text for word in ("屏幕观察", "视觉操作", "computer use", "观察窗口")):
+        from app.services.agent_orchestration import requested
+
+        if requested(text):
+            names = {
+                tool.name for tool in TOOLS if tool.name.startswith(("workflow.", "scheduler."))
+            }
+        elif any(word in text for word in ("屏幕观察", "视觉操作", "computer use", "观察窗口")):
             names = {tool.name for tool in TOOLS if tool.name.startswith("computer.")}
         elif any(word in text for word in ("知识库", "知识检索", "knowledge", "检索资料")):
             names = {

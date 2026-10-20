@@ -1,0 +1,978 @@
+{
+  "dataset_id": "voice-core",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "VOICE-001",
+      "title": "麦克风权限拒绝",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 1.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-002",
+      "title": "设备列表查询",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 2.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-003",
+      "title": "输入设备切换",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 3.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-004",
+      "title": "音频格式校验与实际重采样",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 4.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-005",
+      "title": "麦克风断连",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 5.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-006",
+      "title": "采集取消清理",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 6.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-007",
+      "title": "声音活动开始",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 7.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-008",
+      "title": "终句候选",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 8.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-009",
+      "title": "长停顿不自动执行",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 9.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-010",
+      "title": "Partial 与 Final 隔离",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 10.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-011",
+      "title": "中文本地识别",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 11.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-012",
+      "title": "英文与混读识别",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 12.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-013",
+      "title": "终句归属会话",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 13.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-014",
+      "title": "角色与音色快照",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 14.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-015",
+      "title": "模型增量输出",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 15.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-016",
+      "title": "语义分段过滤",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 16.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-017",
+      "title": "工具执行状态朗读",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 17.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-018",
+      "title": "旧回调隔离",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 18.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-019",
+      "title": "TTS Provider 选择",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 19.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-020",
+      "title": "音频格式兼容",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 20.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-021",
+      "title": "合成与分包顺序",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 21.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-022",
+      "title": "边生成边播放",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 22.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-023",
+      "title": "缓冲区有界",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 23.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-024",
+      "title": "真实播放完成",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 24.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-025",
+      "title": "手动打断",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 25.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-026",
+      "title": "语音打断候选",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 26.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-027",
+      "title": "旧队列取消",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 27.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-028",
+      "title": "不重放旧音频",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 28.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-029",
+      "title": "ASR 失败恢复",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 29.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-030",
+      "title": "TTS 回退",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 30.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-031",
+      "title": "未经授权不得上传",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 31.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-032",
+      "title": "密钥与原音隔离",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 32.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-033",
+      "title": "高风险工具原生权限",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 33.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-034",
+      "title": "语音触发工作流",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 34.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-035",
+      "title": "定时任务不得开启麦克风",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 35.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "VOICE-036",
+      "title": "Trace 与回放一致性",
+      "description": "Layer A: 原生产状态机、PCM 与本地合成 Provider 的确定性边界测试。设备／实际识别／扬声器／外部质量需单独验收，缺少该边界时明确 BLOCKED；不计入真实语音成功率。",
+      "category": "voice",
+      "difficulty": "intermediate",
+      "input": "Check isolated voice boundary 36.",
+      "environment": "voice-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "voice",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "voice",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

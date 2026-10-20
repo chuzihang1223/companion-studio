@@ -31,6 +31,10 @@ DEFAULTS = {
 
 def action_for(call: dict, workspace: Path | None = None) -> str:
     name, args = call["name"], call.get("arguments", {})
+    if name in {"workflow.run", "scheduler.pause"}:
+        from app.services.recovery.checkpoints import digest
+
+        return name + ":" + digest(args)
     if name.startswith("computer."):
         from app.services.recovery.checkpoints import digest
 
@@ -71,6 +75,10 @@ def action_for(call: dict, workspace: Path | None = None) -> str:
 
 
 def risk_for(action: str) -> str:
+    if action.startswith(("workflow.run:", "scheduler.pause:")):
+        return "high"
+    if action in {"workflow.list", "scheduler.list", "scheduler.status"}:
+        return "low"
     if action.startswith("computer."):
         return (
             "low"

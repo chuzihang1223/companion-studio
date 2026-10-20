@@ -1,6 +1,7 @@
 """Start, reuse, and stop the isolated local TTS subprocess safely."""
 
 from dataclasses import asdict
+from contextlib import contextmanager
 import json
 import logging
 import os
@@ -260,13 +261,43 @@ class VoiceWorkerClient:
         for line in process.stderr:
             logger.info("Voice worker: %s", line.rstrip())
 
-    def synthesize(self, text: str, control: EngineControl, timeout: float | None = None) -> dict:
+    @contextmanager
+    def _request_scope(self, cancel_event, timeout):
+        deadline = time.monotonic() + timeout
+        while not self._request_lock.acquire(timeout=0.1):
+            if cancel_event is not None and cancel_event.is_set():
+                raise RuntimeError("Voice generation cancelled")
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Voice generation timed out")
+        try:
+            if cancel_event is not None and cancel_event.is_set():
+                raise RuntimeError("Voice generation cancelled")
+            yield
+        finally:
+            self._request_lock.release()
+
+    def synthesize(
+        self,
+        text: str,
+        control: EngineControl,
+        timeout: float | None = None,
+        cancel_event: Event | None = None,
+    ) -> dict:
         timeout = timeout or min(180, max(45, 30 + len(text) * 2))
+        if cancel_event is not None and cancel_event.is_set():
+            raise RuntimeError("Voice generation cancelled")
         self.start_background()
-        if not self._ready.wait(timeout=timeout) or not self.ready:
+        ready_deadline = time.monotonic() + timeout
+        while not self._ready.wait(timeout=0.1):
+            if cancel_event is not None and cancel_event.is_set():
+                raise RuntimeError("Voice generation cancelled")
+            if time.monotonic() >= ready_deadline:
+                break
+        if not self.ready:
             raise RuntimeError(self.error or "Voice model is still unavailable")
-        with self._request_lock:
-            assert self.process and self.process.stdin
+        with self._request_scope(cancel_event, timeout):
+            if not self.ready or self.process is None or self.process.stdin is None:
+                raise RuntimeError("Voice worker unavailable")
             request_id = str(uuid4())
             request = {
                 "command": "synthesize",
@@ -276,10 +307,26 @@ class VoiceWorkerClient:
             }
             self.process.stdin.write(json.dumps(request, ensure_ascii=False) + "\n")
             self.process.stdin.flush()
-            try:
-                response = self._responses.get(timeout=timeout)
-            except Empty as exc:
-                raise RuntimeError("Voice generation timed out") from exc
+            deadline = time.monotonic() + timeout
+            while True:
+                if cancel_event is not None and cancel_event.is_set():
+                    # Only this request's own worker is stopped while holding its
+                    # request lock. No process-name kill or other edition access.
+                    process = self.process
+                    self._stopping = True
+                    if process is not None and process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=3)
+                    self._ready.clear()
+                    raise RuntimeError("Voice generation cancelled")
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError("Voice generation timed out")
+                try:
+                    response = self._responses.get(timeout=min(remaining, 0.1))
+                    break
+                except Empty:
+                    continue
             if response.get("type") != "audio" or response.get("id") != request_id:
                 raise RuntimeError(response.get("error", "Voice worker protocol error"))
             return response

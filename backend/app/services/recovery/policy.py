@@ -3,6 +3,9 @@
 from app.services.recovery.types import RecoveryDecision
 
 READ_ONLY = {
+    "workflow.list",
+    "scheduler.list",
+    "scheduler.status",
     "computer.observe",
     "computer.find_element",
     "computer.wait_for_state",

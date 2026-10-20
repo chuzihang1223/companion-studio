@@ -51,6 +51,7 @@ async def datasets(request: Request):
                 "knowledge-core",
                 "computer-use-core",
                 "scheduler-core",
+                "voice-core",
             )
         ]
     }
@@ -66,6 +67,7 @@ async def dataset(
         "knowledge-core",
         "computer-use-core",
         "scheduler-core",
+        "voice-core",
     ],
     request: Request,
 ):

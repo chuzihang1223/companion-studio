@@ -61,6 +61,8 @@ import AppSettings from './AppSettings';
 import CharacterPage from './CharacterPage';
 import FirstRunGuide from './FirstRunGuide';
 import VoiceInputButton from './VoiceInputButton';
+import VoicePanel from './realtimeVoice/VoicePanel';
+import type { VoiceController } from './realtimeVoice/VoiceController';
 import ComposerActionButton from './ComposerActionButton';
 import FolderChip from './FolderChip';
 import { usePresence, PresenceIndicator } from './PresenceService';
@@ -135,6 +137,9 @@ export default function AppV3() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [musicOpen, setMusicOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const realtimeVoiceRef = useRef<VoiceController | null>(null);
+  const realtimeReplyRef = useRef('');
   const [agentMode, setAgentMode] = useState<'chat' | 'agent'>(
     saved('agent-mode', 'chat') === 'agent' ? 'agent' : 'chat',
   );
@@ -253,15 +258,27 @@ export default function AppV3() {
         ) {
           gateRef.current?.audioStarted();
           if (id) submissionRef.current?.audioStarted(id);
+          if (id) {
+            realtimeReplyRef.current = id;
+            realtimeVoiceRef.current?.observe('playback_started', id);
+          }
         }
         setPlayingId(id);
         if (diagnostic) {
           setPlaybackDiagnostic(diagnostic);
           if (['native-failed', 'media-error', 'pcm-failed'].includes(diagnostic.playResult || ''))
             setError(`语音播放失败：${diagnostic.detail ?? diagnostic.playResult}`);
+          if (
+            id &&
+            ['native-failed', 'media-error', 'pcm-failed'].includes(diagnostic.playResult || '')
+          )
+            realtimeVoiceRef.current?.observe('playback_failed', id);
         }
       },
       () => {
+        if (realtimeReplyRef.current)
+          realtimeVoiceRef.current?.observe('playback_completed', realtimeReplyRef.current);
+        realtimeReplyRef.current = '';
         timerRef.current = window.setTimeout(
           () => playNextRef.current(),
           currentQueuedAfterRef.current,
@@ -1927,6 +1944,56 @@ export default function AppV3() {
                 </div>
               )}
 
+              {voiceOpen && character && (
+                <VoicePanel
+                  conversationId={activeId}
+                  characterId={character.id}
+                  controller={(value) => {
+                    realtimeVoiceRef.current = value;
+                  }}
+                  close={() => setVoiceOpen(false)}
+                  ensureConversation={async () => {
+                    if (activeIdRef.current) return activeIdRef.current;
+                    const token = openTokenRef.current;
+                    const row = await createConversation(
+                      character.id,
+                      agentModeRef.current === 'agent' ? 'work' : 'chat',
+                    );
+                    if (token !== openTokenRef.current) throw Error('会话已切换，请重新开启语音');
+                    activeIdRef.current = row.id;
+                    setActiveId(row.id);
+                    return row.id;
+                  }}
+                  output={(id) => playbackRef.current!.setOutputDevice(id)}
+                  interrupt={async (id) => {
+                    // Submission checks the fixed conversation before touching
+                    // the shared player; a late old-panel cleanup must not mute
+                    // the newly selected conversation.
+                    if (id) await submissionRef.current?.stop(id);
+                  }}
+                  send={async (text, binding, current) => {
+                    const identity = realtimeVoiceRef.current?.view.identity;
+                    if (
+                      !current() ||
+                      identity?.conversation_id !== activeIdRef.current ||
+                      identity.character_id !== characterIdRef.current
+                    )
+                      throw Error('语音会话已切换，未发送识别文本');
+                    const request = {
+                      ...submission(text),
+                      attachments: [],
+                      replyTo: undefined,
+                      voice: true,
+                      prefetch: true,
+                      voiceContext: binding,
+                      stillCurrent: current,
+                      onVoiceReply: (id: string) =>
+                        realtimeVoiceRef.current?.bindReply(id, binding),
+                    };
+                    await submissionRef.current!.submit(request);
+                  }}
+                />
+              )}
               <textarea
                 ref={composerRef}
                 aria-label="输入消息"
@@ -1950,8 +2017,7 @@ export default function AppV3() {
                   <VoiceInputButton
                     disabled={!character || (!concurrentRuntime && busy)}
                     onActivate={() => {
-                      composerRef.current?.focus();
-                      setDesktopActionStatus('输入框已就绪，请按 Win + H 使用 Windows 语音输入。');
+                      setVoiceOpen((open) => !open);
                     }}
                   />
                   {agentMode === 'agent' && (

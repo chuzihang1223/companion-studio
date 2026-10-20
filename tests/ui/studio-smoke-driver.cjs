@@ -134,6 +134,7 @@ class StudioSmokeDriver {
         '--compat',
         '--remote-debugging-port=' + this.ports.renderer,
         '--inspect=' + this.ports.main,
+        ...(this.chromiumArgs || []),
         ...(process.env.COMPANION_TEST_CHROMIUM_LOGGING === '1'
           ? ['--enable-logging=stderr', '--v=1']
           : []),

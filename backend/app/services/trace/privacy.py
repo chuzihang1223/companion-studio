@@ -50,6 +50,7 @@ BOOLEANS = {
     "queued",
 }
 ENUMS = {
+    "provider_id": {"windows-sapi", "configured"},
     "source": {"uia", "ocr", "dom", "vision"},
     "strategy": {
         "retry_read",
@@ -163,6 +164,9 @@ def metadata(value: object) -> dict:
         elif key == "external_tool_id" and identifier(item):
             result[key] = item
         elif key in {
+            "voice_session_id",
+            "turn_id",
+            "generation_id",
             "schedule_id",
             "occurrence_id",
             "window_id",

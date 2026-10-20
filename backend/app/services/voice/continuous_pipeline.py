@@ -9,14 +9,17 @@ import json
 import time
 from uuid import uuid4
 import wave
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.file_logging import file_logger
 from app.models import Message
+from app.services.trace.scope import current_trace, current_span
 from .canonical_text import CanonicalResponseText, IncrementalSpeechText
 from .message_cache import save_message_audio
 from .prosody_planner import ProsodyPlanner
 from .speech_director import SpeechDirector
 from .speech_plan import PreviousVoiceState
+from .speech_filter import speakable_text
 
 
 class RealtimeVoicePipeline:
@@ -41,6 +44,32 @@ class RealtimeVoicePipeline:
         self.logger.info(json.dumps(row))
         self.latency.info(json.dumps(row))
 
+    def save_audio(self, result, provider, realtime):
+        with self.factory() as db:
+            row = db.get(Message, self.reply_id)
+            if not row:
+                return None
+            try:
+                saved = save_message_audio(
+                    db,
+                    row,
+                    [(result["audio_base64"], 0, 0)],
+                    result.get("engine", provider.name),
+                    expression=self.payload.expression,
+                    speed_factor=self.payload.speed_factor,
+                    reference_id=getattr(getattr(provider, "config", None), "reference_id", None),
+                    realtime=realtime,
+                )
+                return {"engine": saved.engine}
+            except (OSError, ValueError, SQLAlchemyError) as exc:
+                if not realtime:
+                    raise
+                # Text and played PCM are already complete. A quota/disk error
+                # must not invite the user to execute an Agent side effect again.
+                db.rollback()
+                self.log("voice_cache_failed", error=type(exc).__name__)
+                return None
+
     async def events(self, deltas, messages, on_complete):
         outgoing, speech = asyncio.Queue(maxsize=32), asyncio.Queue(maxsize=16)
         canonical, chunker = CanonicalResponseText(), IncrementalSpeechText()
@@ -49,6 +78,32 @@ class RealtimeVoicePipeline:
             if hasattr(self.app.state.voice_client, "choose")
             else self.app.state.voice_client
         )
+        voice_session = voice_turn = None
+        binding = getattr(self.payload, "voice_context", None)
+        if binding:
+            from app.services.realtime_voice.contracts import Scope
+
+            voice_session = self.app.state.realtime_voice.owned(
+                Scope(owner_id=self.payload.renderer_id, **binding.model_dump()), turn=True
+            )
+            voice_turn = voice_session.turn
+            provider = voice_turn.tts
+
+        def voice_event(event, **metadata):
+            if voice_session and voice_session.turn is voice_turn:
+                from app.services.realtime_voice.contracts import TurnState
+                from app.services.realtime_voice.trace import record
+
+                if event == "TTS_CHUNK_REQUESTED" and voice_turn.state == TurnState.GENERATING:
+                    voice_turn.transition(TurnState.SYNTHESIZING)
+                record(voice_session, event, **metadata)
+
+        def guard_generation():
+            if voice_session and (
+                voice_session.turn is not voice_turn or voice_turn.cancellation_token.is_set()
+            ):
+                raise asyncio.CancelledError()
+
         if getattr(getattr(provider, "config", None), "latency", None) == "normal":
             # Quality delivery needs enough context before the single early flush;
             # flushing a tiny reaction alone makes the next phrase restart audibly.
@@ -68,9 +123,16 @@ class RealtimeVoicePipeline:
         async def text_worker():
             nonlocal error
             first = True
+            tokens = None
+            if voice_turn and voice_turn.trace:
+                tokens = (
+                    current_trace.set(voice_turn.trace),
+                    current_span.set(voice_turn.trace.root_span_id),
+                )
 
             async def accept(delta, final=False):
                 nonlocal first, previous_voice, segment_offset, low_water
+                guard_generation()
                 visible, spoken = canonical.feed(delta, final)
                 if visible:
                     if first:
@@ -130,6 +192,7 @@ class RealtimeVoicePipeline:
                         body_sha256=hashlib.sha256(part.encode()).hexdigest(),
                     )
                     await speech.put(directed)
+                    voice_event("TTS_CHUNK_REQUESTED", character_count=len(part))
 
             try:
                 async for delta in deltas:
@@ -145,17 +208,28 @@ class RealtimeVoicePipeline:
                 error = exc
                 await outgoing.put(("error", {"detail": "回复生成失败，请重试。"}))
             finally:
+                try:
+                    # Close in the task that iterated the generator: model span
+                    # ContextVar tokens must never reset from another task.
+                    if hasattr(deltas, "aclose"):
+                        await deltas.aclose()
+                finally:
+                    if tokens:
+                        current_span.reset(tokens[1])
+                        current_trace.reset(tokens[0])
                 if not asyncio.current_task().cancelling():
                     await speech.put(None)
                     await outgoing.put(("text_done", {}))
 
         async def on_pcm(raw, rate, channels):
             nonlocal sequence, audio_started, produced_seconds
+            guard_generation()
             if not raw:
                 return
             if not sequence:
                 audio_started = time.perf_counter()
                 self.log("first_audio", sample_rate=rate)
+                voice_event("TTS_CHUNK_READY")
             produced_seconds += len(raw) / (rate * channels * 2)
             # Normal quality can return several seconds in one WebSocket packet.
             # Keep every IPC/SSE frame safely below the existing payload limit.
@@ -230,8 +304,6 @@ class RealtimeVoicePipeline:
                             )
                     else:
                         # Local backup uses the same output device and canonical reply.
-                        from .speech_filter import speakable_text
-
                         texts = []
                         while (part := await speech.get()) is not None:
                             texts.append(part)
@@ -271,8 +343,12 @@ class RealtimeVoicePipeline:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                backup = getattr(self.app.state.voice_client, "fallback", lambda *_: None)(
-                    provider, exc
+                backup = (
+                    getattr(provider, "fallback", lambda *_: None)(exc)
+                    if voice_session
+                    else getattr(self.app.state.voice_client, "fallback", lambda *_: None)(
+                        provider, exc
+                    )
                 )
                 # Once any PCM is delivered, switching engines would repeat or mix a reply.
                 if not sequence and backup and getattr(backup, "available", False):
@@ -292,17 +368,24 @@ class RealtimeVoicePipeline:
                             ProsodyPlanner().for_expressive(plan.segments[0]),
                             speed_factor=self.payload.speed_factor,
                         )
-                        result = await asyncio.to_thread(
-                            backup.synthesize, canonical.spoken, control
-                        )
-                        with wave.open(
-                            BytesIO(base64.b64decode(result["audio_base64"])), "rb"
-                        ) as reader:
-                            await on_pcm(
-                                reader.readframes(reader.getnframes()),
-                                reader.getframerate(),
-                                reader.getnchannels(),
+                        if voice_session:
+                            from app.services.realtime_voice.tts import local_fallback_audio
+
+                            result = await local_fallback_audio(
+                                backup, canonical.spoken, self.payload.speed_factor, on_pcm
                             )
+                        else:
+                            result = await asyncio.to_thread(
+                                backup.synthesize, speakable_text(canonical.spoken), control
+                            )
+                            with wave.open(
+                                BytesIO(base64.b64decode(result["audio_base64"])), "rb"
+                            ) as reader:
+                                await on_pcm(
+                                    reader.readframes(reader.getnframes()),
+                                    reader.getframerate(),
+                                    reader.getnchannels(),
+                                )
                         self.log("local_fallback", engine=backup.name)
                         await outgoing.put(
                             (
@@ -340,6 +423,17 @@ class RealtimeVoicePipeline:
                     await outgoing.put(("audio_done", {}))
 
         workers = [asyncio.create_task(text_worker()), asyncio.create_task(audio_worker())]
+
+        async def cancel_turn():
+            for worker in workers:
+                worker.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
+            while not outgoing.empty():
+                outgoing.get_nowait()
+            outgoing.put_nowait(("voice_cancelled", {}))
+
+        if voice_session:
+            voice_turn.pipeline = cancel_turn
         sessions = getattr(self.app.state, "live_voice_sessions", None)
         if sessions is None:
             sessions = self.app.state.live_voice_sessions = {}
@@ -367,33 +461,37 @@ class RealtimeVoicePipeline:
         try:
             while len(done) < 2:
                 event, data = await outgoing.get()
+                if event == "voice_cancelled":
+                    break
                 if event in {"text_done", "audio_done"}:
                     done.add(event)
                 else:
-                    yield event, data
-            if result and not error:
-                with self.factory() as db:
-                    row = db.get(Message, self.reply_id)
-                    if row:
-                        saved = save_message_audio(
-                            db,
-                            row,
-                            [(result["audio_base64"], 0, 0)],
-                            result.get("engine", provider.name),
-                            expression=self.payload.expression,
-                            speed_factor=self.payload.speed_factor,
-                            reference_id=getattr(
-                                getattr(provider, "config", None), "reference_id", None
-                            ),
-                        )
-                        yield (
-                            "voice_saved",
-                            {
-                                "message_id": self.reply_id,
-                                "engine": saved.engine,
-                                "status": "ready",
-                            },
-                        )
+                    guard_generation()
+                    yield (
+                        event,
+                        {
+                            **data,
+                            **(binding.model_dump(mode="json") if binding else {}),
+                        },
+                    )
+            if (
+                result
+                and not error
+                and not (voice_session and voice_turn.cancellation_token.is_set())
+            ):
+                saved = self.save_audio(result, provider, voice_session is not None)
+                if saved:
+                    yield (
+                        "voice_saved",
+                        {"message_id": self.reply_id, "engine": saved["engine"], "status": "ready"},
+                    )
+                elif voice_session:
+                    yield (
+                        "voice_error",
+                        {
+                            "detail": "回复已生成，但语音缓存未保存。请检查磁盘空间或缓存配额；不要重复执行任务。"
+                        },
+                    )
             self.log(
                 "generation_done",
                 canonical_chars=len(canonical.text),
@@ -406,6 +504,10 @@ class RealtimeVoicePipeline:
                 if not worker.done():
                     worker.cancel()
             await asyncio.gather(*workers, return_exceptions=True)
+            if voice_session:
+                voice_turn.pipeline = None
+                if hasattr(provider, "close"):
+                    await provider.close()
             if hasattr(deltas, "aclose"):
                 await deltas.aclose()
 

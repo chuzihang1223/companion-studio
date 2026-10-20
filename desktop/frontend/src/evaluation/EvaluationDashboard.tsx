@@ -4,19 +4,25 @@ import { modelLabel, terminal } from './presentation';
 import EvaluationMetrics from './EvaluationMetrics';
 import EvaluationEvidence from './EvaluationEvidence';
 import EvaluationComparison from './EvaluationComparison';
-import EvaluationSetup, { initialForm } from './EvaluationSetup';
+import EvaluationSetup, { initialForm, type EvaluationForm } from './EvaluationSetup';
 import EvaluationResults from './EvaluationResults';
 import EvaluationTrend from './EvaluationTrend';
 import './evaluation.css';
 
 // All progress, paging and metrics state stays in this memoized module. Evaluation
 // SSE does not invalidate the parent Workbench or its geometry on every case.
-export default memo(function EvaluationDashboard({ visible }: { visible: boolean }) {
+export default memo(function EvaluationDashboard({
+  visible,
+  initialDataset = 'studio-core',
+}: {
+  visible: boolean;
+  initialDataset?: EvaluationForm['datasetId'];
+}) {
   const api = window.desktopAPI;
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [evidenceDataset, setEvidenceDataset] = useState<Dataset | null>(null);
   const [models, setModels] = useState<ModelChoice[]>([]);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({ ...initialForm, datasetId: initialDataset }));
   const {
     datasetId,
     mode,

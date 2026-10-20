@@ -35,6 +35,12 @@ export class AudioPlaybackService {
   private pcmFinished = false;
   private pcmUserPaused = false;
   private buffered: BufferedAudioQueue | null = null;
+  private outputDevice = '';
+
+  setOutputDevice(id: string) {
+    if (this.voiceId) throw Error('请先停止语音再切换输出设备');
+    this.outputDevice = id;
+  }
 
   constructor(listener: PlaybackListener, ended: () => void = () => {}) {
     this.listener = listener;
@@ -317,6 +323,7 @@ export class AudioPlaybackService {
       },
       this.pendingStop,
       initialBufferMs,
+      this.outputDevice,
     );
     return this.buffered;
   }

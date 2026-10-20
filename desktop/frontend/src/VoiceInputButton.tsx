@@ -1,6 +1,6 @@
 import ComposerActionButton from './ComposerActionButton';
 export type VoiceInputState = 'idle' | 'recording' | 'transcribing' | 'error';
-/** Windows dictation remains the input engine; recording state is never guessed. */
+/** Opens the opt-in voice panel. Actual capture status belongs to its controller. */
 export default function VoiceInputButton({
   state = 'idle',
   disabled = false,
@@ -20,7 +20,7 @@ export default function VoiceInputButton({
     <ComposerActionButton
       icon={state === 'error' ? 'alert' : state === 'transcribing' ? 'retry' : 'wave'}
       className={`voice-input-button ${state}`}
-      title={state === 'idle' ? '使用 Windows 语音输入（Win + H）' : label}
+      title={state === 'idle' ? '打开本地语音会话' : label}
       aria-label={label}
       aria-pressed={state === 'recording'}
       disabled={disabled || state === 'transcribing'}

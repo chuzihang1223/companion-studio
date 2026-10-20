@@ -32,6 +32,11 @@ TREES = {
     "examples/agent-skills",
 }
 PUBLIC_DOCS = {
+    "VOICE_BASELINE.md",
+    "VOICE_ARCHITECTURE.md",
+    "VOICE_PROVIDERS.md",
+    "VOICE_PRIVACY.md",
+    "VOICE_EVALUATION.md",
     "COMPUTER_USE_ARCHITECTURE.md",
     "WINDOWS_UI_AUTOMATION.md",
     "SCREEN_CAPTURE_PRIVACY.md",

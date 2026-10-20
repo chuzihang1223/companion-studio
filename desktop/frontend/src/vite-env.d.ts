@@ -2,6 +2,18 @@
 
 interface Window {
   desktopAPI?: {
+    readVoiceTraces: NonNullable<Window['desktopAPI']>['readAgentTraces'];
+    realtimeVoiceCapabilities: () => Promise<import('./realtimeVoice/types').VoiceCapabilities>;
+    realtimeVoiceStart: (
+      options: import('./realtimeVoice/types').VoiceOptions,
+    ) => Promise<import('./realtimeVoice/types').VoiceIdentity>;
+    realtimeVoiceControl: (
+      action: import('./realtimeVoice/types').VoiceControl,
+      options: Record<string, unknown>,
+    ) => Promise<
+      import('./realtimeVoice/types').VoiceIdentity & { text?: string; duration_ms?: number }
+    >;
+    onRealtimeVoiceRevoked: (callback: () => void) => () => void;
     readSchedules: <K extends keyof import('./scheduling/types').Reads>(
       operation: K,
       options?: Record<string, unknown>,
@@ -350,7 +362,12 @@ interface Window {
     pauseNativeAudio: () => Promise<{ status: string }>;
     resumeNativeAudio: () => Promise<{ status: string }>;
     stopNativeAudio: () => Promise<{ status: string }>;
-    nativeAudioStatus: () => Promise<{ status: string; position: number; duration: number }>;
+    nativeAudioStatus: () => Promise<{
+      status: string;
+      position: number;
+      duration: number;
+      buffered_seconds?: number;
+    }>;
   };
 }
 

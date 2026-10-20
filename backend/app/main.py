@@ -60,6 +60,8 @@ from app.services.knowledge.service import KnowledgeService
 from app.api.knowledge import router as knowledge_router
 from app.api.schedules import router as schedules_router
 from app.services.scheduling.coordinator import DurableScheduler
+from app.api.realtime_voice import router as realtime_voice_router
+from app.services.realtime_voice.sessions import VoiceSessionManager
 
 
 @asynccontextmanager
@@ -148,6 +150,7 @@ async def services_lifespan(app: FastAPI):
     app.state.native_player = NativeAudioPlayer(settings.data_root)
     app.state.voice_jobs.start()
     app.state.voice_states = {}
+    app.state.realtime_voice = VoiceSessionManager(app)
     app.state.voice_client.start_background()
     app.state.workflows = None
     try:
@@ -194,6 +197,7 @@ async def services_lifespan(app: FastAPI):
 
             await asyncio.gather(*tasks, return_exceptions=True)
         await close_service(app.state.desktop_bridge.close, "desktop_bridge")
+        await close_service(app.state.realtime_voice.close, "realtime_voice")
         await close_service(app.state.voice_jobs.stop, "voice_jobs")
         await close_service(app.state.native_player.stop, "native_player")
         await close_service(app.state.voice_client.stop, "voice_client")
@@ -226,6 +230,7 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(chat_stream_router)
 app.include_router(voice_router)
+app.include_router(realtime_voice_router)
 app.include_router(fish_settings_router)
 app.include_router(character_router)
 app.include_router(conversations_router)

@@ -64,7 +64,7 @@ try {
 $utf8 = New-Object Text.UTF8Encoding($false)
 $sourceHashes = [ordered]@{}
 foreach ($folder in @('backend\app','desktop\frontend\src','desktop\electron','characters','examples\agent-skills')) {
-  foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $project $folder) -Recurse -File | Sort-Object FullName | Where-Object { $_.Name -ne 'build-info.json' -and $_.Extension -in @('.py','.json','.cjs','.ps1','.cs','.ts','.tsx','.css','.svg','.md') })) {
+  foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $project $folder) -Recurse -File | Sort-Object FullName | Where-Object { $_.Name -ne 'build-info.json' -and $_.Extension -in @('.py','.json','.cjs','.js','.ps1','.cs','.ts','.tsx','.css','.svg','.md') })) {
     $sourceHashes[$file.FullName.Substring($project.Length+1).Replace('\','/')] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
   }
 }
@@ -109,6 +109,7 @@ $arguments = @('-m','PyInstaller','--noconfirm','--clean','--onedir','--noconsol
   '--add-data',((Join-Path $appStage 'electron\build-info.json')+';.'),
   '--add-data',((Join-Path $project 'backend\app\services\character\app_identity.json')+';app/services/character'),
   '--add-data',((Join-Path $project 'backend\app\services\voice\voice_presets.json')+';app/services/voice'),
+  '--add-data',((Join-Path $project 'backend\app\services\realtime_voice\windows-speech.ps1')+';app/services/realtime_voice'),
   '--add-data',((Join-Path $project 'backend\app\services\evaluation\datasets')+';app/services/evaluation/datasets'),
   '--exclude-module','_pytest','--exclude-module','PIL._imagingtk','--exclude-module','tkinter','--exclude-module','_tkinter','--exclude-module','pytest','--exclude-module','pip','--exclude-module','docx','--exclude-module','lxml','--exclude-module','soundfile','--exclude-module','_soundfile_data',
   '--distpath',$backend,'--workpath',(Join-Path $build 'pyinstaller'),'--specpath',$build,(Join-Path $project 'backend\run.py'))
