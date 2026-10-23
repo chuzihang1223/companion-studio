@@ -92,6 +92,11 @@ def test_twenty_case_api_runtime_trace_database_and_exports(evaluation):
             ).json()
             assert trace["items"] and all(e["task_id"] == row["task_id"] for e in trace["items"])
             assert not (value.environment.path(run_id, row["attempt_id"]) / "workspace").exists()
+        # Retain the original export before the deletion API test removes this run.
+        (value.environment.root.parent / "studio-result.json").write_text(
+            EvaluationReportService(value.repository).export(run_id, "json")["content"],
+            encoding="utf-8",
+        )
         first = rows[0]
         dual = rows[-1]
         assert (

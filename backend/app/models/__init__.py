@@ -37,3 +37,5 @@ from .schedules import (  # noqa: F401 - additive scheduler tables
     SchedulerEventRow,
     SchedulerNotificationRow,
 )
+
+from .model_routing import ModelRequestRow  # noqa: F401 - additive routing ledger

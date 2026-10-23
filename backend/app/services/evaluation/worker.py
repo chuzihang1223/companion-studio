@@ -155,6 +155,16 @@ async def evaluate(payload):
     state.work_state.trace_recorder = state.trace_recorder
     state.runtime_registry.trace_recorder = state.trace_recorder
     store.start()
+    if case.case_id.startswith("ROUTE-"):
+        from app.services.evaluation.router_cases import run_case
+
+        try:
+            return await run_case(app, store, case, payload, workspace)
+        finally:
+            await state.recovery.close()
+            await state.runtime_registry.close()
+            await store.stop()
+            engine.dispose()
     if case.case_id.startswith("VOICE-"):
         from app.services.evaluation.voice_cases import run_case
 

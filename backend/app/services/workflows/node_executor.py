@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from app.services.workflows.contracts import WorkflowError, bounded
 from app.services.workflows.variables import condition, resolve, transform
 from app.services.workflows.output import workflow_output
-from app.services.workflows.metadata import model_metadata
+from app.services.workflows.metadata import model_metadata, workflow_data_kind
 
 
 class NodeExecutor:
@@ -130,7 +130,28 @@ class NodeExecutor:
         }:
             raise WorkflowError("WORKFLOW_MODEL_ROLE_INVALID", node.node_id)
         # Original LLMService supplies provider isolation, usage accounting and Trace spans.
-        service = self.app.state.model_roles.service(role)
+        from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+        routes = getattr(getattr(self.app.state, "workflows", None), "model_routes", {}).get(
+            context.get("workflow_run_id"), self.app.state.model_roles
+        )
+        run = self.app.state.workflows.repository.run(
+            context["workflow_run_id"], context["conversation_id"]
+        )
+        definition = self.app.state.workflows.repository.version(run["version_id"])
+        requirements = TaskCapabilityResolver.resolve(
+            "STRUCTURED"
+            if schema
+            else "SCHEDULED"
+            if context.get("scheduled_guard")
+            else "WORKFLOW",
+            data_kind=workflow_data_kind(definition),
+        )
+        service = (
+            routes.service(role, requirements=requirements)
+            if getattr(routes, "intelligent", None)
+            else routes.service(role)
+        )
         if context.get("knowledge_tainted"):
             from app.services.knowledge.context import GroundedService, model_target
             from app.services.knowledge.runtime import validate_references
@@ -154,7 +175,7 @@ class NodeExecutor:
                 raise WorkflowError(error.code, node.node_id) from None
             service = GroundedService(knowledge, service, sources, owner, character_id, None)
             service.dispatch_guard = context.get("scheduled_guard")
-        # 热切换可能改变后续节点的实际模型；同时记录实际服务，不能只看运行起点的快照。
+        # Record the selected task snapshot; provider dispatch still checks scheduled grants.
         context["observed_model"] = model_metadata(service)
         if context.get("scheduled_guard"):
             context["scheduled_guard"]()

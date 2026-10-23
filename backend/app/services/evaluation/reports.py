@@ -21,7 +21,11 @@ class EvaluationReportService:
         # Config snapshots have no keys/URLs; results contain booleans/counts only.
         report = {
             "schema_version": 1,
-            "title": "Mock Evaluation" if run["mode"] == "mock" else "Agent Evaluation",
+            "title": "Integration Observation Evaluation (existing evidence; no worker rerun)"
+            if run["snapshot"].get("origin") == "integration_observation"
+            else "Mock Evaluation"
+            if run["mode"] == "mock"
+            else "Agent Evaluation",
             "run": run,
             "results": rows,
             "limitations": [
@@ -81,6 +85,29 @@ class EvaluationReportService:
                     ]
                 )
             content = stream.getvalue()
+        elif format == "markdown" and run["snapshot"].get("origin") == "integration_observation":
+            snapshot = run["snapshot"]
+            lines = [
+                "# " + report["title"],
+                "",
+                "既有受控执行证据的重新评分；未由 Benchmark Worker 重新执行。",
+                "",
+                f"- Run: {run_id}",
+                f"- App: {snapshot['app_version']} / Commit: {snapshot['git_commit']}",
+                f"- Workflow: {snapshot['workflow_run_id']}",
+                "",
+                "|Case|Result|Trace|",
+                "|---|---|---|",
+            ]
+            lines += [
+                f"|{row['case_id']}|{row['execution_status']}|{row['trace_id'] or 'N/A'}|"
+                for row in rows
+            ]
+            lines += [
+                "",
+                "本报告仅证明实际文件摘要、当前引用授权、检查点与 Trace 的一致性，不证明云端模型质量或账单。",
+            ]
+            content = "\n".join(lines) + "\n"
         elif format == "markdown":
             snapshot, metrics = run["snapshot"], run["metrics"]
 

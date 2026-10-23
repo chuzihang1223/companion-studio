@@ -37,6 +37,14 @@ def migrate(engine: Engine) -> None:
 
     # V8.3: add virtual_code_documents only; existing data and tables stay intact.
     Base.metadata.create_all(bind=engine)
+    # Earlier local router candidates may already contain request reservations.
+    # Add metadata in place; never recreate the ledger or refill a budget.
+    with engine.begin() as conn:
+        routing_columns = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(model_routing_requests)"))
+        }
+        if "decision_json" not in routing_columns:
+            conn.execute(text("ALTER TABLE model_routing_requests ADD COLUMN decision_json TEXT"))
     # Preserve legacy character memories verbatim. New scopes share this table;
     # they must not be returned by the legacy character-only API.
     with engine.begin() as conn:

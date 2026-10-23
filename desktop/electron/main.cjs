@@ -540,6 +540,14 @@ ipcMain.handle('api-model-role-status', (event) => {
   requireMainWindow(event);
   return apiConfig.roleStatus();
 });
+ipcMain.handle('api-model-routing', (event, selection) => {
+  requireMainWindow(event);
+  return apiConfig.setRouting(selection);
+});
+ipcMain.handle('api-model-routing-status', (event) => {
+  requireMainWindow(event);
+  return apiConfig.routingStatus();
+});
 ipcMain.handle('api-test', (event, draft) => {
   requireMainWindow(event);
   return apiConfig.testConnection(draft);

@@ -65,9 +65,22 @@ class InternalCodingProvider(CodingAgentProvider):
         changed, passed = [], False
         for round_index in range(6):
             await self.handle.checkpoint()
-            roles = getattr(self.app.state, "model_roles", None)
+            roles = getattr(self.context, "model_routes", None) or getattr(
+                self.app.state, "model_roles", None
+            )
+            from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+            route_options = (
+                {
+                    "requirements": TaskCapabilityResolver.resolve(
+                        "CODING", tools=True, data_kind="ATTACHMENT"
+                    )
+                }
+                if getattr(roles, "intelligent", None)
+                else {}
+            )
             message = await (
-                roles.plan_tools(prompt, tools, role="coding_model")
+                roles.plan_tools(prompt, tools, role="coding_model", **route_options)
                 if roles
                 else self.app.state.llm_service.plan_tools(prompt, tools)
             )

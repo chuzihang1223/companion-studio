@@ -13,6 +13,7 @@ from app.api.fish_settings import router as fish_settings_router
 from app.api.character import router as character_router
 from app.api.conversations import router as conversations_router
 from app.api.llm_settings import router as llm_settings_router
+from app.api.model_routing import router as model_routing_router
 from app.api.personalization import router as personalization_router
 from app.api.agent import router as agent_router
 from app.api.music import router as music_router
@@ -227,6 +228,15 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
+from app.services.llm.routing.contracts import RoutingError
+from fastapi.responses import JSONResponse
+
+
+@app.exception_handler(RoutingError)
+async def routing_error_handler(_request, error):
+    return JSONResponse(status_code=409, content={"detail": {"code": error.code}})
+
+
 app.include_router(chat_router)
 app.include_router(chat_stream_router)
 app.include_router(voice_router)
@@ -235,6 +245,7 @@ app.include_router(fish_settings_router)
 app.include_router(character_router)
 app.include_router(conversations_router)
 app.include_router(llm_settings_router)
+app.include_router(model_routing_router)
 app.include_router(personalization_router)
 app.include_router(agent_router)
 app.include_router(agent_traces_router)

@@ -82,6 +82,10 @@ class VoiceSessionManager:
         if session.turn and session.turn.state not in {T.COMPLETED, T.CANCELLED, T.FAILED}:
             raise ValueError("TURN_STATE_CONFLICT")
         turn = VoiceTurn()
+        routes = getattr(self.app.state, "model_roles", None)
+        turn.model_routes = (
+            routes.capture(task_id=turn.id) if hasattr(routes, "capture") else routes
+        )
         session.turn = turn
         turn.provider = self.provider_factory(
             language=session.options.language,

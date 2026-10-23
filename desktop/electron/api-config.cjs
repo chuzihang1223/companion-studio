@@ -119,6 +119,7 @@ function listPresets() {
   return {
     active_id: data.active_id,
     roles: data.roles || {},
+    routing: data.routing || null,
     presets: data.presets.map((item) => ({
       ...item,
       capabilities: item.capabilities || {
@@ -175,7 +176,16 @@ async function callApi(endpoint, body) {
     signal: AbortSignal.timeout(190000),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+  if (!response.ok) {
+    const detail = data.detail;
+    // Validation errors may contain rejected configuration. Never reflect a
+    // structured body, which can include the main-process API key, to renderer.
+    const code =
+      detail && typeof detail.code === 'string' && /^[A-Z][A-Z0-9_]{0,79}$/.test(detail.code)
+        ? detail.code
+        : null;
+    throw new Error(typeof detail === 'string' ? detail : code || `HTTP ${response.status}`);
+  }
   return data;
 }
 async function testConnection(draft) {
@@ -200,6 +210,7 @@ async function apply(draft, force = false) {
     saved = secrets();
   const preset = {
     id,
+    config_revision: randomUUID(),
     name: String(draft.name || '自定义 API').slice(0, 50),
     provider: config.provider,
     base_url: config.base_url,
@@ -220,6 +231,7 @@ async function apply(draft, force = false) {
       structured_output: draft.capabilities?.structured_output ?? null,
       reasoning: draft.capabilities?.reasoning ?? null,
       streaming: draft.capabilities?.streaming ?? null,
+      coding: draft.capabilities?.coding ?? null,
     },
   };
   data.presets = [...data.presets.filter((item) => item.id !== id), preset];
@@ -229,6 +241,7 @@ async function apply(draft, force = false) {
   atomicJson(secretsPath, saved);
   atomicJson(settingsPath, data);
   await restoreRoles();
+  await restoreRouting();
   lastTest = '';
   return listPresets();
 }
@@ -241,6 +254,12 @@ function deletePreset(id) {
   const data = store();
   if (Object.values(data.roles || {}).includes(id))
     throw Error('请先更改这个预设的模型职责，再删除配置');
+  if (
+    data.routing?.policy?.enabled &&
+    (data.routing.policy.manual_model === id ||
+      data.routing.models?.some((row) => row.model_id === id && row.enabled))
+  )
+    throw new Error('请先在智能模型路由中停用这个预设');
   if (id === data.active_id) throw new Error('请先切换到其他 API 配置，再删除当前配置');
   if (!data.presets.some((item) => item.id === id)) throw new Error('未找到 API 配置');
   data.presets = data.presets.filter((item) => item.id !== id);
@@ -256,6 +275,7 @@ async function restoreActive() {
   const item = data.presets.find((preset) => preset.id === data.active_id);
   if (item) await callApi('/apply?force=true', configFor(item));
   await restoreRoles();
+  await restoreRouting();
 }
 const roleNames = ['character_model', 'planning_model', 'tool_execution_model', 'coding_model'];
 /** 模型职责引用预设 ID；解密密钥留在本地控制请求，不写入公开角色状态。 */
@@ -277,6 +297,7 @@ async function setRoles(selection) {
   const status = await restoreRoles(selection),
     data = store();
   data.roles = selection;
+  await restoreRouting(data.routing, data);
   atomicJson(settingsPath, data);
   return { ...listPresets(), role_status: status };
 }
@@ -287,7 +308,79 @@ async function fetchModels(draft) {
   return callApi('/models', configFor(draft));
 }
 
+const routingRecordKeys = new Set([
+  'model_id',
+  'display_name',
+  'model_type',
+  'enabled',
+  'allow_auto',
+  'allow_remote_text',
+  'allow_attachments',
+  'context_window',
+  'input_cost',
+  'output_cost',
+  'cost_currency',
+  'price_source',
+  'price_verified_at',
+  'priority',
+  'config_revision',
+]);
+/** Routing metadata references existing presets. It cannot supply endpoints or keys. */
+async function restoreRouting(selection = store().routing, data = store()) {
+  if (!selection) return null;
+  const models = [];
+  if (!Array.isArray(selection.models) || selection.models.length > 32)
+    throw new Error('模型路由最多保存 32 项模型');
+  for (const record of selection.models) {
+    if (
+      !record ||
+      typeof record !== 'object' ||
+      Object.keys(record).some((key) => !routingRecordKeys.has(key))
+    )
+      throw new Error('模型路由元数据无效');
+    const preset = data.presets.find((item) => item.id === record.model_id);
+    if (!preset) {
+      if (!selection.policy?.enabled) continue;
+      throw new Error('路由引用的 API 预设已不存在');
+    }
+    models.push({
+      record: { ...record, config_revision: preset.config_revision || 'initial' },
+      config: configFor(preset),
+    });
+  }
+  const roles = {};
+  for (const role of roleNames) {
+    const id = data.roles?.[role] || data.roles?.character_model || data.active_id;
+    if (id && models.some((row) => row.record.model_id === id)) roles[role] = id;
+  }
+  return callApi('/routing', { models, policy: selection.policy, roles });
+}
+async function setRouting(selection) {
+  if (
+    !selection ||
+    typeof selection !== 'object' ||
+    Array.isArray(selection) ||
+    Object.keys(selection).some((key) => !['models', 'policy'].includes(key))
+  )
+    throw new Error('缺少有效的模型路由配置');
+  const status = await restoreRouting(selection);
+  const data = store();
+  data.routing = {
+    models: status.models.map((row) =>
+      Object.fromEntries(Object.entries(row).filter(([key]) => routingRecordKeys.has(key))),
+    ),
+    policy: status.policy,
+  };
+  atomicJson(settingsPath, data);
+  return status;
+}
+async function routingStatus() {
+  return callApi('/routing/status', {});
+}
+
 module.exports = {
+  setRouting,
+  routingStatus,
   listPresets,
   testConnection,
   apply,

@@ -28,6 +28,7 @@ from app.services.workflows.controls import WorkflowControls
 from app.services.workflows.metrics import combine_usage
 from app.services.workflows.metadata import execution_snapshot
 from app.services.llm.usage import UsageBudget, usage_scope, current_usage_budget
+from app.services.llm.routing.service import routing_scope
 
 
 class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
@@ -39,6 +40,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
         self.bridge = WorkflowRuntimeBridge(app, self.repository, self.catalog)
         self.recovery = WorkflowCheckpointAdapter(app, self.repository)
         self.tasks, self.approvals, self.pauses = {}, {}, {}
+        self.model_routes = {}
         self.closing = False
         self.interrupting = set()
         from app.services.evaluation.engine import build_identity
@@ -86,7 +88,11 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             raise WorkflowError("WORKFLOW_INPUT_INVALID") from None
         if sum(not task.done() for task in self.tasks.values()) >= 8:
             raise WorkflowError("WORKFLOW_QUEUE_FULL", status=409)
-        snapshot = execution_snapshot(self.app, definition, self.build_identity)
+        router = self.app.state.model_roles
+        captured_routes = router.capture() if hasattr(router, "capture") else router
+        snapshot = execution_snapshot(
+            self.app, definition, self.build_identity, routes=captured_routes
+        )
         run_id = self.repository.create_run(
             definition,
             version_id,
@@ -109,6 +115,11 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
                 "execution_snapshot": snapshot,
             },
         )
+        if hasattr(captured_routes, "_selection_cache"):
+            captured_routes._budget_task_id = run_id
+            for service in (captured_routes._selection_cache or {}).values():
+                service.task_id = service.workflow_id = run_id
+        self.model_routes[run_id] = captured_routes
         self.launch(run_id, conversation_id)
         return self.repository.run(run_id, conversation_id)
 
@@ -124,6 +135,7 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
 
     def finished(self, run_id, task):
         self.tasks.pop(run_id, None)
+        self.model_routes.pop(run_id, None)
         self.pauses.pop(run_id, None)
         self.approvals.pop(run_id, None)
         if not task.cancelled():
@@ -150,7 +162,23 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
             definition.budget.max_model_calls - run["model_calls"], remaining_tokens
         )
         try:
-            with execution_trace(tracing, self, run), usage_scope(usage):
+            if run_id not in self.model_routes:
+                router = self.app.state.model_roles
+                previous_identity = run.get("execution_snapshot", {}).get("routing_identity")
+                current_identity = router.identity() if hasattr(router, "identity") else None
+                if previous_identity != current_identity:
+                    raise WorkflowError("WORKFLOW_MODEL_CONFIGURATION_CHANGED")
+                self.model_routes[run_id] = (
+                    router.capture(task_id=run_id) if hasattr(router, "capture") else router
+                )
+                selections = run.get("execution_snapshot", {}).get("model_routes", [])
+                if selections:
+                    self.model_routes[run_id].restore_selections(selections)
+            with (
+                execution_trace(tracing, self, run),
+                usage_scope(usage),
+                routing_scope(run_id, run_id),
+            ):
                 trace = current_trace.get()
                 emit("WORKFLOW_CREATED" if run["attempt"] == 1 else "WORKFLOW_RESUMED", run)
                 self.repository.change(

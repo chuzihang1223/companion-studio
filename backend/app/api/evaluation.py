@@ -40,21 +40,7 @@ async def read(function, *args, **kwargs):
 @router.get("/datasets")
 async def datasets(request: Request):
     engine(request)
-    return {
-        "items": [
-            BenchmarkRegistry(key).public()
-            for key in (
-                "studio-core",
-                "recovery-core",
-                "mcp-skills-core",
-                "workflow-core",
-                "knowledge-core",
-                "computer-use-core",
-                "scheduler-core",
-                "voice-core",
-            )
-        ]
-    }
+    return {"items": [BenchmarkRegistry(key).public() for key in BenchmarkRegistry.available()]}
 
 
 @router.get("/datasets/{dataset_id}")
@@ -68,6 +54,7 @@ async def dataset(
         "computer-use-core",
         "scheduler-core",
         "voice-core",
+        "router-core",
     ],
     request: Request,
 ):

@@ -169,14 +169,17 @@ def test_concurrent_contexts_and_failed_writer_do_not_break_agent(runtime_app, m
         store.start()
         plans = await asyncio.gather(*(execute(app) for _ in range(3)))
         assert await store.flush()
+        trace_ids = set()
         for plan, _ in plans:
             row = app.state.trace_repository.listing(plan["conversation_id"])["items"][0]
             events = app.state.trace_repository.events(row["trace_id"], plan["conversation_id"])[
                 "items"
             ]
+            trace_ids.add(row["trace_id"])
             assert row["status"] == "completed"
             assert all(event["task_id"] == plan["plan_id"] for event in events)
             assert all(event["conversation_id"] == plan["conversation_id"] for event in events)
+        assert len(trace_ids) == len(plans) == 3
         monkeypatch.setattr(
             store, "_write", lambda batch: (_ for _ in ()).throw(OSError("private path"))
         )

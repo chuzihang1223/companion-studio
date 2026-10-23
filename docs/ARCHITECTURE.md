@@ -208,3 +208,18 @@ Skill 不授予权限，不启动 `scripts`；脚本文件仅可查看。新增 
 
 详细边界见 [MCP 架构](MCP_ARCHITECTURE.md)、[工具生命周期](MCP_TOOL_LIFECYCLE.md)
 与 [Skills 开发](SKILLS_DEVELOPMENT.md)。布局、缩放、拖拽和滚动引擎不属于此次扩展的修改范围。
+
+
+## Intelligent Model Router（Skill 10，本地候选）
+
+现有 `ModelRoleRouter` 可选地持有不可变 registry/policy 快照，再交给原有 `LLMService`。
+没有第二套 Provider 或工具执行器。能力、目标授权、请求预算先于打分；按真实样本记录总耗时和首段延迟。
+SQLite 请求预留在发出 HTTP 前原子提交，失败、取消、进程退出均不返还未知请求。
+任务、工作流、语音轮次保存选择与预算标识；调度复用原审批并检查配置依赖变化。
+工作流的文件/工具输入和 Agent 的工具观察不能降级为普通文字，以绕过远程资料授权。
+
+`evaluation/integration_observation.py` 是本机 QA 的既有执行证据重新评分工具，无公开启动接口。
+它核验已拥有的 Workflow 文件摘要、当前有效引用、检查点与 Trace，再复用原评测存储和报告。
+报告明确标记不是 Benchmark Worker 重新执行；正式 Benchmark 继续使用原 Registry/Engine/Worker。
+
+参见 [MODEL_ROUTER.md](MODEL_ROUTER.md) 与 [UNIFIED_ACCEPTANCE.md](UNIFIED_ACCEPTANCE.md)。

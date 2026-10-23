@@ -80,6 +80,9 @@ class AgentContext:
     knowledge_service: Any = None
     knowledge_references: list[dict] | None = None
     knowledge_tainted: bool = False
+    model_routes: Any = None
+    has_attachments: bool = False
+    requires_vision: bool = False
 
 
 class AgentService:
@@ -100,6 +103,7 @@ class AgentService:
         attachments: list[AttachmentInput] | None = None,
         workspace_folder: str | None = None,
         renderer_id: str | None = None,
+        model_routes: Any = None,
     ) -> dict[str, Any]:
         """构建并保存计划，返回编号、工具调用和关联的 Work Session。
 
@@ -147,9 +151,30 @@ class AgentService:
             manual_memory=manual,
         )
         attachment_service = AttachmentService()
-        roles = getattr(app.state, "model_roles", None)
+        roles = model_routes or getattr(app.state, "model_roles", None)
+        if model_routes is None and hasattr(roles, "capture"):
+            roles = roles.capture()
+        from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+        plan_requirements = TaskCapabilityResolver.resolve(
+            "PLANNING",
+            tools=True,
+            vision=attachment_service.requires_vision(attachments or []),
+            data_kind="ATTACHMENT" if attachments else "TEXT",
+        )
+        route_options = (
+            {"requirements": plan_requirements} if getattr(roles, "intelligent", None) else {}
+        )
         active_config = getattr(
-            roles.service("character_model") if roles else app.state.llm_service, "config", None
+            (
+                roles.service("planning_model", tools=True, **route_options)
+                if roles
+                else app.state.llm_service
+            )
+            if attachments
+            else None,
+            "config",
+            None,
         )
         prepared = attachment_service.prepare(
             attachments or [],
@@ -322,9 +347,13 @@ class AgentService:
             assistant_plan = deterministic or {"role": "assistant", "content": None}
         else:
             try:
-                roles = getattr(app.state, "model_roles", None)
                 assistant_plan = await (
-                    roles.plan_tools(prompt, registry.schemas_for(user_text), role="planning_model")
+                    roles.plan_tools(
+                        prompt,
+                        registry.schemas_for(user_text),
+                        role="planning_model",
+                        **route_options,
+                    )
                     if roles
                     else app.state.llm_service.plan_tools(prompt, registry.schemas_for(user_text))
                 )
@@ -383,7 +412,7 @@ class AgentService:
         self.pending = {
             key: value for key, value in self.pending.items() if now - value.created < 300
         }
-        plan_id = planning_task_id() or str(uuid4())
+        plan_id = planning_task_id() or getattr(roles, "_budget_task_id", None) or str(uuid4())
         # Store the user's request before waiting for permissions or running tools.
         with SessionLocal() as db:
             conversation = (
@@ -450,6 +479,9 @@ class AgentService:
             coding_mode,
             local_resolution,
         )
+        self.pending[plan_id].model_routes = roles
+        self.pending[plan_id].has_attachments = bool(prepared)
+        self.pending[plan_id].requires_vision = any(item.kind == "image" for item in prepared)
         self.pending[plan_id].renderer_id = renderer_id
         self.pending[plan_id].selected_skills = skill_selection["skills"]
         if getattr(app.state, "task_runtime", None) and work_session_id:
@@ -466,6 +498,17 @@ class AgentService:
                     "assistant_plan": assistant_plan,
                     "calls": calls,
                     "selected_skills": skill_selection["skills"],
+                    "model_budget_task_id": getattr(roles, "_budget_task_id", None),
+                    "attachment_context": {
+                        "has_attachments": bool(prepared),
+                        "requires_vision": any(item.kind == "image" for item in prepared),
+                    },
+                    "model_route_selections": roles.selection_snapshot()
+                    if hasattr(roles, "selection_snapshot")
+                    else [],
+                    "model_route_identity": roles.identity()
+                    if hasattr(roles, "identity")
+                    else None,
                     "work_session_id": work_session_id,
                     "user_message_id": user_message_id,
                     "workspace": str(executor.workspace),
@@ -570,6 +613,34 @@ class AgentService:
         工作目录取当前持久快照，created 重新设为单调时间；附件内容
         已在规划阶段保存，恢复只保留现有消息与计划所有权。
         """
+        routes = getattr(app.state, "model_roles", None)
+        if stored.get("model_route_identity") and (
+            not routes or routes.identity() != stored["model_route_identity"]
+        ):
+            raise ValueError("模型配置已改变，请重新规划任务")
+        if stored.get("model_route_identity") and not stored.get("model_budget_task_id"):
+            raise ValueError("旧模型计划缺少预算快照，请重新规划")
+        captured_routes = (
+            routes.capture(task_id=stored.get("model_budget_task_id") or stored.get("plan_id"))
+            if hasattr(routes, "capture")
+            else routes
+        )
+        metadata = []
+        if stored.get("user_message_id"):
+            with SessionLocal() as db:
+                original = db.get(Message, stored["user_message_id"])
+                if (
+                    original
+                    and original.character_id == stored["character_id"]
+                    and original.conversation_id == stored["conversation_id"]
+                ):
+                    metadata = json.loads(original.attachments_json or "[]")
+        flags = AttachmentService.context_flags(stored["prompt"], metadata)
+        flags = {
+            key: flags[key] or bool(stored.get("attachment_context", {}).get(key)) for key in flags
+        }
+        if stored.get("model_route_selections"):
+            captured_routes.restore_selections(stored["model_route_selections"])
         mode = stored.get("coding_mode") or CodingWriteIntentResolver().resolve(stored["user_text"])
         root = app.state.work_state.snapshot(stored["work_session_id"]).get("workspace_root")
         executor = CodingWorkspaceExecutor(
@@ -592,6 +663,9 @@ class AgentService:
             stored.get("renderer_id"),
             selected_skills=stored.get("selected_skills", []),
             knowledge_service=getattr(app.state, "knowledge", None),
+            model_routes=captured_routes,
+            has_attachments=flags["has_attachments"],
+            requires_vision=flags["requires_vision"],
         )
 
     async def execute(
@@ -944,8 +1018,34 @@ class AgentService:
                 goal_verified = False
                 answer += " 后续多步骤任务需要配置可用的 Agent 执行模型。"
         else:
-            roles = getattr(app.state, "model_roles", None)
-            service = roles.service("character_model") if roles else app.state.llm_service
+            roles = context.model_routes or getattr(app.state, "model_roles", None)
+            needs_vision = context.requires_vision or any(
+                item.kind == "image" for item in context.prepared_attachments or []
+            )
+            from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+            # Every tool observation is local/external data, including code
+            # output and desktop observations. Tool names cannot downgrade it
+            # to ordinary user text when selecting a remote summary model.
+            tool_data = bool(context.calls)
+            final_options = (
+                {
+                    "requirements": TaskCapabilityResolver.resolve(
+                        "CHAT",
+                        vision=needs_vision,
+                        data_kind="ATTACHMENT"
+                        if context.has_attachments or context.prepared_attachments or tool_data
+                        else "TEXT",
+                    )
+                }
+                if getattr(roles, "intelligent", None)
+                else {}
+            )
+            service = (
+                roles.service("character_model", **final_options)
+                if roles
+                else app.state.llm_service
+            )
             if context.knowledge_tainted:
                 from app.services.knowledge.runtime import validate_references
                 from app.services.knowledge.context import (

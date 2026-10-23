@@ -1,11 +1,13 @@
 import json
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 import httpx
 
 from app.services.llm.base import LLMProvider
 from app.services.llm.test_budget import record_test_request
 from app.services.llm.usage import before_request, observe_response
+from app.services.llm.routing.observation import transport as observe_transport
 
 
 class LLMConfigurationError(Exception):
@@ -13,6 +15,10 @@ class LLMConfigurationError(Exception):
 
 
 class LLMResponseError(Exception):
+    pass
+
+
+class LLMConnectionError(LLMResponseError):
     pass
 
 
@@ -82,7 +88,7 @@ class OpenAIProvider(LLMProvider):
     def _validate(self) -> None:
         if not self.model or (
             not self.api_key
-            and not self.base_url.startswith(("http://127.0.0.1:", "http://localhost:"))
+            and urlsplit(self.base_url).hostname not in {"localhost", "127.0.0.1", "::1"}
         ):
             raise LLMConfigurationError("请先在设置中填写模型名称和 API 密钥，或配置本地模型服务")
 
@@ -96,6 +102,7 @@ class OpenAIProvider(LLMProvider):
                     headers=self._headers(),
                     json=before_request(self._payload(messages)),
                 )
+                observe_transport(response.status_code)
                 response.raise_for_status()
                 data = response.json()
                 observe_response(data)
@@ -109,7 +116,9 @@ class OpenAIProvider(LLMProvider):
             raise LLMHTTPError(exc.response.status_code) from exc
         except httpx.TimeoutException as exc:
             raise LLMTimeoutError("模型请求超时") from exc
-        except (httpx.RequestError, KeyError, IndexError, ValueError) as exc:
+        except httpx.RequestError as exc:
+            raise LLMConnectionError("模型连接失败") from exc
+        except (KeyError, IndexError, ValueError) as exc:
             raise LLMResponseError("The model request failed") from exc
 
     async def plan_tools(self, messages: list[dict], tools: list[dict]) -> dict:
@@ -128,6 +137,7 @@ class OpenAIProvider(LLMProvider):
                     raise LLMResponseError(
                         "当前模型或 API 不支持工具调用，请切换模型或使用聊天模式。"
                     )
+                observe_transport(response.status_code)
                 response.raise_for_status()
                 data = response.json()
                 observe_response(data)
@@ -139,10 +149,13 @@ class OpenAIProvider(LLMProvider):
             raise LLMHTTPError(exc.response.status_code) from exc
         except httpx.TimeoutException as exc:
             raise LLMTimeoutError("模型工具规划超时") from exc
-        except (httpx.RequestError, KeyError, IndexError, ValueError) as exc:
+        except httpx.RequestError as exc:
+            raise LLMConnectionError("模型连接失败") from exc
+        except (KeyError, IndexError, ValueError) as exc:
             raise LLMResponseError("模型工具规划失败") from exc
 
     async def stream_chat(self, messages: list[dict[str, str]]):
+        request_id = uuid4().hex
         self._validate()
         record_test_request(self.base_url)
         try:
@@ -151,8 +164,9 @@ class OpenAIProvider(LLMProvider):
                     "POST",
                     f"{self.base_url}/chat/completions",
                     headers=self._headers(),
-                    json=before_request(self._payload(messages, stream=True)),
+                    json=before_request(self._payload(messages, stream=True), request_id),
                 ) as response:
+                    observe_transport(response.status_code)
                     response.raise_for_status()
                     async for line in response.aiter_lines():
                         if not line.startswith("data:"):
@@ -163,6 +177,7 @@ class OpenAIProvider(LLMProvider):
                         if not data:
                             continue
                         payload = json.loads(data)
+                        observe_response(payload, request_id)
                         for choice in payload.get("choices", []):
                             delta = choice.get("delta") or {}
                             content = delta.get("content")
@@ -174,7 +189,9 @@ class OpenAIProvider(LLMProvider):
             raise LLMHTTPError(exc.response.status_code) from exc
         except httpx.TimeoutException as exc:
             raise LLMTimeoutError("模型请求超时") from exc
-        except (httpx.RequestError, ValueError, KeyError, IndexError) as exc:
+        except httpx.RequestError as exc:
+            raise LLMConnectionError("模型连接失败") from exc
+        except (ValueError, KeyError, IndexError) as exc:
             raise LLMResponseError("The model stream failed") from exc
 
     async def list_models(self) -> list[str]:
@@ -182,6 +199,7 @@ class OpenAIProvider(LLMProvider):
         try:
             async with self._client() as client:
                 response = await client.get(f"{self.base_url}/models", headers=self._headers())
+                observe_transport(response.status_code)
                 response.raise_for_status()
                 return sorted(
                     str(item["id"]) for item in response.json().get("data", []) if item.get("id")

@@ -21,7 +21,16 @@ class Suggestion(Strict):
 
 
 def target(app):
-    service = app.state.model_roles.service("tool_execution_model")
+    from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+    routes = app.state.model_roles
+    service = (
+        routes.service(
+            "tool_execution_model", requirements=TaskCapabilityResolver.resolve("VISION")
+        )
+        if getattr(routes, "intelligent", None)
+        else routes.service("tool_execution_model")
+    )
     config = getattr(service, "config", None)
     if not config:
         raise ComputerUseError("VISION_MODEL_UNAVAILABLE")

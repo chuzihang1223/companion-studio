@@ -240,6 +240,8 @@ interface Window {
       roles: Record<string, string>,
     ) => Promise<{ roles: Record<string, string>; role_status: ModelRoleStatus }>;
     modelRoleStatus: () => Promise<ModelRoleStatus>;
+    setModelRouting: (selection: ModelRoutingInput) => Promise<ModelRoutingStatus>;
+    modelRoutingStatus: () => Promise<ModelRoutingStatus>;
     testApiConnection: (
       draft: ApiDraft,
     ) => Promise<{ ok: boolean; model: string; latency_ms: number }>;
@@ -390,6 +392,7 @@ interface ApiDraft {
     structured_output: boolean | null;
     reasoning?: boolean | null;
     streaming?: boolean | null;
+    coding?: boolean | null;
   };
 }
 
@@ -507,4 +510,68 @@ interface BrowserTabState {
   description?: string;
   isMainFrame?: boolean;
   popup_url?: string;
+}
+
+type RoutingBudgetKey =
+  | `max_requests_per_${'task' | 'workflow' | 'day' | 'provider'}`
+  | `max_cost_per_${'request' | 'task' | 'workflow' | 'day' | 'provider'}`;
+type ModelRoutingPolicy = {
+  enabled: boolean;
+  mode: 'MANUAL' | 'ROLE_BASED' | 'AUTO';
+  preference: 'BALANCED' | 'LOW_LATENCY' | 'LOW_COST' | 'QUALITY_FIRST' | 'PRIVACY_FIRST';
+  manual_model: string | null;
+  fallback_enabled: boolean;
+  budget_mode: 'STRICT' | 'ESTIMATED';
+  max_output_tokens: number;
+  cost_currency: 'USD' | 'CNY';
+} & Partial<Record<RoutingBudgetKey, number | null>>;
+interface ModelRoutingRecord {
+  model_id: string;
+  display_name: string;
+  model_type: 'TEXT_LLM' | 'VISION_LLM' | 'EMBEDDING' | 'ASR' | 'TTS';
+  enabled: boolean;
+  allow_auto: boolean;
+  allow_remote_text: boolean;
+  allow_attachments: boolean;
+  context_window: number | null;
+  input_cost: number | null;
+  output_cost: number | null;
+  cost_currency: 'USD' | 'CNY';
+  price_source: 'USER' | 'UNKNOWN';
+  priority: number;
+}
+interface ModelRoutingInput {
+  policy: ModelRoutingPolicy;
+  models: ModelRoutingRecord[];
+}
+interface ModelRoutingStatus {
+  policy: Partial<ModelRoutingPolicy>;
+  models: (ModelRoutingRecord & {
+    config_version: string;
+    provider_id: string;
+    by_task?: Record<
+      string,
+      {
+        total: { n: number; p50_ms: number | null; p95_ms: number | null };
+        successes: number;
+        failures: number;
+      }
+    >;
+    capabilities: Record<string, { value: boolean | null; source: string }>;
+    metrics: {
+      health: string;
+      total: { n: number; p50_ms: number | null; p95_ms: number | null };
+      ttft: { n: number; p50_ms: number | null };
+    };
+  })[];
+  recent_requests: {
+    request_id: string;
+    decision?: { reason: string; mode: string; task: string; is_fallback: boolean } | null;
+    model_id: string;
+    status: string;
+    cost_status: string;
+    reserved_cost: number | null;
+    currency: string;
+    usage: { total_tokens: number } | null;
+  }[];
 }

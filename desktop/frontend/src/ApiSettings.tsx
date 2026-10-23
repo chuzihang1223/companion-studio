@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ModelRolesPanel from './ModelRolesPanel';
+import ModelRoutingPanel from './ModelRoutingPanel';
 
 const blank = (): ApiDraft => ({
   name: '自定义 API',
@@ -386,6 +387,7 @@ export default function ApiSettings() {
         </button>
       )}
       <ModelRolesPanel presets={presets} />
+      <ModelRoutingPanel presets={presets} />
       <p className="setting-note">
         密钥由 Windows
         安全存储加密后保存在本机；界面不会显示已保存的密钥。测试失败不会替换当前可用配置。

@@ -44,11 +44,13 @@ async def retry_answer(
     character = request.app.state.characters.get(old.character_id)
     if character is None:
         raise HTTPException(status_code=404, detail="Character not found")
+    selected_service = request.app.state.model_roles.service("character_model")
     history = knowledge_chat.history(
         request.app,
         visible[max(0, position - 21) : position - 1],
         conversation.id,
         old.character_id,
+        selected_service,
     )
     memory = relationship_memory(
         db, old.character_id, {row.id for row in visible[max(0, position - 21) : position]}
@@ -70,7 +72,7 @@ async def retry_answer(
     alternative_id = str(uuid4())
     service = await knowledge_chat.grounded(
         request.app,
-        request.app.state.model_roles.service("character_model"),
+        selected_service,
         conversation.id,
         old.character_id,
         original.content,
@@ -150,6 +152,7 @@ async def chat(
     if not user_text:
         raise HTTPException(status_code=422, detail="Message cannot be blank")
 
+    selected_service = request.app.state.model_roles.service("character_model")
     try:
         conversation = (
             db.get(Conversation, payload.conversation_id)
@@ -171,7 +174,7 @@ async def chat(
         ):
             raise HTTPException(status_code=404, detail="Reply target not found")
         history_messages = knowledge_chat.history(
-            request.app, previous[-20:], conversation.id, payload.character_id
+            request.app, previous[-20:], conversation.id, payload.character_id, selected_service
         )
         memory = relationship_memory(db, payload.character_id, {item.id for item in previous[-20:]})
         overlay = read_settings(db, payload.character_id)
@@ -207,7 +210,7 @@ async def chat(
         user_text,
         memory_context=memory,
         reply_context=knowledge_chat.reply(
-            request.app, reply_target, conversation.id, payload.character_id
+            request.app, reply_target, conversation.id, payload.character_id, selected_service
         ),
         personalization=overlay,
         manual_memory=manual,
@@ -215,7 +218,7 @@ async def chat(
     assistant_id = str(uuid4())
     service = await knowledge_chat.grounded(
         request.app,
-        request.app.state.model_roles.service("character_model"),
+        selected_service,
         conversation.id,
         payload.character_id,
         user_text,

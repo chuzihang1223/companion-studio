@@ -31,6 +31,7 @@ class PlanRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     attachments: list[AttachmentInput] = Field(default_factory=list, max_length=4)
     workspace_folder: str | None = Field(default=None, max_length=500)
+    voice_context: VoiceContext | None = None
 
 
 class ExecuteRequest(BaseModel):
@@ -55,6 +56,20 @@ def route(payload: RouteRequest):
 @router.post("/plan")
 async def plan(request: Request, payload: PlanRequest):
     try:
+        options = {}
+        if payload.voice_context:
+            from app.services.realtime_voice.contracts import Scope, TurnState
+
+            session = request.app.state.realtime_voice.owned(
+                Scope(owner_id=payload.renderer_id, **payload.voice_context.model_dump()), turn=True
+            )
+            if (
+                str(session.options.conversation_id) != payload.conversation_id
+                or session.options.character_id != payload.character_id
+                or session.turn.state != TurnState.FINAL_TRANSCRIPT
+            ):
+                raise LookupError("VOICE_SCOPE_INVALID")
+            options["model_routes"] = session.turn.model_routes
         return await request.app.state.agent_service.plan(
             request.app,
             payload.character_id,
@@ -63,6 +78,7 @@ async def plan(request: Request, payload: PlanRequest):
             payload.attachments,
             payload.workspace_folder,
             payload.renderer_id,
+            **options,
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -126,3 +126,12 @@ def test_missing_trace_is_failed_evidence_even_if_other_trace_is_complete():
         [{"incomplete": False}],
     )
     assert not graded["passed"] and graded["error_code"] == "TRACE_INCOMPLETE"
+
+
+def test_all_bundled_registry_identities_versions_and_counts_match():
+    for dataset_id in BenchmarkRegistry.available():
+        registry = BenchmarkRegistry(dataset_id)
+        assert registry.dataset_id == dataset_id
+        assert registry.version == "1.0.0"
+        assert registry.public()["case_count"] == len(registry.cases)
+        assert all(case.dataset_version == registry.version for case in registry.cases)

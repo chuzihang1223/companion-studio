@@ -1,4 +1,6 @@
 {
+  "dataset_id": "recovery-core",
+  "version": "1.0.0",
   "dataset_version": "1.0.0",
   "cases": [
     {
@@ -513,5 +515,6 @@
       ],
       "dataset_version": "1.0.0"
     }
-  ]
+  ],
+  "title": "Recovery Core"
 }

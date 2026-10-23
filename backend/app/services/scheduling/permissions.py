@@ -4,7 +4,7 @@ from app.services.recovery.checkpoints import digest
 from app.services.scheduling.conditions import scope_identity
 from app.services.scheduling.contracts import ScheduleError
 from app.services.scheduling.time_rules import utc
-from app.services.workflows.metadata import execution_snapshot
+from app.services.workflows.metadata import execution_snapshot, workflow_service, workflow_data_kind
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
@@ -44,7 +44,22 @@ class ScheduledPermissionAdapter:
         # The URL itself is private configuration, only its digest is persisted.
         model_targets = {}
         for role in snapshot["models"]:
-            config = getattr(self.app.state.model_roles.service(role), "config", None)
+            routes = self.app.state.model_roles
+            config = getattr(
+                workflow_service(
+                    routes,
+                    role,
+                    schema=any(
+                        node.config.get("output_schema")
+                        for node in graph.nodes
+                        if node.config.get("model_role", "planning_model") == role
+                    ),
+                    current=True,
+                    data_kind=workflow_data_kind(graph),
+                ),
+                "config",
+                None,
+            )
             model_targets[role] = digest(
                 {
                     "provider": getattr(config, "provider", None),
@@ -54,6 +69,11 @@ class ScheduledPermissionAdapter:
             )
         dependencies = {
             "models": snapshot["models"],
+            **(
+                {"routing_identity": snapshot["routing_identity"]}
+                if snapshot.get("routing_identity")
+                else {}
+            ),
             "model_targets": model_targets,
             "tools": snapshot["dependencies"],
             "capabilities": graph.required_capabilities,

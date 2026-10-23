@@ -151,6 +151,7 @@ export class ConversationSubmissionService {
           request.text,
           request.attachments,
           request.folder,
+          request.voiceContext,
         );
         if (request.stillCurrent && !request.stillCurrent()) {
           if (plan.work_session_id) await this.sdk.stopWorkSession(plan.work_session_id);

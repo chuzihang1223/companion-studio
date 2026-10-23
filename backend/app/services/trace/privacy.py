@@ -32,6 +32,7 @@ NUMBERS = {
     "dropped_events",
 }
 BOOLEANS = {
+    "routing_fallback",
     "actual_playback",
     "requires_permission",
     "side_effect",
@@ -51,6 +52,28 @@ BOOLEANS = {
     "queued",
 }
 ENUMS = {
+    "routing_mode": {"MANUAL", "ROLE_BASED", "AUTO"},
+    "routing_task": {
+        "CHAT",
+        "PLANNING",
+        "EXECUTION",
+        "CODING",
+        "RAG",
+        "STRUCTURED",
+        "VISION",
+        "WORKFLOW",
+        "SCHEDULED",
+        "VOICE",
+    },
+    "routing_reason": {
+        "USER_SELECTION",
+        "CONSTRAINTS_THEN_BALANCED",
+        "CONSTRAINTS_THEN_LOW_LATENCY",
+        "CONSTRAINTS_THEN_LOW_COST",
+        "CONSTRAINTS_THEN_QUALITY_FIRST",
+        "CONSTRAINTS_THEN_PRIVACY_FIRST",
+        "TRANSIENT_SAME_TARGET",
+    },
     "provider_id": {"windows-sapi", "configured"},
     "source": {"uia", "ocr", "dom", "vision"},
     "strategy": {
@@ -159,6 +182,14 @@ def metadata(value: object) -> dict:
         elif key in BOOLEANS and isinstance(item, bool):
             result[key] = item
         elif key in ENUMS and isinstance(item, str) and item in ENUMS[key]:
+            result[key] = item
+        elif (
+            key == "routing_config_version"
+            and isinstance(item, str)
+            and re.fullmatch(r"[0-9a-f]{24}", item)
+        ):
+            result[key] = item
+        elif key == "routing_model_id" and identifier(item, 80):
             result[key] = item
         elif key == "tool_call_id" and identifier(item, 100):
             result[key] = item

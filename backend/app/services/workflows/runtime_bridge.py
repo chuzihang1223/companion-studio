@@ -75,6 +75,9 @@ class WorkflowRuntimeBridge:
                 renderer_id=run["renderer_id"],
                 task_id=task_id,
                 knowledge_service=knowledge,
+                model_routes=getattr(self.app.state.workflows, "model_routes", {}).get(
+                    run.get("run_id"), self.app.state.model_roles
+                ),
             )
             context.retry_max_attempts = (
                 node.retry_policy.max_attempts if node.retry_policy.strategy == "safe_read" else 1

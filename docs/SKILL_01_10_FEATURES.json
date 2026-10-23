@@ -1,0 +1,3214 @@
+[
+  {
+    "skill": "01",
+    "name": "Trace ID 唯一性",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-001",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-001",
+    "test_id": "S01-001",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_concurrent_contexts_and_failed_writer_do_not_break_agent"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Real task events persist and share the plan task ID"
+    ],
+    "coverage_boundary": "Related concurrent-context test separates owned traces; require an explicit distinct-ID assertion before claiming UUID uniqueness.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "Task / Span 关联",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-002",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-002",
+    "test_id": "S01-002",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[False]",
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Real task events persist and share the plan task ID"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "工具执行事件",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-003",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-003",
+    "test_id": "S01-003",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_runtime_step_outcomes[cancel]",
+      "backend.tests.test_agent_trace::test_runtime_step_outcomes[failure]",
+      "backend.tests.test_agent_trace::test_runtime_step_outcomes[retry]",
+      "backend.tests.test_agent_trace::test_runtime_step_outcomes[timeout]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Real task events persist and share the plan task ID"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "Agent 状态",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-004",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-004",
+    "test_id": "S01-004",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[False]",
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Workbench TraceViewer displays the real task and details"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "多会话隔离",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-005",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-005",
+    "test_id": "S01-005",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_concurrent_contexts_and_failed_writer_do_not_break_agent",
+      "backend.tests.test_trace_api::test_trace_api_auth_scope_pagination_and_deletion"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Switching to a new work conversation hides the previous trace"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "Trace 持久化",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-006",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-006",
+    "test_id": "S01-006",
+    "direct_test_ids": [
+      "backend.tests.test_trace_persistence::test_trace_persistence_order_scope_and_second_pass_redaction"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Historical trace and module layout survive application restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "重启后历史读取",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-007",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-007",
+    "test_id": "S01-007",
+    "direct_test_ids": [
+      "backend.tests.test_trace_persistence::test_restart_marks_interrupted_without_inventing_duration"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Historical trace and module layout survive application restart"
+    ],
+    "coverage_boundary": "Backend marks unfinished traces interrupted; GUI must also reopen and display persisted history without reexecution.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "只读 Replay",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-008",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-008",
+    "test_id": "S01-008",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[False]",
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Replay pauses without advancing",
+      "Replay jumps directly to a historical event",
+      "Replay produces no model requests",
+      "Replay creates no task or tool events"
+    ],
+    "coverage_boundary": "Backend history reads prove no model calls; actual Replay seek/progress and layout restoration require current GUI assertions.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "数据脱敏",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-009",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-009",
+    "test_id": "S01-009",
+    "direct_test_ids": [
+      "backend.tests.test_trace_persistence::test_trace_persistence_order_scope_and_second_pass_redaction"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Export writes the scoped allowlisted history without credentials"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "01",
+    "name": "不重复执行外部动作",
+    "source": "backend/app/services/trace",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S01-010",
+    "skill_id": "SKILL-01",
+    "gate_id": "FEATURE-S01-010",
+    "test_id": "S01-010",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[False]",
+      "backend.tests.test_agent_trace::test_real_agent_trace_and_refused_permission[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/trace-viewer-e2e.cjs",
+    "gui_labels": [
+      "Replay creates no task or tool events",
+      "Replay produces no model requests"
+    ],
+    "coverage_boundary": "History read path is checked; do not generalize this to external exactly-once execution.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "Evaluation Runner",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-011",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-011",
+    "test_id": "S02-011",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_twenty_case_api_runtime_trace_database_and_exports"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Twenty cases execute through installed worker, Runtime, Trace, grading and DB"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "评测数据集",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-012",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-012",
+    "test_id": "S02-012",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_twenty_case_api_runtime_trace_database_and_exports",
+      "backend.tests.test_model_router_evaluation::test_router_dataset_declares_forty_eight_unique_cases_and_no_live_budget"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Twenty cases execute through installed worker, Runtime, Trace, grading and DB"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "任务评分",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-013",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-013",
+    "test_id": "S02-013",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_grader_ignores_natural_language_claims_and_csv_injection",
+      "backend.tests.test_evaluation_system::test_metrics_exclude_unrun_statuses_and_use_interpolated_percentiles"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Twenty cases execute through installed worker, Runtime, Trace, grading and DB"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "结果证据",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-014",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-014",
+    "test_id": "S02-014",
+    "direct_test_ids": [
+      "backend.tests.test_recovery_evaluation::test_missing_trace_is_failed_evidence_even_if_other_trace_is_complete"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Result links to the existing TraceViewer with matching task ID"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "多模型对比",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-015",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-015",
+    "test_id": "S02-015",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_metrics_exclude_unrun_statuses_and_use_interpolated_percentiles"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Comparison exposes differing case conditions instead of ranking models"
+    ],
+    "coverage_boundary": "Metric comparison is related only; require actual condition/model identity compatibility and refusal of incomparable runs, not just aggregate percentiles.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "失败分类",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-016",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-016",
+    "test_id": "S02-016",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_pause_cancel_timeout_and_setup_failure",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[ACTION_STATE_UNKNOWN]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[APP_EXITED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[CHECKPOINT_CONFLICT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[CHECKPOINT_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[DESKTOP_LOCKED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[DISPLAY_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[DOM_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[DPI_MAPPING_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[ELEMENT_AMBIGUOUS]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[ELEMENT_NOT_FOUND]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[FILE_STATE_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[FOCUS_LOST]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MAX_RETRIES_EXCEEDED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_ARGUMENT_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_AUTH_REQUIRED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_CONNECTION_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_PERMISSION_DENIED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_PROTOCOL_MISMATCH]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_RESULT_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_SCHEMA_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_SERVER_UNAVAILABLE]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_SIDE_EFFECT_UNKNOWN]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_TOOL_NOT_FOUND]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MCP_TOOL_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MODEL_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[MODEL_UNAVAILABLE]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[NETWORK_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[PAGE_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[PERMISSION_DENIED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[POST_ACTION_VERIFICATION_FAILED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[RESOURCE_CONFLICT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[SCREEN_CAPTURE_FAILED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[SIDE_EFFECT_UNCERTAIN]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[SKILL_DEPENDENCY_MISSING]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[SKILL_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[SKILL_PERMISSION_DENIED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[TARGET_WINDOW_CLOSED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[TASK_CANCELLED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[TOOL_ARGUMENT_INVALID]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[TOOL_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[UIA_ELEMENT_STALE]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[UNKNOWN_ERROR]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[USER_INTERRUPTION]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[VERIFICATION_FAILED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[VISION_MODEL_UNAVAILABLE]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[WINDOW_IDENTITY_CHANGED]",
+      "backend.tests.test_recovery_policy::test_all_failure_codes_are_structured_and_do_not_echo_private_text[WINDOW_NOT_FOUND]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Cancellation preserves NOT_RUN instead of manufacturing passed cases"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "历史记录",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-017",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-017",
+    "test_id": "S02-017",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_twenty_case_api_runtime_trace_database_and_exports"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "All five benchmark histories persist after restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "报告导出",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-018",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-018",
+    "test_id": "S02-018",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_twenty_case_api_runtime_trace_database_and_exports",
+      "backend.tests.test_unified_skill_routing::test_INT_016_authorized_scheduled_rag_writes_verified_report"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Fixed export capability saves all three formats under owned Exports",
+      "Export contains bounded synthetic summaries without model secrets"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "Mock / Real 区分",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-019",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-019",
+    "test_id": "S02-019",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_gui_missing_environment_and_implicit_live_are_not_passed",
+      "backend.tests.test_mcp_evaluation::test_dataset_and_live_mode_boundaries"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Mock result is not a real AI score or a zero-cost claim"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "02",
+    "name": "测试环境可重复性",
+    "source": "backend/app/services/evaluation",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S02-020",
+    "skill_id": "SKILL-02",
+    "gate_id": "FEATURE-S02-020",
+    "test_id": "S02-020",
+    "direct_test_ids": [
+      "backend.tests.test_evaluation_system::test_setup_failure_closes_owned_server_and_directories",
+      "backend.tests.test_evaluation_system::test_twenty_case_api_runtime_trace_database_and_exports"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/evaluation-e2e.cjs",
+    "gui_labels": [
+      "Single-case benchmark executes independently",
+      "Rerun creates new history without overwriting the earlier run"
+    ],
+    "coverage_boundary": "Owned local fixture setup/cleanup is proven; external model determinism is not covered.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Checkpoint 持久化",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-021",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-021",
+    "test_id": "S03-021",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_additive_migration_preserves_old_work_and_messages",
+      "backend.tests.test_workflow_execution::test_original_tool_runtime_and_checkpoint"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Intent is durable before a pending read-only desktop probe",
+      "Checkpoint inspector shows the actual tool and durable step"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Side Effect Classification",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-022",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-022",
+    "test_id": "S03-022",
+    "direct_test_ids": [
+      "backend.tests.test_recovery_policy::test_policy_never_replays_side_effects_or_model_requests",
+      "backend.tests.test_recovery_policy::test_read_retry_budget_and_unknown_failures_require_review"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Safe resume makes no additional local or external model/voice request"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "RecoveryPolicy",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-023",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-023",
+    "test_id": "S03-023",
+    "direct_test_ids": [
+      "backend.tests.test_recovery_policy::test_known_boundary_errors[error0-TOOL_TIMEOUT]",
+      "backend.tests.test_recovery_policy::test_known_boundary_errors[error1-TOOL_ARGUMENT_INVALID]",
+      "backend.tests.test_recovery_policy::test_known_boundary_errors[error2-TASK_CANCELLED]",
+      "backend.tests.test_recovery_policy::test_known_boundary_errors[error3-ELEMENT_NOT_FOUND]",
+      "backend.tests.test_recovery_policy::test_policy_never_replays_side_effects_or_model_requests"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Recovery preview explains revalidation and zero extra model requests"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Retry Budget",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-024",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-024",
+    "test_id": "S03-024",
+    "direct_test_ids": [
+      "backend.tests.test_recovery_policy::test_read_retry_budget_and_unknown_failures_require_review",
+      "backend.tests.test_recovery_policy::test_replanning_requires_new_evidence_and_honors_time_cycles_and_permissions"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Completed task cannot be resumed twice"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Restart Reconciliation",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-025",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-025",
+    "test_id": "S03-025",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_interrupted_real_read_tool_can_resume_with_original_checkpoint",
+      "backend.tests.test_unified_skill_routing::test_INT_014_actual_process_exit_recovers_scheduler_workflow_trace_and_budget"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Restart loads the persisted logical task as interrupted without replay",
+      "Packaged worker hard exit and fresh-process resume preserve file hash without rewriting"
+    ],
+    "coverage_boundary": "Hard process exit test is real. Record the exact final INTERRUPTED/NEEDS_REVIEW/COMPLETED state; safe halt is not successful automatic resume.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "人工核查状态",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-026",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-026",
+    "test_id": "S03-026",
+    "direct_test_ids": [
+      "backend.tests.test_recovery_evaluation::test_missing_trace_is_failed_evidence_even_if_other_trace_is_complete",
+      "backend.tests.test_recovery_policy::test_read_retry_budget_and_unknown_failures_require_review"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Recovery preview explains revalidation and zero extra model requests"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "未知副作用不重放",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-027",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-027",
+    "test_id": "S03-027",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_security::test_actual_adapter_discovery_call_disable_and_unknown_effect",
+      "backend.tests.test_scheduler_adversarial::test_interrupted_model_request_does_not_automatically_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Restart loads the persisted logical task as interrupted without replay"
+    ],
+    "coverage_boundary": "Unknown effects must remain blocked. Do not label non-idempotent remote side effects exactly-once.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Cancel",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-028",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-028",
+    "test_id": "S03-028",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_storage_fault_during_close_still_cancels_owned_active_coroutine",
+      "backend.tests.test_workflow_execution::test_timeout_cancel_and_no_leaked_quota"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Only the owned Electron was interrupted; its backend stops"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "Resume",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-029",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-029",
+    "test_id": "S03-029",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_interrupted_real_read_tool_can_resume_with_original_checkpoint",
+      "backend.tests.test_workflow_execution::test_model_and_resume_pure_nodes_without_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Resume creates a new execution UUID and preserves logical task identity",
+      "Resumed probe is observed, verified and committed"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "03",
+    "name": "多会话隔离",
+    "source": "backend/app/services/recovery",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S03-030",
+    "skill_id": "SKILL-03",
+    "gate_id": "FEATURE-S03-030",
+    "test_id": "S03-030",
+    "direct_test_ids": [
+      "backend.tests.test_agent_trace::test_concurrent_contexts_and_failed_writer_do_not_break_agent",
+      "backend.tests.test_workflow_security::test_multi_conversation_snapshots_and_capability_revocation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/recovery-e2e.cjs",
+    "gui_labels": [
+      "Navigation does not leak the previous conversation recovery state"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "stdio MCP",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-031",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-031",
+    "test_id": "S04-031",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_connection::test_actual_stdio_modes_and_owned_cleanup[2026-07-28]",
+      "backend.tests.test_mcp_connection::test_actual_stdio_modes_and_owned_cleanup[auto]",
+      "backend.tests.test_mcp_connection::test_actual_stdio_modes_and_owned_cleanup[legacy]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Real SDK stdio discovers eight disabled tools"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Streamable HTTP",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-032",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-032",
+    "test_id": "S04-032",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_connection::test_http_actual_modern_and_legacy"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Actual candidate HTTP fixture connects, discovers and reads a resource through Streamable HTTP"
+    ],
+    "coverage_boundary": "Real SDK loopback HTTP fixture; authenticated external MCP server interoperability remains environment-dependent.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Server 管理",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-033",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-033",
+    "test_id": "S04-033",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_api::test_protected_api_real_resources_prompts_and_skill_lifecycle",
+      "backend.tests.test_mcp_connection::test_cancel_call_and_remove_server_leave_other_server_usable"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Saving an enabled config does not start its executable",
+      "Restart preserves metadata and last connection but never auto-starts an external server"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Tool Discovery",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-034",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-034",
+    "test_id": "S04-034",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_security::test_actual_adapter_discovery_call_disable_and_unknown_effect",
+      "backend.tests.test_mcp_security::test_registry_collision_schema_disable_and_budget"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-005",
+      "MCP-006",
+      "MCP-007"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Real SDK stdio discovers eight disabled tools"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Schema Fingerprint",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-035",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-035",
+    "test_id": "S04-035",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_security::test_registry_collision_schema_disable_and_budget",
+      "backend.tests.test_scheduler_security::test_stale_mcp_schema_never_reaches_adapter"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-013"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Tool 权限",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-036",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-036",
+    "test_id": "S04-036",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_security::test_external_permission_exact_parameters_and_scope",
+      "backend.tests.test_scheduler_security::test_schedule_consent_does_not_grant_original_mcp_permission"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "UI stores the user-reviewed read-only risk separately from server annotations",
+      "The normal execute path invokes main-process permission confirmation (response mocked)"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Skills 导入",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-037",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-037",
+    "test_id": "S04-037",
+    "direct_test_ids": [
+      "backend.tests.test_skill_security::test_import_enable_progressive_load_dependency_disable_and_update"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-015",
+      "MCP-016"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Skill snapshot imports disabled with standard name",
+      "Bundled standard Skill is previewed before import"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Skills 启停",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-038",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-038",
+    "test_id": "S04-038",
+    "direct_test_ids": [
+      "backend.tests.test_skill_security::test_import_enable_progressive_load_dependency_disable_and_update"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-016"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Skill can be explicitly enabled through the actual UI",
+      "Restart preserves the imported Skill registration and enabled preference"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "渐进加载",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-039",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-039",
+    "test_id": "S04-039",
+    "direct_test_ids": [
+      "backend.tests.test_skill_security::test_import_enable_progressive_load_dependency_disable_and_update"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-017",
+      "MCP-018"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Normal Agent Runtime records owned MCP and progressive Skill Trace events"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "脚本限制",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-040",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-040",
+    "test_id": "S04-040",
+    "direct_test_ids": [
+      "backend.tests.test_skill_security::test_paths_private_files_and_mutation_are_blocked"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Skill metadata/content never grants process, network or tool authority. Self-authored script policy is separately enforced. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "凭据保护",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-041",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-041",
+    "test_id": "S04-041",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_security::test_authenticated_metadata_cannot_echo_credentials_into_sqlite",
+      "backend.tests.test_mcp_security::test_http_pins_ip_preserves_sni_and_stops_auth_redirect_and_compression"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Synthetic credential is encrypted by Windows safe storage",
+      "Renderer server reads do not return saved credential values"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "04",
+    "name": "Trace / Recovery",
+    "source": "backend/app/services/mcp_ext",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S04-042",
+    "skill_id": "SKILL-04",
+    "gate_id": "FEATURE-S04-042",
+    "test_id": "S04-042",
+    "direct_test_ids": [
+      "backend.tests.test_mcp_evaluation::test_twenty_mcp_skill_cases_real_stdio_runtime_trace_and_existing_engine",
+      "backend.tests.test_unified_skill_agent::test_INT_002_real_stdio_mcp_agent_router_and_trace"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "MCP-019",
+      "MCP-020"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/extensions-e2e.cjs",
+    "gui_labels": [
+      "Normal Agent Runtime records owned MCP and progressive Skill Trace events",
+      "UI task trace retains conversation ownership"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "DAG Schema",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-043",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-043",
+    "test_id": "S05-043",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_schema::test_linear_compilation_and_empty_draft_save",
+      "backend.tests.test_workflow_schema::test_strict_schema_and_secret_fields"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Save persists typed graph and revision in SQLite"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Graph Validation",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-044",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-044",
+    "test_id": "S05-044",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_schema::test_bad_variables[__import__('os')]",
+      "backend.tests.test_workflow_schema::test_bad_variables[inputs.missing]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.finish.output]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.missing.output]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.start.__class__]",
+      "backend.tests.test_workflow_schema::test_cycle_and_disconnected",
+      "backend.tests.test_workflow_schema::test_duplicate_and_invalid_edge"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Keyboard/click accessible ports connect real nodes"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Node Execution",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-045",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-045",
+    "test_id": "S05-045",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_execution::test_linear_real_coordinator_trace_and_persistence",
+      "backend.tests.test_workflow_execution::test_original_tool_runtime_and_checkpoint"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Original backend coordinator executes a real workflow",
+      "Durable event cursor updates actual canvas node highlights"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Condition",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-046",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-046",
+    "test_id": "S05-046",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_execution::test_branch_merge_never_waits_for_skipped_path[False]",
+      "backend.tests.test_workflow_execution::test_branch_merge_never_waits_for_skipped_path[True]",
+      "backend.tests.test_workflow_schema::test_resolver_conditions_and_transform"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "WF-011",
+      "WF-012"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Variables",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-047",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-047",
+    "test_id": "S05-047",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_schema::test_bad_variables[__import__('os')]",
+      "backend.tests.test_workflow_schema::test_bad_variables[inputs.missing]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.finish.output]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.missing.output]",
+      "backend.tests.test_workflow_schema::test_bad_variables[nodes.start.__class__]",
+      "backend.tests.test_workflow_variables_permissions::test_types_do_not_silently_coerce_or_execute_expressions"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Save persists typed graph and revision in SQLite"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Merge",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-048",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-048",
+    "test_id": "S05-048",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_execution::test_branch_merge_never_waits_for_skipped_path[False]",
+      "backend.tests.test_workflow_execution::test_branch_merge_never_waits_for_skipped_path[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "WF-013"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Human Approval",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-049",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-049",
+    "test_id": "S05-049",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_execution::test_human_wait_requires_matching_owner_and_nonce[False]",
+      "backend.tests.test_workflow_execution::test_human_wait_requires_matching_owner_and_nonce[True]",
+      "backend.tests.test_workflow_security::test_tool_runtime_rejects_traversal_and_human_does_not_grant_tool"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "MCP Node",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-050",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-050",
+    "test_id": "S05-050",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_security::test_real_mcp_requires_exact_grant_after_human_approval"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "WF-009",
+      "WF-010"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Normal Agent Runtime records owned MCP and progressive Skill Trace events"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Skill Node",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-051",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-051",
+    "test_id": "S05-051",
+    "direct_test_ids": [
+      "backend.tests.test_skill_security::test_import_enable_progressive_load_dependency_disable_and_update",
+      "backend.tests.test_unified_skill_agent::test_INT_003_skill_workflow_router_hash_pin"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "WF-008",
+      "MCP-018"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Workbench shows the selected Skill and real external tool plan"
+    ],
+    "coverage_boundary": "Existing named test covers enabled/disabled hash-pinned Skill workflow. Hash mutation and missing capability must have their exact benchmark cases or direct assertions.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Workflow Version",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-052",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-052",
+    "test_id": "S05-052",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_migration_performance::test_optimistic_writer_collision_does_not_damage_saved_graph",
+      "backend.tests.test_workflow_schema::test_immutable_versions_optimistic_edits_and_runs"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Publish creates immutable v1 snapshot",
+      "Restart preserves immutable versions, output and workflow history without replay"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Checkpoint",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-053",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-053",
+    "test_id": "S05-053",
+    "direct_test_ids": [
+      "backend.tests.test_workflow_execution::test_model_and_resume_pure_nodes_without_replay",
+      "backend.tests.test_workflow_execution::test_original_tool_runtime_and_checkpoint"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "WF-018",
+      "WF-019"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Workflow operation commits the original Skill 03 checkpoint"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "05",
+    "name": "Visual Canvas",
+    "source": "backend/app/services/workflows",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S05-054",
+    "skill_id": "SKILL-05",
+    "gate_id": "FEATURE-S05-054",
+    "test_id": "S05-054",
+    "direct_test_ids": [],
+    "backend_applicable": false,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/workflow-e2e.cjs",
+    "gui_labels": [
+      "Palette adds real trigger and output nodes",
+      "Keyboard/click accessible ports connect real nodes",
+      "Undo restores previous graph",
+      "Redo restores connection",
+      "Keyboard activation deletes a selected connection"
+    ],
+    "coverage_boundary": "No direct Python canvas interaction test. Require actual create/connect/edit/save/publish/reopen pointer and DOM assertions in source and installed Workflow GUI.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "Collection",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-055",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-055",
+    "test_id": "S06-055",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_store::test_collection_explicit_roots_and_scope"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Only test-selected root is authorized through product main process",
+      "Restart preserves collection metadata and index"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "Document Parser",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-056",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-056",
+    "test_id": "S06-056",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_parser::test_corrupt_binary_encoding_and_chunk_limits",
+      "backend.tests.test_knowledge_parser::test_document_positions_and_isolated_worker[.docx-make_docx-paragraph]",
+      "backend.tests.test_knowledge_parser::test_document_positions_and_isolated_worker[.pdf-make_pdf-page]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Document diagnostics show actual successful parser records",
+      "Real candidate indexes original Markdown and Python fixtures"
+    ],
+    "coverage_boundary": "Synthetic text PDF/DOCX positions are covered; scanned-PDF OCR and arbitrary malformed document compatibility are not implied.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "Chunking",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-057",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-057",
+    "test_id": "S06-057",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_parser::test_paragraph_amplification_and_identifier_metadata_are_bounded",
+      "backend.tests.test_knowledge_parser::test_structured_md_code_and_stable_chunks"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Real candidate indexes original Markdown and Python fixtures"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "FTS5",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-058",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-058",
+    "test_id": "S06-058",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_indexer::test_index_incremental_search_and_stale_citation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Chinese keyword retrieval returns the actual source line"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "中文检索",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-059",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-059",
+    "test_id": "S06-059",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_indexer::test_index_incremental_search_and_stale_citation",
+      "backend.tests.test_knowledge_store::test_chinese_english_safe_tokens"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "KB-013"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Chinese keyword retrieval returns the actual source line"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "增量索引",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-060",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-060",
+    "test_id": "S06-060",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_indexer::test_failures_invalidate_old_chunks_and_hybrid_fallback",
+      "backend.tests.test_knowledge_indexer::test_index_incremental_search_and_stale_citation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "KB-007",
+      "KB-008",
+      "KB-009"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Changed source is rejected before a native source-open command"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "引用溯源",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-061",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-061",
+    "test_id": "S06-061",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_memory_context::test_grounding_transfer_consent_citations_and_no_evidence",
+      "backend.tests.test_unified_skill_agent::test_INT_004_rag_router_valid_citation_wrong_owner_and_revocation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "KB-019",
+      "KB-020",
+      "KB-021",
+      "KB-022"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Actual chat citation button opens the matching source details",
+      "Changed source is rejected before a native source-open command"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "可选向量检索",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-062",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-062",
+    "test_id": "S06-062",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_indexer::test_embeddings_explicit_consent_version_isolation",
+      "backend.tests.test_knowledge_indexer::test_failures_invalidate_old_chunks_and_hybrid_fallback"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "KB-017"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Unconfigured optional embeddings explicitly fall back to keywords"
+    ],
+    "coverage_boundary": "Embedding test uses controlled synthetic provider; real local/remote embedding quality/performance requires separate configured provider evidence and consent.",
+    "scope_limited": true
+  },
+  {
+    "skill": "06",
+    "name": "Memory",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-063",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-063",
+    "test_id": "S06-063",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_memory_context::test_memory_manual_isolation_expiry_and_clear",
+      "backend.tests.test_unified_skill_routing::test_INT_013_character_memory_conversation_and_voice_snapshot_isolation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Explicit memory is saved in the current conversation only",
+      "Editing a disabled memory preserves its explicit disabled status",
+      "Conversation memory is isolated after a real restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "Agent / Workflow 集成",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-064",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-064",
+    "test_id": "S06-064",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_workflow_runtime::test_knowledge_node_original_runtime_trace_and_resume_freshness",
+      "backend.tests.test_knowledge_workflow_runtime::test_knowledge_to_transform_model_keeps_provenance",
+      "backend.tests.test_unified_skill_routing::test_INT_016_authorized_scheduled_rag_writes_verified_report"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "KB-027",
+      "KB-028"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "Knowledge → model → output uses current verified source through original runtime"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "删除和权限撤销",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-065",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-065",
+    "test_id": "S06-065",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_indexer::test_index_incremental_search_and_stale_citation",
+      "backend.tests.test_unified_skill_agent::test_INT_004_rag_router_valid_citation_wrong_owner_and_revocation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "A new Work conversation does not inherit another conversation’s grants",
+      "Changed source is rejected before a native source-open command"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "06",
+    "name": "数据隔离",
+    "source": "backend/app/services/knowledge",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S06-066",
+    "skill_id": "SKILL-06",
+    "gate_id": "FEATURE-S06-066",
+    "test_id": "S06-066",
+    "direct_test_ids": [
+      "backend.tests.test_knowledge_api::test_api_control_token_native_grant_and_owner",
+      "backend.tests.test_knowledge_memory_context::test_memory_manual_isolation_expiry_and_clear",
+      "backend.tests.test_knowledge_store::test_collection_explicit_roots_and_scope"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/knowledge-e2e.cjs",
+    "gui_labels": [
+      "A new Work conversation does not inherit another conversation’s grants",
+      "Conversation memory is isolated after a real restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "UI Automation",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-067",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-067",
+    "test_id": "S07-067",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_api_evaluation::test_24_native_cases_are_real_gui_only_and_no_paid_model",
+      "backend.tests.test_computer_use_api_evaluation::test_private_routes_validate_owner_schema_and_fixture_profile"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-001",
+      "CU-002"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Actual UIA semantic controls"
+    ],
+    "coverage_boundary": "Backend schema/dispatch tests do not exercise Windows UIA. Require actual CU native fixture results under current source and installed binary.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "OCR",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-068",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-068",
+    "test_id": "S07-068",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_api_evaluation::test_24_native_cases_are_real_gui_only_and_no_paid_model"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-007",
+      "CU-008",
+      "CU-009",
+      "CU-011"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Actual local Chinese OCR",
+      "Actual local English OCR"
+    ],
+    "coverage_boundary": "Native OCR cases are required. A registry declaration or 24-case dataset enumeration does not execute OCR.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Screen Capture",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-069",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-069",
+    "test_id": "S07-069",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_runtime::test_original_runtime_permissions_trace_checkpoint_and_no_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-022"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Original Runtime observes the actual fixture",
+      "Raw screenshot and UI text stay outside model/tool persistence"
+    ],
+    "coverage_boundary": "Mock bridge strips image/tree text only. Require owned native capture plus raw screenshot exclusion from logs/exports and no remote upload without grant.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Element Locator",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-070",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-070",
+    "test_id": "S07-070",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_contracts::test_no_raw_coordinate_or_script_interface_and_side_effect_needs_fresh_evidence",
+      "backend.tests.test_computer_use_runtime::test_registry_rejects_scripts_coordinates_bad_nested_fields"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-003",
+      "CU-004",
+      "CU-006",
+      "CU-010",
+      "CU-013",
+      "CU-014",
+      "CU-015"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Actual UIA semantic controls",
+      "Fresh UIA discovery recovers after reconstruction"
+    ],
+    "coverage_boundary": "Backend schema and coordinate checks do not prove actual UIA/OCR locator behavior; require native candidate selection and stale evidence rejection.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Action Executor",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-071",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-071",
+    "test_id": "S07-071",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_runtime::test_workflow_computer_node_original_bridge_and_approval"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-005",
+      "CU-017",
+      "CU-018"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Visible input flow verifies real textbox contents",
+      "Visible click flow verifies actual application result"
+    ],
+    "coverage_boundary": "Mock click dispatch requires approval; native action execution needs actual post-action fixture evidence.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Window Permission",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-072",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-072",
+    "test_id": "S07-072",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_api_evaluation::test_private_routes_validate_owner_schema_and_fixture_profile",
+      "backend.tests.test_computer_use_runtime::test_workflow_computer_node_original_bridge_and_approval"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-021"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Native QA consent refusal is honored",
+      "Only original synthetic fixture is granted after native consent",
+      "Fixture close revokes window grant"
+    ],
+    "coverage_boundary": "Never infer native window consent from a generic tool approved-ID list or Voice FINAL transcript.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Action Verification",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-073",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-073",
+    "test_id": "S07-073",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_lifecycle::test_native_case_deadline_cleanup_and_trace[cancel]",
+      "backend.tests.test_computer_use_lifecycle::test_native_case_deadline_cleanup_and_trace[cancel_cleanup]",
+      "backend.tests.test_computer_use_lifecycle::test_native_case_deadline_cleanup_and_trace[cleanup]",
+      "backend.tests.test_computer_use_lifecycle::test_native_case_deadline_cleanup_and_trace[timeout]",
+      "backend.tests.test_computer_use_runtime::test_original_runtime_permissions_trace_checkpoint_and_no_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-019",
+      "CU-020"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Visible input flow verifies real textbox contents",
+      "Visible click flow verifies actual application result",
+      "Stale observation cannot replay input after control reconstruction"
+    ],
+    "coverage_boundary": "Require actual native verified postcondition, missing/changed controls and wrong focused window rejection; protocol success is not goal verification.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Recovery",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-074",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-074",
+    "test_id": "S07-074",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_runtime::test_original_runtime_permissions_trace_checkpoint_and_no_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-024"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Resume requires fresh observation",
+      "Fresh UIA discovery recovers after reconstruction",
+      "Evaluation Trace/Replay reads original host trace"
+    ],
+    "coverage_boundary": "Reconciliation refuses stale screen evidence; require a fresh owned observation and original Recovery behavior in the native fixture.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Computer Use Workflow",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-075",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-075",
+    "test_id": "S07-075",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_runtime::test_visual_template_uses_original_restricted_schema",
+      "backend.tests.test_computer_use_runtime::test_workflow_computer_node_original_bridge_and_approval"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-023"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Original Evaluation creates all 24 Computer Use cases"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "Visual Observer",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-076",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-076",
+    "test_id": "S07-076",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_lifecycle::test_vision_owned_cancel_trace_and_early_revoke",
+      "backend.tests.test_computer_use_runtime::test_vision_has_no_implicit_capability_no_execution_and_bounds"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-012"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Visual Computer Use is off by default",
+      "Original Runtime observes the actual fixture",
+      "Actual UIA semantic controls",
+      "Actual password redaction"
+    ],
+    "coverage_boundary": "External vision model quality is NOT_RUN without explicit image/paid permission. Deterministic local fallback can be separately verified. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "07",
+    "name": "截图隐私",
+    "source": "backend/app/services/computer_use",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S07-077",
+    "skill_id": "SKILL-07",
+    "gate_id": "FEATURE-S07-077",
+    "test_id": "S07-077",
+    "direct_test_ids": [
+      "backend.tests.test_computer_use_lifecycle::test_vision_owned_cancel_trace_and_early_revoke",
+      "backend.tests.test_computer_use_runtime::test_original_runtime_permissions_trace_checkpoint_and_no_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "CU-022"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/computer-use-e2e.cjs",
+    "gui_labels": [
+      "Raw screenshot and UI text stay outside model/tool persistence",
+      "Trace does not contain synthetic screen image or input text",
+      "No external or local model needed for Computer Use"
+    ],
+    "coverage_boundary": "No raw screenshots, OCR text or credentials in public Trace/exports. External screenshot consent is target/scope-specific.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "One-Time",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-078",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-078",
+    "test_id": "S08-078",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_runtime::test_real_workflow_once_dedup_atomic_link_trace_and_notification"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-001",
+      "SCH-003"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "UI creates real one-minute schedule and UTC preview",
+      "Real wall-clock task finishes while window hidden"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Daily",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-079",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-079",
+    "test_id": "S08-079",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_time::test_calendar_days_are_not_24_hour_utc_increments"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-004"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Daily scheduling unit evidence is exact for calendar arithmetic; SCH-004 actual worker case should cover the configured daily trigger. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Weekly",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-080",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-080",
+    "test_id": "S08-080",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_time::test_windows_alias_iana_mapping_and_preview_are_real"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-005"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Timezone mapping/preview alone is not weekly firing. Require actual SCH-005 case evidence; otherwise keep PARTIAL. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Interval",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-081",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-081",
+    "test_id": "S08-081",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_time::test_interval_uses_anchor_and_clock_jump_never_replays_old_slot"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-006",
+      "SCH-011"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Condition Watch",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-082",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-082",
+    "test_id": "S08-082",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_failures::test_revoked_condition_source_blocks_queued_execution_and_consent",
+      "backend.tests.test_scheduler_runtime::test_file_watch_stable_debounce_modify_delete_and_scope_revocation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-013",
+      "SCH-014",
+      "SCH-015",
+      "SCH-016",
+      "SCH-017",
+      "SCH-018"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "UTC / DST",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-083",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-083",
+    "test_id": "S08-083",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_time::test_calendar_days_are_not_24_hour_utc_increments",
+      "backend.tests.test_scheduler_time::test_dst_gap_is_skipped_and_fold_runs_only_first_instant"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-007",
+      "SCH-008",
+      "SCH-009",
+      "SCH-010"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "UI creates real one-minute schedule and UTC preview"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Occurrence",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-084",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-084",
+    "test_id": "S08-084",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_runtime::test_real_workflow_once_dedup_atomic_link_trace_and_notification",
+      "backend.tests.test_scheduler_storage_api::test_additive_migration_preserves_old_rows_and_is_idempotent"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-030"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "Original Workflow executed typed synthetic target",
+      "History opens original read-only Trace"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "去重",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-085",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-085",
+    "test_id": "S08-085",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_eight_sqlite_claimants_create_one_durable_run",
+      "backend.tests.test_scheduler_runtime::test_real_workflow_once_dedup_atomic_link_trace_and_notification"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-003",
+      "SCH-020"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Lease",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-086",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-086",
+    "test_id": "S08-086",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_native_profile_lock_rejects_other_process_and_releases",
+      "backend.tests.test_scheduler_runtime::test_live_process_lease_prevents_duplicate_schedulers_after_wall_jump"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-023",
+      "SCH-024"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Queue",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-087",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-087",
+    "test_id": "S08-087",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_performance::test_measured_hundred_schedules_thousand_occurrences_and_idle_loop"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-019",
+      "SCH-020",
+      "SCH-021"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Load/performance test is related; require actual SCH-019/020/021 admission, overlap and queue-capacity assertions. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Misfire",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-088",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-088",
+    "test_id": "S08-088",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_failures::test_expired_queued_work_is_missed_even_after_fresh_consent",
+      "backend.tests.test_scheduler_runtime::test_misfire_coalesces_three_days_and_does_not_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-012"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Tray",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-089",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-089",
+    "test_id": "S08-089",
+    "direct_test_ids": [],
+    "backend_applicable": false,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "Actual close event hides window to live native tray",
+      "Real tray recent handler navigates exact persisted occurrence"
+    ],
+    "coverage_boundary": "No Python test can prove tray menu placement or native navigation. Require native recent handler and show/hide behavior in current source/installed Scheduler GUI.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Quit",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-090",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-090",
+    "test_id": "S08-090",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_storage_fault_during_close_still_cancels_owned_active_coroutine",
+      "backend.tests.test_scheduler_failures::test_shutdown_is_interrupt_and_explicit_resume_reuses_original_run"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "Tray Quit stops owned backend",
+      "Default close exits; background not silently enabled"
+    ],
+    "coverage_boundary": "Backend close cancels only owned work; current installed Tray Quit must stop the exact backend PID without stopping other profiles.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Notification",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-091",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-091",
+    "test_id": "S08-091",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_runtime::test_real_workflow_once_dedup_atomic_link_trace_and_notification"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [
+      "Native outbox state retained without fabricated delivery"
+    ],
+    "coverage_boundary": "Backend proves durable PENDING outbox only. Require exact owner/occurrence native delivery=SHOWN; ATTEMPTED/UNKNOWN is not displayed.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Permission",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-092",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-092",
+    "test_id": "S08-092",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_runtime::test_background_model_and_low_risk_side_effect_do_not_inherit_smart_permission",
+      "backend.tests.test_scheduler_security::test_original_tool_permission_wait_rechecks_schedule_expiry",
+      "backend.tests.test_scheduler_security::test_schedule_consent_does_not_grant_original_mcp_permission"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-026",
+      "SCH-027",
+      "SCH-029"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "08",
+    "name": "Recovery",
+    "source": "backend/app/services/scheduling",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S08-093",
+    "skill_id": "SKILL-08",
+    "gate_id": "FEATURE-S08-093",
+    "test_id": "S08-093",
+    "direct_test_ids": [
+      "backend.tests.test_scheduler_adversarial::test_interrupted_real_read_tool_can_resume_with_original_checkpoint",
+      "backend.tests.test_scheduler_failures::test_shutdown_is_interrupt_and_explicit_resume_reuses_original_run",
+      "backend.tests.test_unified_skill_routing::test_INT_014_actual_process_exit_recovers_scheduler_workflow_trace_and_budget"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "SCH-022",
+      "SCH-025"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/scheduler-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Voice Session",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-094",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-094",
+    "test_id": "S09-094",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_core::test_final_once_owner_generation_and_capture_lifecycle"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-013"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Session enable requires native scoped consent but still keeps microphone off",
+      "Stopping session leaves no capture tracks"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Audio Capture",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-095",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-095",
+    "test_id": "S09-095",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_core::test_invalid_containers_alignment_rate_duration_and_sequence",
+      "backend.tests.test_realtime_voice_core::test_real_resampling_preserves_duration_and_frequency[16000]",
+      "backend.tests.test_realtime_voice_core::test_real_resampling_preserves_duration_and_frequency[24000]",
+      "backend.tests.test_realtime_voice_core::test_real_resampling_preserves_duration_and_frequency[44100]",
+      "backend.tests.test_realtime_voice_core::test_real_resampling_preserves_duration_and_frequency[48000]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-001",
+      "VOICE-002",
+      "VOICE-003",
+      "VOICE-004",
+      "VOICE-005",
+      "VOICE-006"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Controlled WAV media stream runs through actual product AudioWorklet",
+      "Ending capture actually releases all owned tracks before ASR",
+      "New capture uses the selected controlled input device",
+      "Synthetic device-disconnect notification releases all actual capture tracks"
+    ],
+    "coverage_boundary": "Controlled Chromium WAV media stream and AudioWorklet can be verified. Physical microphone/acoustic AEC remains NOT_RUN.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "VAD",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-096",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-096",
+    "test_id": "S09-096",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_core::test_capture_limit_and_silence_do_not_dispatch",
+      "backend.tests.test_realtime_voice_core::test_final_once_owner_generation_and_capture_lifecycle"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-007",
+      "VOICE-008",
+      "VOICE-009"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "RMS/silence endpoint detection is not semantic turn-end recognition; automatic barge-in remains disabled/unverified. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": true
+  },
+  {
+    "skill": "09",
+    "name": "ASR",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-097",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-097",
+    "test_id": "S09-097",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_core::test_cancel_actual_pending_asr_task_and_discard_stale_result"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-010",
+      "VOICE-011",
+      "VOICE-012",
+      "VOICE-029"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Real local ASR returns a final transcript from controlled WAV"
+    ],
+    "coverage_boundary": "Synthetic ASR lifecycle test is not recognition accuracy. Run scripts/voice_native_probe.py and current GUI controlled WAV; retain Chinese/English/mixed recognition outcomes independently.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Final Transcript",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-098",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-098",
+    "test_id": "S09-098",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_api::test_voice_token_owner_final_and_read_only_trace",
+      "backend.tests.test_realtime_voice_core::test_final_once_owner_generation_and_capture_lifecycle"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-010",
+      "VOICE-013"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Final transcript waits for explicit send; no partial tool execution"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "LLM Streaming",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-099",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-099",
+    "test_id": "S09-099",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_stream_observes_usage_and_cancel_does_not_refund",
+      "backend.tests.test_unified_skill_routing::test_INT_015_same_host_four_conversations_cancel_isolation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-015",
+      "VOICE-016"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "First actual PCM playback begins before delayed mock LLM completes",
+      "Voice Trace includes the actual local mock LLM span, not an invented zero"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "TTS",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-100",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-100",
+    "test_id": "S09-100",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_safety::test_cancelled_local_tts_waits_for_its_owned_thread_and_emits_no_late_pcm",
+      "backend.tests.test_unified_skill_agent::test_INT_008_voice_final_agent_tool_and_pcm_pipeline"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-019",
+      "VOICE-020",
+      "VOICE-030"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Windows PCM hardware frame position advances; no acoustic audibility claim"
+    ],
+    "coverage_boundary": "Synthetic PCM and native SAPI are distinct evidence. Fish/IndexTTS/external voice quality NOT_RUN unless explicitly configured/authorized.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Audio Queue",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-101",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-101",
+    "test_id": "S09-101",
+    "direct_test_ids": [
+      "backend.tests.test_v82_voice::test_one_utterance_preserves_pcm_order_and_never_replays_after_failure[False]",
+      "backend.tests.test_v82_voice::test_one_utterance_preserves_pcm_order_and_never_replays_after_failure[True]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-021",
+      "VOICE-023",
+      "VOICE-027",
+      "VOICE-028"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Late old-generation model/audio does not restart playback",
+      "Second turn records, recognizes, incrementally plays and completes after interruption"
+    ],
+    "coverage_boundary": "Actual bounded native/renderer queue and no stale-generation replay need Electron/voice GUI checks in addition to Python PCM ordering.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Playback",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-102",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-102",
+    "test_id": "S09-102",
+    "direct_test_ids": [],
+    "backend_applicable": false,
+    "benchmark_case_ids": [
+      "VOICE-022",
+      "VOICE-024"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Windows PCM hardware frame position advances; no acoustic audibility claim",
+      "First actual PCM playback begins before delayed mock LLM completes"
+    ],
+    "coverage_boundary": "No Python unit test proves audio playback. Require native frame position advance and completion; never claim acoustic audibility from counters alone.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Manual Interrupt",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-103",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-103",
+    "test_id": "S09-103",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_safety::test_cancel_while_waiting_for_first_text_does_not_need_a_producer_end_marker",
+      "backend.tests.test_realtime_voice_safety::test_repeated_cancel_keeps_native_request_owned_until_thread_acknowledges"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-025",
+      "VOICE-026",
+      "VOICE-027",
+      "VOICE-028"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Manual interrupt stops actual PCM player; software latency only",
+      "Late old-generation model/audio does not restart playback"
+    ],
+    "coverage_boundary": "Owned cancellation is checked; software stop latency does not establish physical barge-in or AEC.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Character Voice",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-104",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-104",
+    "test_id": "S09-104",
+    "direct_test_ids": [
+      "backend.tests.test_unified_skill_routing::test_INT_013_character_memory_conversation_and_voice_snapshot_isolation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-014"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "INT013 now checks actual character Memory and synthetic provider config identity. Real timbre/quality and cloud TTS remain NOT_RUN. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": true
+  },
+  {
+    "skill": "09",
+    "name": "Tool Calling",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-105",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-105",
+    "test_id": "S09-105",
+    "direct_test_ids": [
+      "backend.tests.test_unified_skill_agent::test_INT_008_voice_final_agent_tool_and_pcm_pipeline",
+      "backend.tests.test_voice_agent_orchestration::test_original_runtime_queues_exact_workflow_only_after_approval_and_keeps_owner"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-017",
+      "VOICE-033",
+      "VOICE-034"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Final transcript waits for explicit send; no partial tool execution"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Privacy",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-106",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-106",
+    "test_id": "S09-106",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_api::test_remote_tts_requires_its_own_consent",
+      "backend.tests.test_realtime_voice_safety::test_every_token_boundary_filters_inline_fences_json_urls_and_credentials",
+      "backend.tests.test_voice_agent_orchestration::test_voice_cannot_grant_high_risk_or_replay_unknown_side_effects"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-031",
+      "VOICE-032",
+      "VOICE-035"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Audio-only grant does not grant the camera",
+      "Denied native session consent creates no capture tracks (dialog answer fixture)",
+      "Microphone remains off at app startup"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Trace",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-107",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-107",
+    "test_id": "S09-107",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_api::test_voice_token_owner_final_and_read_only_trace",
+      "backend.tests.test_unified_skill_routing::test_INT_015_same_host_four_conversations_cancel_isolation"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-036"
+    ],
+    "gui_requirement": "REQUIRED",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Original Trace persists completed and cancelled voice turns under correct conversation",
+      "Voice Trace includes the actual local mock LLM span, not an invented zero"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "09",
+    "name": "Recovery",
+    "source": "backend/app/services/realtime_voice",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S09-108",
+    "skill_id": "SKILL-09",
+    "gate_id": "FEATURE-S09-108",
+    "test_id": "S09-108",
+    "direct_test_ids": [
+      "backend.tests.test_realtime_voice_completion::test_silent_generation_finishes_its_trace_and_allows_another_turn[Valid prose but the provider returns no audio.-False-FAILED]",
+      "backend.tests.test_realtime_voice_completion::test_silent_generation_finishes_its_trace_and_allows_another_turn[Valid prose with a failing provider.-True-FAILED]",
+      "backend.tests.test_realtime_voice_completion::test_silent_generation_finishes_its_trace_and_allows_another_turn[```python\\nprint(\"private code\")\\n```-False-COMPLETED]",
+      "backend.tests.test_realtime_voice_completion::test_silent_generation_finishes_its_trace_and_allows_another_turn[https://example.invalid/private-False-COMPLETED]",
+      "backend.tests.test_realtime_voice_completion::test_silent_generation_finishes_its_trace_and_allows_another_turn[{\"arguments\":[\"private data\"]}-False-COMPLETED]",
+      "backend.tests.test_realtime_voice_core::test_cancel_actual_pending_asr_task_and_discard_stale_result"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "VOICE-029",
+      "VOICE-030"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+    "gui_labels": [
+      "Second turn records, recognizes, incrementally plays and completes after interruption"
+    ],
+    "coverage_boundary": "ASR/TTS lifecycle recovery is safe; no replay of unknown tools/model bills. Do not present fallback/next turn as resuming arbitrary side effects.",
+    "scope_limited": true
+  },
+  {
+    "skill": "10",
+    "name": "Model Registry",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-109",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-109",
+    "test_id": "S10-109",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_duplicate_registry_ids_are_rejected",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad0]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad1]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad2]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad3]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad4]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad5]",
+      "backend.tests.test_intelligent_model_router::test_registry_rejects_invalid_or_fabricated_metadata[bad6]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-001",
+      "ROUTE-002",
+      "ROUTE-003",
+      "ROUTE-004",
+      "ROUTE-005"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "API list never returns plaintext credential",
+      "Unknown model cost remains UNKNOWN after a real loopback request"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Capability Matching",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-110",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-110",
+    "test_id": "S10-110",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update0-requirements0-DISABLED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update1-requirements1-MODEL_TYPE_MISMATCH]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update2-requirements2-CONTEXT_UNCONFIRMED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update3-requirements3-AUTO_NOT_AUTHORIZED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update4-requirements4-CAPABILITY_UNCONFIRMED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update5-requirements5-SEPARATE_TYPED_PROVIDER_REQUIRED]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[ASR-asr]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[CHAT-text]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[CODING-tool_calling]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[EMBEDDING-embedding]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[PLANNING-tool_calling]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[STRUCTURED-structured_output]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[TTS-tts]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[VISION-vision]",
+      "backend.tests.test_intelligent_model_router::test_resolver_declares_actual_requirements[VOICE-streaming]"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-009",
+      "ROUTE-012",
+      "ROUTE-013",
+      "ROUTE-014"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Explicit model auto consent and capacity persist"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Routing Policy",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-111",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-111",
+    "test_id": "S10-111",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_manual_and_role_modes_do_not_silently_auto_select"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-015",
+      "ROUTE-016"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "UI saves enabled AUTO routing through guarded main IPC",
+      "Routing policy and durable usage survive an actual application restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Auto Routing",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-112",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-112",
+    "test_id": "S10-112",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update0-requirements0-DISABLED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update1-requirements1-MODEL_TYPE_MISMATCH]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update2-requirements2-CONTEXT_UNCONFIRMED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update3-requirements3-AUTO_NOT_AUTHORIZED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update4-requirements4-CAPABILITY_UNCONFIRMED]",
+      "backend.tests.test_intelligent_model_router::test_hard_filters_never_call_incompatible_model[record_update5-requirements5-SEPARATE_TYPED_PROVIDER_REQUIRED]",
+      "backend.tests.test_intelligent_model_router::test_local_only_and_cloud_auto_require_explicit_opt_in",
+      "backend.tests.test_unified_skill_routing::test_INT_009_actual_agent_planner_filters_text_only_provider"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-017",
+      "ROUTE-018",
+      "ROUTE-019",
+      "ROUTE-020",
+      "ROUTE-021",
+      "ROUTE-022"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Router starts disabled in a new profile",
+      "UI saves enabled AUTO routing through guarded main IPC",
+      "Saving routing emits no model probe or warmup request"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Budget",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-113",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-113",
+    "test_id": "S10-113",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_atomic_budget_does_not_reset_on_reopen_or_policy_revision",
+      "backend.tests.test_intelligent_model_router::test_no_trace_budget_is_shared_across_all_captured_roles",
+      "backend.tests.test_intelligent_model_router::test_unknown_request_keeps_reservation_even_after_failure"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-026",
+      "ROUTE-027",
+      "ROUTE-028",
+      "ROUTE-029",
+      "ROUTE-030"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Routing policy and durable usage survive an actual application restart"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Cost",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-114",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-114",
+    "test_id": "S10-114",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_low_cost_ranks_unknown_last_and_cannot_compare_other_currency",
+      "backend.tests.test_intelligent_model_router::test_money_limits_and_unknown_reservations_fail_closed[day]",
+      "backend.tests.test_intelligent_model_router::test_money_limits_and_unknown_reservations_fail_closed[provider]",
+      "backend.tests.test_intelligent_model_router::test_money_limits_and_unknown_reservations_fail_closed[request]",
+      "backend.tests.test_intelligent_model_router::test_money_limits_and_unknown_reservations_fail_closed[task]",
+      "backend.tests.test_intelligent_model_router::test_money_limits_and_unknown_reservations_fail_closed[workflow]",
+      "backend.tests.test_intelligent_model_router::test_strict_money_caps_block_without_a_trusted_token_counter"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-006",
+      "ROUTE-023",
+      "ROUTE-024",
+      "ROUTE-025",
+      "ROUTE-029"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Unknown model cost remains UNKNOWN after a real loopback request",
+      "UI distinguishes unknown cost from free"
+    ],
+    "coverage_boundary": "STRICT money caps deliberately block absent a trusted input token bound; ESTIMATED limits are reservations, not invoice ceilings.",
+    "scope_limited": true
+  },
+  {
+    "skill": "10",
+    "name": "Latency",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-115",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-115",
+    "test_id": "S10-115",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_latency_uses_real_sample_count_and_cooldown_recovers",
+      "backend.tests.test_intelligent_model_router::test_task_latency_samples_are_separate_from_aggregate"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-019"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Measured latency has a task type and actual sample count"
+    ],
+    "coverage_boundary": "Metrics are actual sampled requests by config/task. Require sample counts and measured values; no provider SLA or synthetic P95 claims.",
+    "scope_limited": true
+  },
+  {
+    "skill": "10",
+    "name": "Health",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-116",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-116",
+    "test_id": "S10-116",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_latency_uses_real_sample_count_and_cooldown_recovers"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Passive health/cooldown uses observed requests only; no paid active health probe is implied. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": true
+  },
+  {
+    "skill": "10",
+    "name": "Fallback",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-117",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-117",
+    "test_id": "S10-117",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_permanent_errors_never_fallback[400]",
+      "backend.tests.test_intelligent_model_router::test_permanent_errors_never_fallback[401]",
+      "backend.tests.test_intelligent_model_router::test_permanent_errors_never_fallback[403]",
+      "backend.tests.test_intelligent_model_router::test_permanent_errors_never_fallback[404]",
+      "backend.tests.test_intelligent_model_router::test_permanent_errors_never_fallback[422]",
+      "backend.tests.test_intelligent_model_router::test_same_target_fallback_counts_both_requests_and_never_executes_tools",
+      "backend.tests.test_intelligent_model_router::test_stream_delta_commits_attempt_and_prevents_replay"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-030",
+      "ROUTE-031",
+      "ROUTE-032",
+      "ROUTE-033",
+      "ROUTE-034",
+      "ROUTE-035",
+      "ROUTE-036"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "At most one transient fallback, same provider/endpoint/model target, explicit authorization. No fallback after yielded text or a returned plan. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Privacy",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-118",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-118",
+    "test_id": "S10-118",
+    "direct_test_ids": [
+      "backend.tests.test_intelligent_model_router::test_local_only_and_cloud_auto_require_explicit_opt_in",
+      "backend.tests.test_intelligent_model_router::test_persistent_attachment_context_retains_remote_permission_boundary",
+      "backend.tests.test_intelligent_model_router::test_pinned_privacy_requires_and_retains_exact_target"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-020",
+      "ROUTE-043",
+      "ROUTE-044"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "API list never returns plaintext credential",
+      "Explicit model auto consent and capacity persist"
+    ],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Trace",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-119",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-119",
+    "test_id": "S10-119",
+    "direct_test_ids": [
+      "backend.tests.test_model_router_evaluation::test_router_benchmark_runs_through_original_worker_and_report",
+      "backend.tests.test_unified_skill_agent::test_INT_001_agent_trace_checkpoint_and_routed_provider"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-047"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [],
+    "coverage_boundary": "Use these exact assertions as evidence only after verifying their current test bodies and bound JUnit results. Do not copy whole-module status to this feature. No direct matching GUI assertion label was found; do not promote this feature from unrelated module GUI success.",
+    "scope_limited": false
+  },
+  {
+    "skill": "10",
+    "name": "Evaluation",
+    "source": "backend/app/services/llm/routing",
+    "expected": "Production behavior obeys original ownership, permissions and cancellation; evidence matches actual results",
+    "notes": "Real cloud/hardware quality is excluded from mock regression; consult GUI and known limitations.",
+    "feature_id": "S10-120",
+    "skill_id": "SKILL-10",
+    "gate_id": "FEATURE-S10-120",
+    "test_id": "S10-120",
+    "direct_test_ids": [
+      "backend.tests.test_model_router_evaluation::test_router_benchmark_runs_through_original_worker_and_report",
+      "backend.tests.test_model_router_evaluation::test_router_dataset_declares_forty_eight_unique_cases_and_no_live_budget"
+    ],
+    "backend_applicable": true,
+    "benchmark_case_ids": [
+      "ROUTE-048"
+    ],
+    "gui_requirement": "SUPPLEMENTAL",
+    "gui_harness": "tests/ui/model-router-e2e.cjs",
+    "gui_labels": [
+      "Twenty cases execute through installed worker, Runtime, Trace, grading and DB"
+    ],
+    "coverage_boundary": "Require actual original worker ROUTE-001..048 report with current dataset SHA, exact case IDs and scope links; static registry metadata is insufficient.",
+    "scope_limited": false
+  }
+]

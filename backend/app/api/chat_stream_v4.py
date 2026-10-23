@@ -52,7 +52,28 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
         raise HTTPException(status_code=422, detail="Message cannot be blank")
     attachments = AttachmentService()
     try:
-        character_llm = request.app.state.model_roles.service("character_model")
+        routes = request.app.state.model_roles
+        if payload.voice_context:
+            from app.services.realtime_voice.contracts import Scope
+
+            session = request.app.state.realtime_voice.owned(
+                Scope(owner_id=payload.renderer_id, **payload.voice_context.model_dump()), turn=True
+            )
+            routes = session.turn.model_routes or routes
+        if hasattr(routes, "capture"):
+            routes = routes.capture()
+        from app.services.llm.routing.contracts import TaskCapabilityResolver
+
+        requirements = TaskCapabilityResolver.resolve(
+            "VOICE" if payload.voice_context else "CHAT",
+            vision=attachments.requires_vision(payload.attachments),
+            data_kind="ATTACHMENT" if payload.attachments else "TEXT",
+        )
+        character_llm = (
+            routes.service("character_model", requirements=requirements)
+            if getattr(routes, "intelligent", None)
+            else routes.service("character_model")
+        )
         active_config = getattr(character_llm, "config", None)
         prepared = attachments.prepare(
             payload.attachments,
@@ -95,7 +116,7 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
             ):
                 raise HTTPException(status_code=404, detail="Reply target not found")
             history = knowledge_chat.history(
-                request.app, previous[-20:], conversation.id, payload.character_id
+                request.app, previous[-20:], conversation.id, payload.character_id, character_llm
             )
             memory = relationship_memory(
                 db, payload.character_id, {item.id for item in previous[-20:]}
@@ -136,7 +157,7 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
         user_text,
         memory_context=memory,
         reply_context=knowledge_chat.reply(
-            request.app, reply_target, conversation_id, payload.character_id
+            request.app, reply_target, conversation_id, payload.character_id, character_llm
         ),
         personalization=overlay,
         manual_memory=manual,
@@ -159,7 +180,7 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
                 if item.kind == "image"
             ),
         ]
-    llm = request.app.state.model_roles.service("character_model")
+    llm = character_llm
     assistant_id = str(uuid4())
     llm = await knowledge_chat.grounded(
         request.app, llm, conversation_id, payload.character_id, user_text, assistant_id

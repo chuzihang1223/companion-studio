@@ -118,6 +118,8 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   listApiPresets: () => ipcRenderer.invoke('api-presets'),
   setModelRoles: (roles) => ipcRenderer.invoke('api-model-roles', roles),
   modelRoleStatus: () => ipcRenderer.invoke('api-model-role-status'),
+  setModelRouting: (selection) => ipcRenderer.invoke('api-model-routing', selection),
+  modelRoutingStatus: () => ipcRenderer.invoke('api-model-routing-status'),
   testApiConnection: (draft) => ipcRenderer.invoke('api-test', draft),
   applyApiPreset: (draft, force = false) => ipcRenderer.invoke('api-apply', draft, force),
   activateApiPreset: (id) => ipcRenderer.invoke('api-activate', id),

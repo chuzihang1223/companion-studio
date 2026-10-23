@@ -17,11 +17,14 @@ def owned_service(app, conversation_id, character_id):
     return None
 
 
-def history(app, rows, conversation_id, character_id):
+def history(app, rows, conversation_id, character_id, service=None):
     knowledge = owned_service(app, conversation_id, character_id)
     if knowledge:
         return knowledge.filter_history(
-            rows, conversation_id, character_id, app.state.model_roles.service("character_model")
+            rows,
+            conversation_id,
+            character_id,
+            service or app.state.model_roles.service("character_model"),
         )
     return [{"role": row.role, "content": row.content} for row in rows]
 
@@ -36,10 +39,10 @@ def manual(app, original, conversation_id, character_id, query):
     return list(dict.fromkeys([*original, *extra]))[:8]
 
 
-def reply(app, row, conversation_id, character_id):
+def reply(app, row, conversation_id, character_id, service=None):
     if row is None:
         return None
-    permitted = history(app, [row], conversation_id, character_id)
+    permitted = history(app, [row], conversation_id, character_id, service)
     return permitted[0]["content"] if permitted else None
 
 

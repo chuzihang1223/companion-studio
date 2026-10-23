@@ -1,0 +1,1303 @@
+{
+  "dataset_id": "router-core",
+  "version": "1.0.0",
+  "title": "Intelligent Model Router（本机模拟）",
+  "cases": [
+    {
+      "case_id": "ROUTE-001",
+      "title": "模型注册与公开元数据",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 1.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-002",
+      "title": "模型停用立即排除",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 2.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-003",
+      "title": "能力来源与未知值",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 3.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-004",
+      "title": "非法配置拒绝",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 4.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-005",
+      "title": "配置版本与缓存失效",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 5.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-006",
+      "title": "未知价格保留未知",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 6.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-007",
+      "title": "普通聊天路由",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 7.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-008",
+      "title": "Agent规划路由",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 8.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-009",
+      "title": "工具能力硬过滤",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 9.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-010",
+      "title": "编码任务能力偏好",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 10.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-011",
+      "title": "RAG文本能力需求",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 11.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-012",
+      "title": "Vision能力匹配",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 12.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-013",
+      "title": "Embedding独立类型",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 13.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-014",
+      "title": "ASR与TTS独立类型",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 14.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-015",
+      "title": "手动固定且禁止自动备用",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 15.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-016",
+      "title": "按职责选择",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 16.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-017",
+      "title": "自动模式先过滤",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 17.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-018",
+      "title": "已知价格成本优先",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 18.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-019",
+      "title": "实测延迟偏好",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 19.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-020",
+      "title": "仅本地隐私约束",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 20.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-021",
+      "title": "用户质量优先级",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 21.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-022",
+      "title": "无候选明确阻断",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 22.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-023",
+      "title": "实际Usage解析",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 23.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-024",
+      "title": "缺失Usage的估算标签",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 24.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-025",
+      "title": "未知价格不视为免费",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 25.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-026",
+      "title": "任务请求预算",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 26.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-027",
+      "title": "工作流请求预算",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 27.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-028",
+      "title": "定时授权绑定路由身份",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 28.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-029",
+      "title": "严格金额预算",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 29.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-030",
+      "title": "备用尝试独立计费预留",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 30.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-031",
+      "title": "连接失败有限备用",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 31.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-032",
+      "title": "限流失败有限备用",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 32.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-033",
+      "title": "超时失败有限备用",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 33.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-034",
+      "title": "备用同样检查能力",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 34.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-035",
+      "title": "禁止跨目标云备用",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 35.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-036",
+      "title": "工具计划返回后不重复请求",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 36.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-037",
+      "title": "旧语音Generation拒绝",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 37.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-038",
+      "title": "VoiceTurn只提交一次",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 38.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-039",
+      "title": "Agent实际规划集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 39.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-040",
+      "title": "MCP权限与路由集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 40.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-041",
+      "title": "Skill能力与路由集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 41.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-042",
+      "title": "Workflow模型节点集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 42.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-043",
+      "title": "RAG目标授权集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 43.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-044",
+      "title": "Computer视觉授权集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 44.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-045",
+      "title": "Scheduler依赖变更集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 45.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-046",
+      "title": "Voice模型快照集成",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 46.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-047",
+      "title": "Trace与Recovery路由记录",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 47.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    },
+    {
+      "case_id": "ROUTE-048",
+      "title": "Evaluation结果与证据一致",
+      "description": "原 ModelRoleRouter、LLMService、OpenAI-compatible Provider 与 SQLite 的本机合成回归；不代表外部模型质量或真实计费。跨模块项须具有对应生产边界证据。",
+      "category": "routing",
+      "difficulty": "intermediate",
+      "input": "Run isolated router assertion 48.",
+      "environment": "router-fixture-v1",
+      "execution_mode": [
+        "mock",
+        "sandbox"
+      ],
+      "expected_outcome": {
+        "invariants_hold": true
+      },
+      "grader": "model_router",
+      "allowed_tools": [],
+      "allowed_paths": [],
+      "timeout_seconds": 30,
+      "max_steps": 8,
+      "max_retries": 0,
+      "tags": [
+        "router",
+        "synthetic"
+      ],
+      "dataset_version": "1.0.0"
+    }
+  ]
+}

@@ -100,6 +100,7 @@ class VoiceTurn:
     trace: object = None
     provider: object = None
     tts: object = None
+    model_routes: object = None
     pipeline: object = None
     created: float = field(default_factory=time.monotonic)
 

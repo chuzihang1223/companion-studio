@@ -338,6 +338,7 @@ export async function planAgent(
   message: string,
   attachments: AttachmentInput[] = [],
   workspaceFolder: string | null = null,
+  voiceContext?: import('./realtimeVoice/types').VoiceBinding,
 ): Promise<AgentPlan> {
   const renderer_id = await (await import('./RendererIdentity')).rendererIdentity();
   return readResponse(
@@ -351,6 +352,7 @@ export async function planAgent(
         attachments: attachments.map(({ name, data_base64 }) => ({ name, data_base64 })),
         workspace_folder: workspaceFolder,
         renderer_id,
+        voice_context: voiceContext,
       }),
     }),
   );

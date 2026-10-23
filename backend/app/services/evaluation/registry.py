@@ -1,67 +1,48 @@
-"""只加载随源码审核的版本化数据集；API 不接受外部数据集路径。"""
+"""Load only audited, bundled dataset files; counts and versions come from their content."""
 
 import hashlib
 import json
 from pathlib import Path
+import re
 
 from app.schemas.evaluation import BenchmarkCase
 
+DIRECTORY = Path(__file__).parent / "datasets"
+
 
 class BenchmarkRegistry:
+    @staticmethod
+    def available():
+        return tuple(
+            sorted(
+                path.stem
+                for path in DIRECTORY.glob("*-core.json")
+                if re.fullmatch(r"[a-z]+(?:-[a-z]+)*-core", path.stem)
+            )
+        )
+
     def __init__(self, dataset_id="studio-core"):
-        if dataset_id not in {
-            "studio-core",
-            "recovery-core",
-            "mcp-skills-core",
-            "workflow-core",
-            "knowledge-core",
-            "computer-use-core",
-            "scheduler-core",
-            "voice-core",
-        }:
+        if dataset_id not in self.available():
             raise ValueError("未知内置数据集")
-        raw = (Path(__file__).parent / "datasets" / (dataset_id + ".json")).read_bytes()
+        raw = (DIRECTORY / (dataset_id + ".json")).read_bytes()
         self.digest = hashlib.sha256(raw).hexdigest()
         data = json.loads(raw)
+        if data["dataset_id"] != dataset_id or not re.fullmatch(r"1\.0\.0", data["version"]):
+            raise ValueError("内置数据集身份或版本不符")
         self.cases = [BenchmarkCase.model_validate(row) for row in data["cases"]]
         self.by_id = {row.case_id: row for row in self.cases}
-        expected = (
-            36
-            if dataset_id == "voice-core"
-            else 30
-            if dataset_id == "scheduler-core"
-            else 24
-            if dataset_id == "computer-use-core"
-            else 28
-            if dataset_id == "knowledge-core"
-            else 16
-            if dataset_id == "recovery-core"
-            else 20
-        )
-        if len(self.by_id) != len(self.cases) or len(self.cases) != expected:
-            raise ValueError("内置数据集测试项数量不符")
-        self.dataset_id = dataset_id
-        self.version = "1.0.0"
+        if not self.cases or len(self.by_id) != len(self.cases):
+            raise ValueError("内置数据集测试项为空或编号重复")
+        if any(row.dataset_version != data["version"] for row in self.cases):
+            raise ValueError("内置数据集测试项版本不符")
+        self.dataset_id, self.version = dataset_id, data["version"]
+        self.title = data.get("title", dataset_id)
 
     def public(self, detail=False):
         result = {
             "dataset_id": self.dataset_id,
             "dataset_version": self.version,
-            "title": "Realtime Voice · 36 项（合成边界；设备项可受阻）"
-            if self.dataset_id == "voice-core"
-            else "Scheduled Agent · 30 项（隔离合成数据）"
-            if self.dataset_id == "scheduler-core"
-            else "Visual Computer Use · 24 项（隔离 Windows GUI）"
-            if self.dataset_id == "computer-use-core"
-            else "Studio Core · 20 项"
-            if self.dataset_id == "studio-core"
-            else "Knowledge Core · 28 项"
-            if self.dataset_id == "knowledge-core"
-            else "Recovery Core · 16 项"
-            if self.dataset_id == "recovery-core"
-            else "Workflow Core · 20 项"
-            if self.dataset_id == "workflow-core"
-            else "MCP & Skills Core · 20 项",
+            "title": f"{self.title} · {len(self.cases)} 项",
             "case_count": len(self.cases),
             "sha256": self.digest,
         }

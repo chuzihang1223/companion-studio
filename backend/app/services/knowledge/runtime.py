@@ -76,7 +76,9 @@ async def execute(app, context, call):
         raise KnowledgeError("KNOWLEDGE_UNAVAILABLE", 503)
     # Tool observations will be sent to the current character model at final
     # summarization. Local read permission alone cannot authorize that transfer.
-    model = app.state.model_roles.service("character_model")
+    model = (getattr(context, "model_routes", None) or app.state.model_roles).service(
+        "character_model"
+    )
     proof = snapshot(service, call, context.conversation_id, context.character_id)
     with service.store.sessions() as db:
         service.store.authorize(
