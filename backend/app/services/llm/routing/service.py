@@ -67,6 +67,9 @@ def tool_schema_valid(result, tools):
             if name not in schemas or not isinstance(raw, str) or len(raw) > 200000:
                 return False
             arguments = json.loads(raw)
+            # Python's decoder accepts NaN/Infinity and overflowing exponents;
+            # they are not valid JSON tool arguments even for number schemas.
+            json.dumps(arguments, allow_nan=False)
             if not isinstance(arguments, dict):
                 return False
             Draft202012Validator(schemas[name], registry=Registry()).validate(arguments)

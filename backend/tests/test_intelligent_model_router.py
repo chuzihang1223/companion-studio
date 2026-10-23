@@ -750,3 +750,34 @@ def test_context_reserves_output_capacity_and_checks_actual_payload_before_http(
     asyncio.run(run())
     assert model[0].model_id == "normal"
     assert ModelRegistry.build([model[:2]]).public()[0]["provider"] == model[1].config.provider
+
+
+@pytest.mark.parametrize("number", ["NaN", "Infinity", "-Infinity", "1e999"])
+def test_nonfinite_tool_argument_is_not_valid_schema_output(number):
+    from app.services.llm.routing.service import tool_schema_valid
+
+    tools = [
+        {
+            "function": {
+                "name": "probe",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"v": {"type": "number", "minimum": 0, "maximum": 1}},
+                },
+            }
+        }
+    ]
+
+    def response(raw):
+        return {
+            "tool_calls": [
+                {
+                    "id": "one",
+                    "type": "function",
+                    "function": {"name": "probe", "arguments": '{"v":' + raw + "}"},
+                }
+            ]
+        }
+
+    assert not tool_schema_valid(response(number), tools)
+    assert tool_schema_valid(response("0.5"), tools)

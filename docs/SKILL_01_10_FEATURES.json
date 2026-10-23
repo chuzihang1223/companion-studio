@@ -19,7 +19,7 @@
     "gui_labels": [
       "Real task events persist and share the plan task ID"
     ],
-    "coverage_boundary": "Related concurrent-context test separates owned traces; require an explicit distinct-ID assertion before claiming UUID uniqueness.",
+    "coverage_boundary": "The concurrent production test explicitly requires three distinct trace IDs and verifies their owned task/conversation event bindings.",
     "scope_limited": false
   },
   {

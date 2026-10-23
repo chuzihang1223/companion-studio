@@ -557,6 +557,54 @@ class UnifiedReview(original.Review):
                 for row in latest.values()
             ],
         }
+        test_proof = (
+            {
+                "path": str(Path(test_root) / "pytest.xml"),
+                "sha256": sha(self.source / test_root / "pytest.xml"),
+            }
+            if test_root
+            else None
+        )
+        suite = ET.parse(self.source / test_root / "pytest.xml").getroot() if test_root else None
+        suite_time = (
+            next((s.get("timestamp") for s in suite.iter("testsuite") if s.get("timestamp")), None)
+            if suite is not None
+            else None
+        )
+        for row in report["tests"]:
+            row.update(
+                {
+                    "skill_id": next(
+                        ("SKILL-" + skill for skill, keys in DOMAINS.items() if group([row], keys)),
+                        "ALL",
+                    ),
+                    "gate_id": "GATE-03",
+                    "test_id": row["id"],
+                    "test": row["id"],
+                    "expected": "Original production assertions succeed",
+                    "actual": row["status"],
+                    "evidence": test_proof,
+                    "time": {"suite_started_at": suite_time, "duration_seconds": row["seconds"]},
+                    "error": row.get("skip_reason") if row["status"] != "PASS" else None,
+                    "severity": "P1" if row["status"] == "FAIL" else None,
+                    "reviewer": "pytest-assertions",
+                }
+            )
+        for row in report["features"]:
+            row.update(
+                {
+                    "time": {"suite_started_at": suite_time, "aggregated_at": now},
+                    "actual": {
+                        "backend_passed": row["tests_passed"],
+                        "backend_executed": row["tests_executed"],
+                        "gui": row["gui"],
+                        "benchmark_cases": row["benchmark_cases"],
+                    },
+                    "error": None if row["status"] == "PASS" else row.get("coverage_boundary"),
+                    "severity": "P1" if row["status"] == "FAIL" else None,
+                    "reviewer": "exact-evidence-aggregator",
+                }
+            )
         (self.root / "UNIFIED_ACCEPTANCE_01_10.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
         )

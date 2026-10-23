@@ -480,10 +480,20 @@ def test_chat_budget_denial_retains_safe_http_and_stream_reason(tmp_path):
     from app.api.chat import router as chat_router
     from app.api.chat_stream_v4 import router as stream_router
 
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.database.session import Base
+
+    ledger_engine = create_engine(f"sqlite:///{(tmp_path / 'model-ledger.db').as_posix()}")
+    Base.metadata.create_all(ledger_engine)
+
     async def run():
         async with unified_host(tmp_path) as h:
             h.app.include_router(chat_router)
             h.app.include_router(stream_router)
+            # Keep a daily budget test independent of other INT runs in the same
+            # process; do not clear or rewrite the shared fixture history.
+            h.fixture.ledger = BudgetLedger(sessionmaker(ledger_engine))
             h.fixture.state(max_requests_per_day=1)
             payload = {
                 "character_id": "assistant",
@@ -522,4 +532,7 @@ def test_chat_budget_denial_retains_safe_http_and_stream_reason(tmp_path):
                 assert "上限" in plan["local_resolution"]["error"]
                 assert len(h.requests) == 1
 
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    finally:
+        ledger_engine.dispose()
