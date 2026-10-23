@@ -720,3 +720,33 @@ def test_task_latency_samples_are_separate_from_aggregate():
     assert tasks["VOICE"]["total"]["p50_ms"] == 20
     assert tasks["VOICE"]["ttft"]["n"] == 1
     assert metrics.public("version")["total"]["n"] == 2
+
+
+def test_context_reserves_output_capacity_and_checks_actual_payload_before_http(ledger):
+    small = registered("small")
+    small = (small[0].model_copy(update={"context_window": 256}), *small[1:])
+    state = snapshot(ledger, small)
+    with pytest.raises(RoutingError):
+        state.service("character_model")
+    assert not small[2] and not ledger[0].recent()
+    model = registered("normal")
+    state = snapshot(ledger, model)
+
+    async def run():
+        service = state.service("character_model")
+        messages = [{"role": "user", "content": "中文" * 3000}]
+        with pytest.raises(RoutingError, match="CONTEXT_CAPACITY"):
+            await service.chat(messages)
+        with pytest.raises(RoutingError, match="CONTEXT_CAPACITY"):
+            async for _ in service.stream_chat(messages):
+                pass
+        with pytest.raises(RoutingError, match="CONTEXT_CAPACITY"):
+            await service.plan_tools(
+                [], [{"function": {"name": "large", "description": "x" * 5000}}]
+            )
+        assert not model[2] and not ledger[0].recent()
+        assert await service.chat([{"role": "user", "content": "hello"}]) == "mock reply"
+
+    asyncio.run(run())
+    assert model[0].model_id == "normal"
+    assert ModelRegistry.build([model[:2]]).public()[0]["provider"] == model[1].config.provider

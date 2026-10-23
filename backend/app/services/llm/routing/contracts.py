@@ -10,6 +10,25 @@ class RoutingError(ValueError):
         self.code = code
         super().__init__(code)
 
+    def public(self):
+        code = (
+            self.code
+            if isinstance(self.code, str)
+            and 0 < len(self.code) <= 80
+            and all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789" for c in self.code)
+            else "MODEL_ROUTING_BLOCKED"
+        )
+        message = (
+            "已达到模型请求次数上限，请调整预算或等待限额重置。"
+            if code.endswith("REQUEST_LIMIT")
+            else "当前模型上下文容量不足，请缩短消息或选择更大上下文的模型。"
+            if "CONTEXT" in code
+            else "当前费用上限或价格信息不允许发送请求，请检查模型预算设置。"
+            if "COST" in code or "PRICE" in code or "TOKEN_BOUND" in code
+            else "没有满足当前能力、授权和路由策略的模型，请检查模型路由设置。"
+        )
+        return {"code": code, "message": message}
+
 
 class ModelType(StrEnum):
     TEXT_LLM = "TEXT_LLM"

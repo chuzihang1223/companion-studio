@@ -44,7 +44,10 @@ def eligibility(entry, requirements, policy, metrics):
         return "MODEL_TYPE_MISMATCH"
     if any(entry.capability(name) is not True for name in requirements.required):
         return "CAPABILITY_UNCONFIRMED"
-    if record.context_window is None or record.context_window < requirements.min_context:
+    if (
+        record.context_window is None
+        or record.context_window < requirements.min_context + policy.max_output_tokens
+    ):
         return "CONTEXT_UNCONFIRMED"
     if requirements.data_kind == "ATTACHMENT" and not entry.local and not record.allow_attachments:
         return "ATTACHMENT_TARGET_NOT_AUTHORIZED"

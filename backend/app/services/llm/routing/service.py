@@ -127,6 +127,20 @@ class RoutedService:
                 yield entry
                 return
 
+    def _check_context(self, entry, messages, tools=None):
+        # No compatible-endpoint tokenizer contract exists. This is deliberately
+        # a conservative payload estimate, not an ACTUAL token count or invoice
+        # guarantee. Include tools and image payloads rather than silently ignore
+        # them; a large image may be refused until its provider quota is known.
+        payload_bytes = len(
+            json.dumps({"messages": messages, "tools": tools or []}, ensure_ascii=False).encode(
+                "utf-8"
+            )
+        )
+        estimated_input = max(self.requirements.min_context, payload_bytes + 256)
+        if estimated_input + self.policy.max_output_tokens > entry.record.context_window:
+            raise RoutingError("CONTEXT_CAPACITY_ESTIMATE_EXCEEDED")
+
     async def _start(self, entry):
         if entry.record.model_id != self.entry.record.model_id:
             from app.services.llm.routing.trace import emit
@@ -192,6 +206,7 @@ class RoutedService:
     async def _call(self, operation, messages, tools=None):
         last = None
         for entry in self._attempts():
+            self._check_context(entry, messages, tools)
             request_id, started, observer = await self._start(entry)
             error, valid = None, None
             try:
@@ -226,6 +241,7 @@ class RoutedService:
     async def stream_chat(self, messages):
         last = None
         for entry in self._attempts():
+            self._check_context(entry, messages)
             request_id, started, observer = await self._start(entry)
             error, first, emitted = None, None, False
             try:

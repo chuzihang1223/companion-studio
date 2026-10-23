@@ -234,7 +234,7 @@ from fastapi.responses import JSONResponse
 
 @app.exception_handler(RoutingError)
 async def routing_error_handler(_request, error):
-    return JSONResponse(status_code=409, content={"detail": {"code": error.code}})
+    return JSONResponse(status_code=409, content={"detail": error.public()})
 
 
 app.include_router(chat_router)

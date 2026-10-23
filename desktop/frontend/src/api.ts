@@ -211,7 +211,13 @@ async function backendUrl(): Promise<string> {
 async function readResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(typeof body.detail === 'string' ? body.detail : `HTTP ${response.status}`);
+    throw new Error(
+      typeof body.detail === 'string'
+        ? body.detail
+        : typeof body.detail?.message === 'string'
+          ? body.detail.message
+          : `HTTP ${response.status}`,
+    );
   }
   return response.json() as Promise<T>;
 }
@@ -717,7 +723,13 @@ export async function* streamMessage(
 async function* readEventStream(response: Response): AsyncGenerator<ChatStreamEvent> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(typeof body.detail === 'string' ? body.detail : `HTTP ${response.status}`);
+    throw new Error(
+      typeof body.detail === 'string'
+        ? body.detail
+        : typeof body.detail?.message === 'string'
+          ? body.detail.message
+          : `HTTP ${response.status}`,
+    );
   }
   if (!response.body) throw new Error('当前环境不支持流式回复。');
   const reader = response.body.getReader();

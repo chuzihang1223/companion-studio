@@ -474,3 +474,38 @@ def test_INT_014_actual_process_exit_recovers_scheduler_workflow_trace_and_budge
     report = json.loads((root / "result.json").read_text(encoding="utf-8"))
     assert report["side_effect_unchanged"] and report["budget_survived_process"]
     assert report["automatic_replay_count"] == 0 and report["trace_rows"] > 0
+
+
+def test_chat_budget_denial_retains_safe_http_and_stream_reason(tmp_path):
+    from app.api.chat import router as chat_router
+    from app.api.chat_stream_v4 import router as stream_router
+
+    async def run():
+        async with unified_host(tmp_path) as h:
+            h.app.include_router(chat_router)
+            h.app.include_router(stream_router)
+            h.fixture.state(max_requests_per_day=1)
+            payload = {
+                "character_id": "assistant",
+                "conversation_id": h.owner,
+                "message": "本地预算验证",
+                "voice_enabled": False,
+            }
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=h.app), base_url="http://isolated.test"
+            ) as client:
+                first = await client.post("/api/chat", json=payload)
+                assert first.status_code == 200, first.text
+                denied = await client.post("/api/chat", json=payload)
+                assert denied.status_code == 409, denied.text
+                assert denied.json()["detail"]["code"] == "DAY_REQUEST_LIMIT"
+                assert "上限" in denied.json()["detail"]["message"]
+                stream = await client.post("/api/chat/stream", json=payload)
+                assert (
+                    '"code": "DAY_REQUEST_LIMIT"' in stream.text
+                    or '"code":"DAY_REQUEST_LIMIT"' in stream.text
+                )
+                assert "回复生成失败" not in stream.text
+                assert len(h.requests) == 1
+
+    asyncio.run(run())

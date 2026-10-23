@@ -64,7 +64,7 @@ class RouterFixture:
             OpenAIProvider("", api_model, endpoint, transport=httpx.MockTransport(respond)), config
         )
         record = ModelRecord(
-            model_id=name, display_name=name, context_window=4096, allow_auto=True, **metadata
+            model_id=name, display_name=name, context_window=65536, allow_auto=True, **metadata
         )
         self.models.append((record, service))
         return record, service

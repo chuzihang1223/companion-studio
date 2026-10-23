@@ -1,3 +1,4 @@
+from app.services.llm.routing.contracts import RoutingError
 import logging
 from uuid import uuid4
 
@@ -80,6 +81,8 @@ async def retry_answer(
     )
     try:
         reply = await service.chat(prompt)
+    except RoutingError as exc:
+        raise HTTPException(status_code=409, detail=exc.public()) from exc
     except (LLMConfigurationError, LLMAuthenticationError) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
@@ -226,6 +229,8 @@ async def chat(
     )
     try:
         reply = await service.chat(messages)
+    except RoutingError as exc:
+        raise HTTPException(status_code=409, detail=exc.public()) from exc
     except LLMConfigurationError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except LLMAuthenticationError as exc:

@@ -6,15 +6,44 @@ import sqlite3
 from visual_review_evidence import require, sha
 
 
+def owned_files(root):
+    """Do not traverse Windows junctions or links, including parent chains."""
+    root = root.absolute()
+    require(
+        not any(p.is_symlink() or p.is_junction() for p in (root, *root.parents)),
+        "QA root contains a filesystem link",
+    )
+    resolved = root.resolve()
+    pending = [root]
+    while pending:
+        for path in pending.pop().iterdir():
+            if path.is_symlink() or path.is_junction():
+                continue
+            require(path.resolve().is_relative_to(resolved), "QA path escaped scan root")
+            if path.is_dir():
+                pending.append(path)
+            elif path.is_file():
+                yield path
+
+
 def collect(source, root, destination, revision):
     require(root.resolve().is_relative_to((source / ".cache").resolve()), "Owned QA cache required")
+    cache = (source / ".cache").resolve()
+    require(
+        destination.resolve().is_relative_to(cache), "Evidence destination must stay in owned cache"
+    )
+    require(
+        not any(p.is_symlink() or p.is_junction() for p in (destination, *destination.parents)),
+        "Evidence destination contains a filesystem link",
+    )
     destination.mkdir()
+    files = list(owned_files(root))
     datasets = {
         p.stem: (p, json.loads(p.read_text(encoding="utf-8")))
         for p in (source / "backend/app/services/evaluation/datasets").glob("*-core.json")
     }
     found = {}
-    for database in root.rglob("*"):
+    for database in files:
         if (
             database.suffix not in {".db", ".sqlite", ".sqlite3"}
             or database.is_symlink()
@@ -109,7 +138,7 @@ def collect(source, root, destination, revision):
     # Studio's API contract deliberately deletes its completed DB record. Its
     # unchanged original export is retained before that deletion, then checked
     # with the same source/dataset/case identity as the database-derived reports.
-    for path in root.rglob("studio-result.json"):
+    for path in (p for p in files if p.name == "studio-result.json"):
         value = json.loads(path.read_text(encoding="utf-8"))
         snapshot = value["run"]["snapshot"]
         dataset_path, dataset = datasets["studio-core"]

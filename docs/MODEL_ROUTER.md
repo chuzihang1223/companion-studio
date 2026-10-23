@@ -63,3 +63,7 @@ provider dispatch, SQLite, Agent, MCP, Skills, Workflow, RAG, Computer authoriza
 Scheduler, Voice state and Trace boundaries. This does not measure real remote model
 quality, real provider prices, physical microphones or acoustic echo cancellation.
 Unified installation acceptance is a separate, identity-bound final gate.
+
+## 上下文容量边界
+
+候选容量必须覆盖最低输入上下文和输出上限。实际请求前再次检查完整消息、工具 Schema 及图片载荷的 UTF-8 体积估算并预留封装余量；过大会在记账和 HTTP 前拒绝，不截断历史、不自动换模型。该估算可能保守拒绝大图片，不是 Provider 的精确 tokenizer 结果，视觉配额和远端 tokenizer 仍须服务端校验。合成评测模型声明 65536 上下文，容量越界由独立回归覆盖。

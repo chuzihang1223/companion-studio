@@ -306,3 +306,34 @@ def test_ungraded_or_failed_result_cannot_be_feature_pass(qa, tmp_path):
             "check",
         )[0]
         assert result["status"] == "FAIL"
+
+
+def test_evidence_scan_skips_junctions_before_traversal(qa, tmp_path):
+    import subprocess
+    import os
+    from collect_benchmark_evidence import owned_files
+
+    root, outside = tmp_path / "scan", tmp_path / "outside"
+    root.mkdir()
+    outside.mkdir()
+    (root / "owned.db").write_text("owned")
+    (outside / "unowned.db").write_text("outside")
+    link = root / "linked"
+    if os.name == "nt":
+        # NTFS directory junctions need no administrator or symlink privilege.
+        result = subprocess.run(
+            ["cmd.exe", "/c", "mklink", "/J", str(link), str(outside)], capture_output=True
+        )
+        assert result.returncode == 0, result.stderr
+    else:
+        link.symlink_to(outside, target_is_directory=True)
+    try:
+        assert list(owned_files(root)) == [root / "owned.db"]
+        with pytest.raises(ValueError, match="filesystem link"):
+            list(owned_files(link))
+    finally:
+        # Remove only this owned directory link, never its target or contents.
+        if os.name == "nt":
+            link.rmdir()
+        else:
+            link.unlink()

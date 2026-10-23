@@ -332,7 +332,7 @@ export default function ModelRoutingPanel({ presets }: { presets: ApiPreset[] })
               ))}
             {observed && (
               <p className="setting-note">
-                服务商 {observed.provider_id}；实测样本 {observed.metrics.total.n}；总耗时 P50{' '}
+                服务商 {observed.provider}；实测样本 {observed.metrics.total.n}；总耗时 P50{' '}
                 {observed.metrics.total.p50_ms ?? '未知'} ms / P95{' '}
                 {observed.metrics.total.p95_ms ?? '未知'} ms；首段 P50{' '}
                 {observed.metrics.ttft.p50_ms ?? '未知'} ms。

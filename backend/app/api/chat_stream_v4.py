@@ -1,6 +1,7 @@
 """Stream visible text and enqueue speech without making chat wait for it."""
 
 import asyncio
+from app.services.llm.routing.contracts import RoutingError
 import base64
 from dataclasses import replace
 import json
@@ -447,6 +448,15 @@ async def chat_stream(request: Request, payload: ChatStreamRequest) -> Streaming
                         "voice_status",
                         {"status": "failed", "detail": "语音排队失败，点击播放可重试"},
                     )
+        except RoutingError as exc:
+            yield sse(
+                "error",
+                {
+                    "detail": exc.public()["message"],
+                    "code": exc.public()["code"],
+                    "retryable": False,
+                },
+            )
         except Exception:
             logger.exception("Streaming chat failed")
             yield sse("error", {"detail": "回复生成失败，请重试。"})

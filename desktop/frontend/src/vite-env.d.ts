@@ -548,7 +548,7 @@ interface ModelRoutingStatus {
   policy: Partial<ModelRoutingPolicy>;
   models: (ModelRoutingRecord & {
     config_version: string;
-    provider_id: string;
+    provider: string;
     by_task?: Record<
       string,
       {
