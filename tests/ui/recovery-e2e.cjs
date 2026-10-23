@@ -25,8 +25,8 @@ async function run() {
     fs.readFileSync(path.resolve(__dirname, '../../desktop/package.json'), 'utf8'),
   ).version;
   driver.check(
-    info.packaged && info.version === expected,
-    'Actual packaged recovery candidate matches source version',
+    info.packaged === !driver.source && info.version === expected,
+    driver.source ? 'Actual source recovery candidate matches source version' : 'Actual packaged recovery candidate matches source version',
   );
   await driver.c.evaluate(
     `window.desktopAPI.applyApiPreset({name:'Recovery local fixture',provider:'openai-compatible',base_url:'http://127.0.0.1:${driver.ports.model}/v1',api_key:'mock-local-only',model:'local-smoke',capabilities:{text:true,tool_calling:false},timeout_seconds:15})`,

@@ -154,7 +154,7 @@ async function run() {
   await driver.launch();
   const info = await driver.c.evaluate('window.desktopAPI.appInfo()');
   driver.check(
-    info.packaged && info.product_name === 'Companion Studio' && info.clean_distribution === true,
+    info.packaged === !driver.source && info.product_name === 'Companion Studio' && info.clean_distribution === true,
     'The installed clean Companion Studio application is running',
     { version: info.version, buildId: info.build_id },
   );

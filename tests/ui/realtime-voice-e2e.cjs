@@ -3,6 +3,7 @@
 // explicitly supplied public synthetic WAV, never a physical microphone.
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const { StudioSmokeDriver, q, sleep } = require('./studio-smoke-driver.cjs');
 let driver;
 const scope = 'document.querySelector(\'[aria-label="实时语音会话"]\')';
@@ -11,7 +12,15 @@ async function run() {
   if (!process.env.COMPANION_VOICE_FIXTURE || !fs.statSync(wav).isFile())
     throw Error('Provide COMPANION_VOICE_FIXTURE: public synthetic PCM WAV');
   driver = new StudioSmokeDriver();
-  driver.chromiumArgs = process.env.COMPANION_VOICE_BROWSER_FIXTURE === '1' ? [] : ['--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture=' + wav + '%noloop'];
+  // Chromium's restricted audio process must read this public fixture. Grant
+  // read only on a new owned copy; never widen the original file, directory,
+  // profile, or inherited ACL. An unreadable fake input otherwise emits zeros.
+  const captureWav = path.join(driver.home, 'Cache', 'public-capture-fixture.wav');
+  fs.copyFileSync(wav, captureWav, fs.constants.COPYFILE_EXCL);
+  if (process.platform === 'win32' && process.env.COMPANION_VOICE_BROWSER_FIXTURE !== '1')
+    execFileSync(path.join(process.env.SYSTEMROOT, 'System32', 'icacls.exe'), [captureWav, '/grant', '*S-1-15-2-2:(R)'], { windowsHide: true });
+  driver.report.captureFixture = { owned_copy: 'Cache/public-capture-fixture.wav', bytes: fs.statSync(captureWav).size, scope: 'public synthetic WAV only; non-inherited read permission' };
+  driver.chromiumArgs = process.env.COMPANION_VOICE_BROWSER_FIXTURE === '1' ? [] : ['--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture=' + captureWav + '%noloop'];
   await driver.prepare();
   if (process.env.COMPANION_VOICE_TEST_PORT) driver.ports.backend = Number(process.env.COMPANION_VOICE_TEST_PORT);
   const responses = [];

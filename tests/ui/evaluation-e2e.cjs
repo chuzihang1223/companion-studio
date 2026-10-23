@@ -24,7 +24,7 @@ async function run() {
   await driver.launch();
   const info = await driver.c.evaluate('window.desktopAPI.appInfo()');
   const expectedVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../desktop/package.json'), 'utf8')).version;
-  driver.check(info.packaged && info.version===expectedVersion, 'Packaged candidate matches the source version under test', {version:info.version});
+  driver.check(info.packaged === !driver.source && info.version===expectedVersion, driver.source ? 'Source candidate matches the source version under test' : 'Packaged candidate matches the source version under test', {version:info.version});
   await driver.click('工作模式');
   await driver.click('模块');
   await driver.click('Agent Evaluation · 评测', "document.querySelector('.workspace-module-picker')");
@@ -93,10 +93,21 @@ async function run() {
   await driver.c.until(`window.desktopAPI.readEvaluation('results',{run_id:${q(cancelling.run_id)}}).then(p=>p.items.some(r=>r.execution_status==='RUNNING'))`);
   await driver.click('暂停排队');
   await driver.c.until(`window.desktopAPI.readEvaluation('detail',{run_id:${q(cancelling.run_id)}}).then(r=>r.status==='PAUSED')`);
-  await sleep(1800);
+  // At concurrency one, only the worker admitted before acknowledgement may
+  // finish. Its started() DB write can still be pending at this snapshot, so
+  // permit one unseen attempt only when no RUNNING attempt is visible. Keep
+  // this frontier fixed while draining: a later quiet queue alone is no proof
+  // that pause prevented new work from being admitted.
+  const pauseRows = (await read('results',{run_id:cancelling.run_id,limit:100})).items;
+  const admittedAtPause = new Set(pauseRows.filter(r=>r.execution_status!=='NOT_RUN').map(r=>r.attempt_id));
+  const admissionAllowance = pauseRows.some(r=>r.execution_status==='RUNNING') ? 0 : 1;
+  await driver.c.until(`window.desktopAPI.readEvaluation('results',{run_id:${q(cancelling.run_id)},limit:100}).then(p=>p.items.every(r=>r.execution_status!=='RUNNING'))`,45000);
   const paused = await read('detail',{run_id:cancelling.run_id});
   await sleep(500);
-  driver.check((await read('detail',{run_id:cancelling.run_id})).metrics.total_count===paused.metrics.total_count, 'Pause stops dequeuing while allowing owned in-flight work to finish');
+  const settledPause = await read('detail',{run_id:cancelling.run_id});
+  const settledRows = (await read('results',{run_id:cancelling.run_id,limit:100})).items;
+  const newlyAdmitted = settledRows.filter(r=>r.execution_status!=='NOT_RUN' && !admittedAtPause.has(r.attempt_id));
+  driver.check(settledPause.status==='PAUSED' && settledPause.metrics.total_count===paused.metrics.total_count && settledRows.every(r=>r.execution_status!=='RUNNING') && newlyAdmitted.length<=admissionAllowance, 'Pause stops dequeuing while allowing owned in-flight work to finish', {admitted_at_pause:admittedAtPause.size,admission_allowance:admissionAllowance,newly_observed_attempts:newlyAdmitted.length});
   await driver.click('取消运行');
   const cancelled = await complete(cancelling.run_id);
   driver.check(cancelled.status==='CANCELLED' && cancelled.metrics.counts.NOT_RUN>0 && cancelled.metrics.valid_count<100, 'Cancellation preserves NOT_RUN instead of manufacturing passed cases');

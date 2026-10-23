@@ -19,7 +19,7 @@ async function run() {
   await driver.prepare();
   await driver.launch();
   const info = await driver.c.evaluate('window.desktopAPI.appInfo()');
-  driver.check(info.packaged, 'Packaged review application launches');
+  driver.check(info.packaged === !driver.source, driver.source ? 'Source review application launches' : 'Packaged review application launches');
   await driver.c.evaluate(`window.desktopAPI.applyApiPreset({name:'Trace local fixture',provider:'openai-compatible',base_url:'http://127.0.0.1:${driver.ports.model}/v1',api_key:'mock-local-only',model:'local-smoke',capabilities:{text:true,tool_calling:false},timeout_seconds:15})`);
   await driver.c.evaluate("window.desktopAPI.setTrustedAction('system.get_status','always')");
   await driver.c.evaluate('window.desktopAPI.workPreferences({auto_work_mode:false})');
