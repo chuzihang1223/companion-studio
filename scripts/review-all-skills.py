@@ -153,6 +153,26 @@ class UnifiedReview(original.Review):
             ],
         )
         self.step("U", "dependency-consistency", [sys.executable, "-m", "pip", "check"])
+        self.step(
+            "C",
+            "computer-security-tests",
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "backend/tests/test_computer_use_contracts.py",
+                "backend/tests/test_computer_use_runtime.py",
+                "backend/tests/test_computer_use_api_evaluation.py",
+                "backend/tests/test_computer_use_lifecycle.py",
+                "backend/tests/test_visual_review_evidence.py",
+                "-q",
+                "--basetemp",
+                str(self.fresh("computer-security-temp")),
+                "--junitxml",
+                str(self.root / "computer-security.xml"),
+            ],
+        )
+        self.step("C", "computer-main-security", [self.node, "tests/ui/computer-use-unit.cjs"])
 
     def gui(self, installed=False):
         # The original computer harness owns native UIA/OCR/permission tests and
@@ -261,6 +281,12 @@ class UnifiedReview(original.Review):
     def final(self):
         self.independent()
         self.step(
+            "A",
+            "independent-review",
+            [sys.executable, "-c", "print('Four current independent domain reports verified')"],
+            verify=self.independent,
+        )
+        self.step(
             "U",
             "independent-current-source",
             [
@@ -352,6 +378,7 @@ class UnifiedReview(original.Review):
         rows = junit(self.source / test_root / "pytest.xml") if test_root else []
         if latest.get("full-check", {}).get("status") != "PASS":
             rows = []  # stale or failed full-check evidence is never feature proof
+            test_root = None
         features = read(self.source / "docs/SKILL_01_10_FEATURES.json")
         matrix = feature_matrix(self, features, rows, latest, test_root)
 

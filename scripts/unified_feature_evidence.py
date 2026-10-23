@@ -77,6 +77,7 @@ def feature_matrix(review, features, rows, latest, test_root):
                         "PASS"
                         if check_labels
                         and len(selected) == len(set(check_labels))
+                        and {c["label"] for c in selected} == set(check_labels)
                         and all(c["status"] == "PASS" for c in detail)
                         else "FAIL"
                         if any(c["status"] == "FAIL" for c in detail)
@@ -97,6 +98,11 @@ def feature_matrix(review, features, rows, latest, test_root):
                 candidates = [None]
             for case in candidates:
                 case_status = case.get("execution_status", "NOT_RUN") if case else "NOT_RUN"
+                if case_status == "PASS" and (
+                    case.get("grader_status") != "GRADED"
+                    or case.get("result", {}).get("passed") is not True
+                ):
+                    case_status = "FAIL"
                 limitation = False
                 if case_status == "BLOCKED" and case:
                     code = case.get("error_code") or case.get("result", {}).get("error_code")

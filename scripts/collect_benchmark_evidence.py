@@ -92,6 +92,17 @@ def collect(source, root, destination, revision):
                         "results": results,
                         "database_sha256": sha(database),
                     }
+                    require(key not in found, "Ambiguous full benchmark evidence: " + key)
+                    require(
+                        all(
+                            r["execution_status"] != "PASS"
+                            or (
+                                r["grader_status"] == "GRADED" and r["result"].get("passed") is True
+                            )
+                            for r in results
+                        ),
+                        "Contradictory benchmark grader evidence",
+                    )
                     found[key] = value
         except sqlite3.DatabaseError:
             continue  # Non-evaluation fixture or deliberately damaged synthetic database.
@@ -113,6 +124,15 @@ def collect(source, root, destination, revision):
             and len(value["results"]) == len(expected)
             and {r["case_id"] for r in value["results"]} == expected
         ):
+            require("studio-core" not in found, "Ambiguous Studio benchmark evidence")
+            require(
+                all(
+                    r["execution_status"] != "PASS"
+                    or (r["grader_status"] == "GRADED" and r["result"].get("passed") is True)
+                    for r in value["results"]
+                ),
+                "Contradictory Studio grader evidence",
+            )
             found["studio-core"] = {
                 **value,
                 "origin": "original_evaluation_export_before_API_deletion",

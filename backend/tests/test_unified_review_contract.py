@@ -248,3 +248,61 @@ def test_edited_bound_gui_artifact_invalidates_success(qa, tmp_path, monkeypatch
     monkeypatch.setattr(review, "current_artifact_key", lambda: "current")
     result = review.summarize()
     assert next(s for s in result["steps"] if s["label"] == "source-voice")["status"] == "FAIL"
+
+
+def test_duplicate_gui_label_cannot_replace_missing_assertion(qa, tmp_path):
+    from types import SimpleNamespace
+    from unified_feature_evidence import feature_matrix
+
+    home = tmp_path / "source-voice"
+    home.mkdir()
+    (home / "report.json").write_text(
+        json.dumps({"checks": [{"label": "A", "passed": True}, {"label": "A", "passed": True}]})
+    )
+    item = {
+        "backend_applicable": False,
+        "gui_requirement": "REQUIRED",
+        "gui_harness": "tests/ui/realtime-voice-e2e.cjs",
+        "gui_labels": ["A", "B"],
+    }
+    review = SimpleNamespace(
+        source=tmp_path,
+        report={"unified_gui": {"source-voice": "source-voice", "installed-voice": "source-voice"}},
+    )
+    latest = {v + "-voice": {"status": "PASS"} for v in ("source", "installed")}
+    result = feature_matrix(review, [item], [], latest, None)[0]
+    assert result["status"] != "PASS" and not result["accepted_environment_limit"]
+
+
+def test_ungraded_or_failed_result_cannot_be_feature_pass(qa, tmp_path):
+    from types import SimpleNamespace
+    from unified_feature_evidence import feature_matrix
+
+    root = tmp_path / "check"
+    (root / "benchmarks").mkdir(parents=True)
+    (root / "pytest.xml").write_text("<testsuite/>")
+    path = root / "benchmarks/workflow-core.json"
+    item = {"direct_test_ids": ["test::one"], "benchmark_case_ids": ["WF-001"]}
+    for graded, passed in (("PENDING", True), ("GRADED", False)):
+        path.write_text(
+            json.dumps(
+                {
+                    "results": [
+                        {
+                            "case_id": "WF-001",
+                            "execution_status": "PASS",
+                            "grader_status": graded,
+                            "result": {"passed": passed},
+                        }
+                    ]
+                }
+            )
+        )
+        result = feature_matrix(
+            SimpleNamespace(source=tmp_path, report={}),
+            [item],
+            [{"id": "test::one", "status": "PASS"}],
+            {},
+            "check",
+        )[0]
+        assert result["status"] == "FAIL"
