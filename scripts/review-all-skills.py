@@ -11,7 +11,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 from visual_review_evidence import read, require, sha, source_identity, needs_artifact
-from collect_benchmark_evidence import collect as collect_benchmarks
+from collect_benchmark_evidence import collect as collect_benchmarks, current_router_export
 from unified_feature_evidence import feature_matrix
 from unified_review_contracts import (
     verify_gui,
@@ -125,10 +125,10 @@ class UnifiedReview(original.Review):
                 attempt / "benchmarks",
                 self.identity["source_revision"],
             )
-            router_reports = list((src / "pytest-temp").rglob("router-result.json"))
-            require(len(router_reports) == 1, "Current original worker report missing or ambiguous")
-            verify_router(self.source, router_reports[0], self.identity["source_revision"])
-            shutil.copyfile(router_reports[0], attempt / "router-result.json")
+            router_report = current_router_export(
+                self.source, src / "pytest-temp", self.identity["source_revision"]
+            )
+            shutil.copyfile(router_report, attempt / "router-result.json")
             self.report["current_test_evidence"] = str(attempt.relative_to(self.source))
             self.report["current_test_binding"] = {
                 "identity": self.identity,

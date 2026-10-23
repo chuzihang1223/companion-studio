@@ -337,3 +337,44 @@ def test_evidence_scan_skips_junctions_before_traversal(qa, tmp_path):
             link.rmdir()
         else:
             link.unlink()
+
+
+def test_router_export_selection_checks_identity_before_filename_ambiguity(qa, tmp_path):
+    from collect_benchmark_evidence import current_router_export
+    from visual_review_evidence import sha
+
+    dataset = tmp_path / "backend/app/services/evaluation/datasets/router-core.json"
+    dataset.parent.mkdir(parents=True)
+    cases = [{"case_id": f"ROUTE-{n:03}"} for n in range(1, 49)]
+    dataset.write_text(json.dumps({"cases": cases}))
+    scan = tmp_path / "scan"
+    scan.mkdir()
+    report = {
+        "run": {
+            "snapshot": {
+                "dataset_id": "router-core",
+                "dataset_sha256": sha(dataset),
+                "git_commit": "current",
+            }
+        },
+        "results": [
+            {
+                "case_id": r["case_id"],
+                "execution_status": "PASS",
+                "grader_status": "GRADED",
+                "result": {"passed": True},
+            }
+            for r in cases
+        ],
+    }
+    actual = scan / "original/router-result.json"
+    actual.parent.mkdir()
+    actual.write_text(json.dumps(report))
+    other = scan / "adversarial/router-result.json"
+    other.parent.mkdir()
+    report["run"]["snapshot"]["git_commit"] = "another-test-commit"
+    other.write_text(json.dumps(report))
+    assert current_router_export(tmp_path, scan, "current") == actual
+    other.write_bytes(actual.read_bytes())
+    with pytest.raises(ValueError, match="ambiguous"):
+        current_router_export(tmp_path, scan, "current")

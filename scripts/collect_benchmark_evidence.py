@@ -176,3 +176,20 @@ def collect(source, root, destination, revision):
             json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     return found
+
+
+def current_router_export(source, root, revision):
+    """Select the original source-bound export; adversarial tests own other files."""
+    from unified_review_contracts import verify_router
+
+    candidates = []
+    for path in owned_files(root):
+        if path.name != "router-result.json":
+            continue
+        try:
+            verify_router(source, path, revision)
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        candidates.append(path)
+    require(len(candidates) == 1, "Current original worker report missing or ambiguous")
+    return candidates[0]
