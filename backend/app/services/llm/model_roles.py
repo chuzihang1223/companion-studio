@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import json
 from typing import TYPE_CHECKING, Any
 from app.core.file_logging import file_logger
+from app.services.llm.routing.contracts import RoutingError
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -22,8 +23,13 @@ CAPABILITIES = ("text", "vision", "tool_calling", "structured_output", "reasonin
 class ExecutionModelUnavailable(ValueError):
     """表示工具请求无可用模型，供上层保留可明确执行的本地动作。"""
 
-    def __init__(self) -> None:
-        super().__init__("当前任务需要 Agent 执行模型，但还没有配置可用模型。")
+    def __init__(self, routing_error: RoutingError | None = None) -> None:
+        self.routing_code = routing_error.public()["code"] if routing_error else None
+        super().__init__(
+            routing_error.public()["message"]
+            if routing_error
+            else "当前任务需要 Agent 执行模型，但还没有配置可用模型。"
+        )
 
 
 @dataclass
@@ -293,7 +299,9 @@ class ModelRoleRouter:
                     {"event": "tool_request_failed", "role": role, "error": type(error).__name__}
                 )
             )
-            raise ExecutionModelUnavailable() from error
+            raise ExecutionModelUnavailable(
+                error if isinstance(error, RoutingError) else None
+            ) from error
         if result.get("tool_calls") and not hasattr(service, "entry"):
             self.capability(service).observed["tool_calling"] = True
         else:

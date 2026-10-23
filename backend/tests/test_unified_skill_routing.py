@@ -506,6 +506,20 @@ def test_chat_budget_denial_retains_safe_http_and_stream_reason(tmp_path):
                     or '"code":"DAY_REQUEST_LIMIT"' in stream.text
                 )
                 assert "回复生成失败" not in stream.text
+                voice = await client.post(
+                    "/api/chat/stream", json={**payload, "voice_enabled": True}
+                )
+                assert (
+                    '"code": "DAY_REQUEST_LIMIT"' in voice.text
+                    or '"code":"DAY_REQUEST_LIMIT"' in voice.text
+                )
+                assert "回复生成失败" not in voice.text
+                assert len(h.requests) == 1
+                plan = await h.app.state.agent_service.plan(
+                    h.app, "assistant", h.owner, "请读取当前项目中的 fixture.txt 并核对实际内容。"
+                )
+                assert plan["local_resolution"]["code"] == "DAY_REQUEST_LIMIT", plan
+                assert "上限" in plan["local_resolution"]["error"]
                 assert len(h.requests) == 1
 
     asyncio.run(run())

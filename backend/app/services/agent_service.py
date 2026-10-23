@@ -365,6 +365,7 @@ class AgentService:
                     **(local_resolution or {}),
                     "remaining_unavailable": True,
                     "error": str(error),
+                    **({"code": error.routing_code} if error.routing_code else {}),
                 }
         calls = registry.parse_calls(assistant_plan)
         if discovered:

@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.file_logging import file_logger
 from app.models import Message
+from app.services.llm.routing.contracts import RoutingError
 from app.services.trace.scope import current_trace, current_span
 from .canonical_text import CanonicalResponseText, IncrementalSpeechText
 from .message_cache import save_message_audio
@@ -205,6 +206,18 @@ class RealtimeVoicePipeline:
                 await outgoing.put(("completed", completed))
             except asyncio.CancelledError:
                 raise
+            except RoutingError as exc:
+                error = exc
+                await outgoing.put(
+                    (
+                        "error",
+                        {
+                            "detail": exc.public()["message"],
+                            "code": exc.public()["code"],
+                            "retryable": False,
+                        },
+                    )
+                )
             except Exception as exc:
                 error = exc
                 await outgoing.put(("error", {"detail": "回复生成失败，请重试。"}))
