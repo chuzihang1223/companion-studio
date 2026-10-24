@@ -70,6 +70,7 @@ async def voice_cycle(h, owner):
             pass
         else:
             raise AssertionError("Cancelled voice generation accepted a late frame")
+        return {"voice_session_id": str(identity["voice_session_id"]), "voice_final": final["kind"]}
     finally:
         await manager.stop_owner(options.owner_id)
 
@@ -94,6 +95,9 @@ def test_real_duration_original_services(tmp_path):
         },
         "samples": [],
         "cycles": 0,
+        "workload_receipts": [],
+        "schedule_receipts": [],
+        "cancel_receipts": [],
         "mcp_children": [],
         "sqlite_errors": [],
         "unexpected_async_errors": [],
@@ -161,7 +165,7 @@ def test_real_duration_original_services(tmp_path):
                     index = report["cycles"]
                     definition = graph()
                     key = start(h.app, owners[0], definition)
-                    agent, workflow, _ = await asyncio.gather(
+                    agent, workflow, voice = await asyncio.gather(
                         h.agent(), settle(h.app, owners[0], key), voice_cycle(h, owners[1])
                     )
                     assert agent[1]["tools"] and workflow["state"] == "COMPLETED"
@@ -193,6 +197,14 @@ def test_real_duration_original_services(tmp_path):
                             final["status"] == "COMPLETED"
                             and scheduled_result["state"] == "COMPLETED"
                         )
+                        report["schedule_receipts"].append(
+                            {
+                                "cycle": index,
+                                "occurrence_id": occurrence,
+                                "workflow_run_id": scheduled_result["run_id"],
+                                "status": final["status"],
+                            }
+                        )
                     if time.monotonic() - began >= 1800 and index % 3 == 0:
                         # Cancellation is exercised through the original permission wait.
                         pending = start(
@@ -204,6 +216,9 @@ def test_real_duration_original_services(tmp_path):
                         assert waiting["state"] == "WAITING_PERMISSION"
                         await h.app.state.workflows.control(pending, owners[3], "cancel")
                         assert (await settle(h.app, owners[3], pending))["state"] == "CANCELLED"
+                        report["cancel_receipts"].append(
+                            {"cycle": index, "workflow_run_id": pending, "state": "CANCELLED"}
+                        )
                     await h.trace.flush()
                     await asyncio.sleep(0.05)
                     assert not h.app.state.runtime_registry.active
@@ -224,6 +239,7 @@ def test_real_duration_original_services(tmp_path):
                         calls.clear()
                     gc.collect()
                     sample = {
+                        "cycle": index,
                         "elapsed_seconds": time.monotonic() - began,
                         "phase": "core" if time.monotonic() - began < 1800 else "mixed_cancel",
                         **process_metrics(),
@@ -234,6 +250,20 @@ def test_real_duration_original_services(tmp_path):
                         "mcp_connections": len(h.app.state.mcp_connections.connections),
                         "cycle_seconds": time.monotonic() - cycle_started,
                     }
+                    report["workload_receipts"].append(
+                        {
+                            "cycle": index,
+                            "phase": sample["phase"],
+                            "agent_plan_id": agent[0]["plan_id"],
+                            "workflow_run_id": workflow["run_id"],
+                            "workflow_state": workflow["state"],
+                            **voice,
+                            "rag_results": len(rows["results"]),
+                            "rag_content_sha256": hashlib.sha256(
+                                json.dumps(rows, sort_keys=True).encode()
+                            ).hexdigest(),
+                        }
+                    )
                     report["samples"].append(sample)
                     persist()
                     await asyncio.sleep(

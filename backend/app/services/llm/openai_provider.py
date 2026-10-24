@@ -6,7 +6,7 @@ import httpx
 
 from app.services.llm.base import LLMProvider
 from app.services.llm.test_budget import record_test_request
-from app.services.llm.usage import before_request, observe_response
+from app.services.llm.usage import EvaluationBudgetExceeded, before_request, observe_response
 from app.services.llm.routing.observation import transport as observe_transport
 
 
@@ -118,6 +118,10 @@ class OpenAIProvider(LLMProvider):
             raise LLMTimeoutError("模型请求超时") from exc
         except httpx.RequestError as exc:
             raise LLMConnectionError("模型连接失败") from exc
+        except EvaluationBudgetExceeded:
+            # A conservative request/unknown-usage stop is a budget decision,
+            # not malformed provider data. Preserve it for workflow/recovery UI.
+            raise
         except (KeyError, IndexError, ValueError) as exc:
             raise LLMResponseError("The model request failed") from exc
 
@@ -191,6 +195,8 @@ class OpenAIProvider(LLMProvider):
             raise LLMTimeoutError("模型请求超时") from exc
         except httpx.RequestError as exc:
             raise LLMConnectionError("模型连接失败") from exc
+        except EvaluationBudgetExceeded:
+            raise
         except (ValueError, KeyError, IndexError) as exc:
             raise LLMResponseError("The model stream failed") from exc
 

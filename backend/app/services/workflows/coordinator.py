@@ -27,7 +27,12 @@ from app.services.workflows.node_runner import WorkflowNodeRunner
 from app.services.workflows.controls import WorkflowControls
 from app.services.workflows.metrics import combine_usage
 from app.services.workflows.metadata import execution_snapshot
-from app.services.llm.usage import UsageBudget, usage_scope, current_usage_budget
+from app.services.llm.usage import (
+    EvaluationBudgetExceeded,
+    UsageBudget,
+    usage_scope,
+    current_usage_budget,
+)
 from app.services.llm.routing.service import routing_scope
 
 
@@ -262,6 +267,8 @@ class WorkflowCoordinator(WorkflowNodeRunner, WorkflowControls):
                 if state == "CANCELLED"
                 else "TIMEOUT"
                 if isinstance(error, TimeoutError)
+                else "WORKFLOW_MODEL_BUDGET"
+                if isinstance(error, EvaluationBudgetExceeded)
                 else getattr(error, "code", "WORKFLOW_EXECUTION_FAILED")
             )
             self.repository.change(

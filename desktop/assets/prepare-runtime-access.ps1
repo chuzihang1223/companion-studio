@@ -1,4 +1,4 @@
-﻿param([Parameter(Mandatory=$true)][string]$ProgramDirectory,[switch]$CheckOnly,[switch]$DevelopmentRuntime)
+﻿param([Parameter(Mandatory=$true)][string]$ProgramDirectory,[switch]$CheckOnly,[switch]$VerifyAccess,[switch]$DevelopmentRuntime)
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Security') -ErrorAction Stop
 Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility') -ErrorAction Stop
@@ -62,10 +62,10 @@ foreach ($target in $targets) {
     $ancestor = [IO.Path]::GetDirectoryName($ancestor)
   }
   $acl = Get-Acl -LiteralPath $full
-  if (-not $CheckOnly) {
+  if (-not $CheckOnly -and -not $VerifyAccess) {
     foreach ($rule in $rules) { $acl.AddAccessRule($rule) }
     Set-Acl -LiteralPath $full -AclObject $acl
-  } else {
+  } elseif ($VerifyAccess) {
     foreach ($sid in $sandboxSids) {
       $allowed = @($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]) | Where-Object {
         $_.IdentityReference.Value -eq $sid -and
@@ -77,5 +77,5 @@ foreach ($target in $targets) {
   }
 }
 # 不枚举 UserData、Cache、用户导入素材或其他目录；日志只有范围与数量。
-@{checked=[bool]$CheckOnly;public_runtime_targets=$targets.Count;
+@{checked=[bool]($CheckOnly -or $VerifyAccess);verified_access=[bool]$VerifyAccess;public_runtime_targets=$targets.Count;
   sandbox_groups=$sandboxSids;inherited_permission_added=$false;user_profile_changed=$false} | ConvertTo-Json

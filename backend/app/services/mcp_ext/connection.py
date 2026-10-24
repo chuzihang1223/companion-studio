@@ -315,11 +315,8 @@ class MCPConnectionManager:
     async def remove(self, server_id):
         async with self.lifecycle(server_id):
             await self._disconnect(server_id)
+            self.store.delete_server(server_id)
             self.credentials.pop(server_id, None)
-            self.store.delete("server", server_id)
-            for row in self.store.listing("tool"):
-                if row["server_id"] == server_id:
-                    self.store.delete("tool", row["id"])
             self.connections.pop(server_id, None)
             if self.on_removed:
                 self.on_removed(server_id)

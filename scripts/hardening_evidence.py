@@ -75,6 +75,9 @@ def dependency_status(source, home, revision):
         {(row["name"], row.get("version")) for row in sbom["components"]} >= set(expected.items()),
         "SBOM omits Python components",
     )
+    from sbom_evidence import validate_sbom
+
+    validate_sbom(source, home, sbom, expected)
     license_inventory = read(source / "licenses/inventory.json")
     require(
         license_inventory.get("components")
@@ -110,6 +113,53 @@ def soak_status(path, source=None):
         "Actual 60-minute duration not observed",
     )
     samples = report["samples"]
+    receipts = report.get("workload_receipts", [])
+    cycles = report.get("cycles", 0)
+    require(
+        cycles >= 180 and len(receipts) == len(samples) == cycles,
+        "Soak did not execute the recorded workload",
+    )
+    require(
+        all(row["cycle"] == index for index, row in enumerate(receipts)),
+        "Soak cycle receipts are missing or duplicated",
+    )
+    for field in ("agent_plan_id", "workflow_run_id", "voice_session_id"):
+        require(
+            len({row.get(field) for row in receipts}) == cycles
+            and all(row.get(field) for row in receipts),
+            "Soak workload IDs are missing or reused",
+        )
+    require(
+        all(
+            row.get("rag_results", 0) > 0
+            and row.get("rag_content_sha256")
+            and row.get("workflow_state") == "COMPLETED"
+            and row.get("voice_final") == "FINAL"
+            for row in receipts
+        ),
+        "Soak has idle or unsuccessful task receipts",
+    )
+    require(
+        all(
+            sample.get("cycle") == row["cycle"] and sample.get("phase") == row.get("phase")
+            for sample, row in zip(samples, receipts)
+        ),
+        "Soak sample/workload mismatch",
+    )
+    require(
+        all(
+            sum(row["phase"] == phase for row in receipts) >= 60
+            for phase in ("core", "mixed_cancel")
+        ),
+        "Soak omitted a workload phase",
+    )
+    require(
+        len(report["mcp_children"]) == (cycles + 5) // 6
+        and len(report.get("schedule_receipts", [])) == (cycles + 29) // 30
+        and len(report.get("cancel_receipts", [])) >= 20
+        and report.get("synthetic_model_requests", 0) >= cycles,
+        "Soak did not exercise MCP, scheduler, model and cancellation workloads",
+    )
     require(
         len(samples) >= 180 and samples[-1]["elapsed_seconds"] >= 3590,
         "Soak samples are incomplete",

@@ -118,6 +118,56 @@ def test_original_registry_releases_deleted_server_tool_generations(tmp_path):
                 assert h.app.state.external_tools.tools
                 await h.app.state.mcp_connections.remove(tool["server_id"])
                 assert not h.app.state.external_tools.tools
-                assert not h.app.state.external_tools.listing()
+                assert not h.app.state.external_tools.listing(tool["server_id"])
+
+    asyncio.run(run())
+
+
+def test_delete_storage_fault_rolls_back_all_metadata_and_can_retry(tmp_path):
+    from sqlalchemy import event
+    from sqlalchemy.exc import OperationalError
+    from unified_skill_fixture import unified_host
+    from app.database.session import engine
+
+    async def run():
+        async with unified_host(tmp_path) as h:
+            first, sibling = await h.connect_mcp(), await h.connect_mcp()
+            manager = h.app.state.mcp_connections
+            original_servers = manager.store.listing("server")
+            original_tools = manager.store.listing("tool")
+            child = manager.connections[first["server_id"]].transport.process
+            injected = []
+
+            def after_delete(_connection, _cursor, statement, _parameters, _context, _many):
+                if statement.lstrip().upper().startswith("DELETE FROM EXTENSION_RECORDS"):
+                    injected.append(True)
+                    raise OperationalError(
+                        "controlled deletion failure after actual SQL",
+                        None,
+                        Exception("synthetic storage fault"),
+                    )
+
+            event.listen(engine, "after_cursor_execute", after_delete)
+            try:
+                with pytest.raises(OperationalError):
+                    await manager.remove(first["server_id"])
+            finally:
+                event.remove(engine, "after_cursor_execute", after_delete)
+            assert injected and child.returncode is not None
+            assert manager.store.listing("server") == original_servers
+            assert manager.store.listing("tool") == original_tools
+            assert first["id"] in h.app.state.external_tools.tools
+            await manager.remove(first["server_id"])
+            assert first["id"] not in h.app.state.external_tools.tools
+            assert manager.store.listing("tool") == [
+                row for row in original_tools if row["server_id"] != first["server_id"]
+            ]
+            assert manager.store.listing("server") == [
+                row for row in original_servers if row["id"] != first["server_id"]
+            ]
+            result = await manager.invoke(
+                sibling["server_id"], "call_tool", "echo", {"text": "sibling survived"}
+            )
+            assert result.content[0].text == "sibling survived"
 
     asyncio.run(run())

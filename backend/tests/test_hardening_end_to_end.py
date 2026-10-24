@@ -73,11 +73,26 @@ def test_E2E_001_api_plan_routing_tool_goal_trace_and_no_reexecute(tmp_path):
     asyncio.run(run())
 
 
-def test_E2E_002_mcp_permission_checkpoint_terminal_recovery_and_artifact_evaluation(tmp_path):
+def test_E2E_002_mcp_failure_same_workflow_recovery_and_artifact_evaluation(tmp_path, monkeypatch):
     async def run():
         async with unified_host(tmp_path) as h:
             collection = await h.indexed()
             tool = await h.connect_mcp()
+            manager = h.app.state.mcp_connections
+            invoke = manager.invoke
+            failing, attempts, dispatched = [True], [], []
+
+            async def controlled_invoke(server, method, *args, **kwargs):
+                if server == tool["server_id"] and method == "call_tool":
+                    attempts.append("failed_before_dispatch" if failing[0] else "actual_dispatch")
+                    if failing[0]:
+                        from app.services.mcp_ext.contracts import MCPError
+
+                        raise MCPError("MCP_TOOL_TIMEOUT")
+                    dispatched.append(True)
+                return await invoke(server, method, *args, **kwargs)
+
+            monkeypatch.setattr(manager, "invoke", controlled_invoke)
             definition = report_graph(collection)
             definition.nodes.append(
                 Node(
@@ -110,9 +125,27 @@ def test_E2E_002_mcp_permission_checkpoint_terminal_recovery_and_artifact_evalua
                         readonly=True,
                     )
 
+            _, failed, first_approvals = await complete_schedule(h, key, approve_extension)
+            assert failed["state"] == "FAILED" and not dispatched, failed
+            assert not (h.workspace / "report.md").exists() and not h.requests
+            failed_step = next(row for row in failed["nodes"] if row["node_id"] == "mcp")
+            assert h.app.state.checkpoint_manager.detail(failed_step["recovery_task_id"], h.owner)[
+                "checkpoints"
+            ]
+            preview = await h.scheduler.recovery_preview(key, h.owner)
+            assert preview["can_resume"], preview
+            failing[0] = False
+            resumed = await h.scheduler.resume(key, h.owner, preview["revision"])
+            assert resumed["workflow_run_id"] == failed["run_id"]
             final, workflow, approvals = await complete_schedule(h, key, approve_extension)
             assert final["status"] == workflow["state"] == "COMPLETED", workflow
-            assert workflow["tool_calls"] == 3 and approvals
+            assert (
+                workflow["tool_calls"] == 4 and approvals
+            )  # failed attempt + three successful tools
+            assert first_approvals.isdisjoint(approvals)
+            assert workflow["run_id"] == failed["run_id"] and workflow["attempt"] == 2
+            assert attempts.count("actual_dispatch") == len(dispatched) == 1
+            assert "failed_before_dispatch" in attempts
             step = next(row for row in workflow["nodes"] if row["node_id"] == "mcp")
             checkpoint = h.app.state.checkpoint_manager.detail(step["recovery_task_id"], h.owner)
             assert checkpoint["checkpoints"][0]["step_state"] == "COMMITTED"
@@ -199,13 +232,20 @@ def test_E2E_004_and_010_scheduled_report_notification_trace_independent_tamper_
 def test_E2E_007_provider_budget_failure_has_no_tool_side_effect(tmp_path, monkeypatch):
     from unified_skill_scenarios import chain
     from app.services.coding.workspace import CodingWorkspaceExecutor
+    from app.services.llm.routing.metrics import ModelMetrics
 
     async def run():
         async with unified_host(tmp_path) as h:
+            # Control only the health clock so each scenario deliberately starts
+            # outside the prior request's cooldown. Never clear budget history.
+            clock = [0.0]
+            h.fixture.metrics = ModelMetrics(clock=lambda: clock[0])
             h.fixture.models.clear()
-            h.fixture.add("failing", priority=10, responder=lambda _: httpx.Response(503))
+            h.fixture.add("failing", priority=9, responder=lambda _: httpx.Response(503))
             h.fixture.add("fallback", responder=h.respond)
-            h.fixture.state(fallback_enabled=True, max_requests_per_task=1)
+            h.fixture.state(
+                fallback_enabled=True, preference="QUALITY_FIRST", max_requests_per_task=1
+            )
             dispatches = []
             original = CodingWorkspaceExecutor.execute
 
@@ -241,11 +281,45 @@ def test_E2E_007_provider_budget_failure_has_no_tool_side_effect(tmp_path, monke
             )
             assert not dispatches and not (h.workspace / "budget-proof.txt").exists()
             assert not h.fixture.calls["fallback"]
-            h.fixture.state(fallback_enabled=True, max_requests_per_task=2)
+            assert len(h.fixture.calls["failing"]) == 1
+            clock[0] = 10.0
+            h.fixture.state(
+                fallback_enabled=True, preference="QUALITY_FIRST", max_requests_per_task=2
+            )
+            key = await scheduled_run(h, definition())
+            _, result, _ = await complete_schedule(h, key)
+            # Router budget permits another attempt, but workflow usage is
+            # unknown after HTTP503. The original fail-closed usage guard must
+            # still stop before sending a fallback or writing the artifact.
+            assert (
+                result["state"] == "FAILED" and result["error_code"] == "WORKFLOW_MODEL_BUDGET"
+            ), result
+            assert not dispatches and not (h.workspace / "budget-proof.txt").exists()
+            assert len(h.fixture.calls["failing"]) == 2 and not h.fixture.calls["fallback"]
+            from sqlalchemy import select
+            from app.database.session import SessionLocal
+            from app.models.model_routing import ModelRequestRow
+
+            with SessionLocal() as db:
+                rows = db.scalars(
+                    select(ModelRequestRow).where(ModelRequestRow.workflow_id == result["run_id"])
+                ).all()
+            assert (
+                len(rows) == 2
+                and sum(json.loads(row.decision_json).get("is_fallback", False) for row in rows)
+                == 1
+            )
+            assert {row.status for row in rows} == {"FAILED_UNKNOWN"}
+            # A different, healthy model and a new workflow can proceed. Do
+            # not erase durable budget history or replay the failed workflow.
+            h.fixture.add("healthy", priority=10, responder=h.respond)
+            h.fixture.state(
+                fallback_enabled=True, preference="QUALITY_FIRST", max_requests_per_task=2
+            )
             key = await scheduled_run(h, definition())
             _, result, _ = await complete_schedule(h, key)
             assert result["state"] == "COMPLETED", result
-            assert dispatches == ["workspace.create"]
+            assert dispatches == ["workspace.create"] and len(h.fixture.calls["healthy"]) == 1
             write = next(node for node in result["nodes"] if node["node_id"] == "write")
             detail = h.app.state.checkpoint_manager.detail(write["recovery_task_id"], h.owner)
             assert len(detail["checkpoints"]) == 1

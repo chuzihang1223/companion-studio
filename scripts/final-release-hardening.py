@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 
 from hardening_evidence import public_json, soak_status
+from hardening_e2e import E2E_TESTS, matching_tests
 from visual_review_evidence import read, require, sha
 
 spec = importlib.util.spec_from_file_location(
@@ -110,19 +111,8 @@ class FinalHardening(original.UnifiedReview):
                 stress = "FAIL" if latest[-1]["status"] == "FAIL" else "NOT_RUN"
         tests = base.get("tests", [])
         e2e = []
-        selectors = {
-            "001": "::test_E2E_001_",
-            "002": "::test_E2E_002_",
-            "003": "::test_E2E_003_",
-            "004": "::test_E2E_004_and_010_",
-            "005": "::test_E2E_005_",
-            "007": "::test_E2E_007_",
-            "008": "::test_E2E_008_",
-            "009": "::test_INT_015_same_host_five_",
-            "010": "::test_E2E_004_and_010_",
-        }
-        for key, selector in selectors.items():
-            rows = [row for row in tests if selector in row["id"]]
+        for key in E2E_TESTS:
+            rows = matching_tests(tests, key)
             e2e.append(
                 {
                     "test_id": "E2E-" + key,
@@ -132,7 +122,7 @@ class FinalHardening(original.UnifiedReview):
                     if any(row["status"] == "FAIL" for row in rows)
                     else "NOT_RUN",
                     "production_tests": rows,
-                    "boundary": "Original services and SQLite; synthetic model/ASR/TTS boundaries. E2E002 checks terminal recovery refusal, not replay of an uncertain MCP effect.",
+                    "boundary": "Original services and SQLite; synthetic model/ASR/TTS. E2E002 resumes the same failed workflow after a pre-dispatch MCP fault; uncertain side effects are not replayed.",
                 }
             )
         native = "PASS" if states.get("12") == "PASS" else states.get("12", "NOT_RUN")

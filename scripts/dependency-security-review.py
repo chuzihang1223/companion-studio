@@ -128,6 +128,10 @@ def main():
     )
     components = nodes.get("components", [])
     dependencies = nodes.get("dependencies", [])
+    root_ref = nodes.get("metadata", {}).get("component", {}).get("bom-ref")
+    if not root_ref:
+        raise ValueError("npm SBOM did not identify its dependency root")
+    root_edges = next(row["dependsOn"] for row in dependencies if row["ref"] == root_ref)
     inventory = json.loads((root / "licenses/inventory.json").read_text(encoding="utf-8"))
     licenses = {canonicalize_name(item["name"]): item for item in inventory["components"]}
     for name, version in sorted(requirements.items()):
@@ -145,6 +149,7 @@ def main():
                 {"name": "companion:notice-path", "value": row["path"]} for row in notice["files"]
             ]
         components.append(component)
+        root_edges.append(purl)
         refs = []
         for text in metadata.requires(name) or []:
             requirement = Requirement(text)
@@ -171,6 +176,8 @@ def main():
                 ],
             }
         )
+        dependencies.append({"ref": ref, "dependsOn": []})
+        root_edges.append(ref)
     sbom = {
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
@@ -180,6 +187,7 @@ def main():
             "timestamp": report["queried_utc"],
             "component": {
                 "type": "application",
+                "bom-ref": root_ref,
                 "name": "Companion Studio",
                 "version": json.loads((root / "desktop/package.json").read_text())["version"],
             },

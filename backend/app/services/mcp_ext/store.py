@@ -52,3 +52,17 @@ class ExtensionStore:
         with self.factory() as db:
             db.delete(db.get(ExtensionRecord, key))
             db.commit()
+
+    def delete_server(self, key):
+        # The process is stopped by the lifecycle owner before this transaction.
+        # Metadata must commit together: a failed tool delete must not strand
+        # orphan tools behind a server ID that can no longer be retried.
+        with self.factory() as db:
+            server = db.get(ExtensionRecord, key)
+            if not server or server.kind != "server":
+                raise MCPError("EXTENSION_NOT_FOUND", 404)
+            for row in db.scalars(select(ExtensionRecord).where(ExtensionRecord.kind == "tool")):
+                if json.loads(row.body)["server_id"] == key:
+                    db.delete(row)
+            db.delete(server)
+            db.commit()

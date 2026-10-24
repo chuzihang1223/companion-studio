@@ -33,7 +33,7 @@ function Descriptor($path){
 $rulesBefore=Descriptor $profile
 $fileBefore=Descriptor (Join-Path $profile 'sentinel.txt')
 & $Helper -ProgramDirectory $Root
-& $Helper -ProgramDirectory $Root -CheckOnly
+& $Helper -ProgramDirectory $Root -VerifyAccess
 # Windows can normalize only SE_DACL_AUTO_INHERITED on existing children when
 # setting a parent's DACL. Compare every effective ACE and owner/protection;
 # that metadata flag alone must not be mistaken for a new access grant.
