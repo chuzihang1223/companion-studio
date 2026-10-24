@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import OrderedDict
+from contextvars import copy_context
 from datetime import datetime, timedelta, timezone
 import json
 import queue
@@ -160,7 +161,10 @@ class TraceStore:
                 for _, data in batch:
                     self._lost(data["trace_id"])
                 self.logger.warning(
-                    "trace_batch_failed type=%s count=%d", type(error).__name__, len(batch)
+                    "trace_batch_failed type=%s sqlite_code=%s count=%d",
+                    type(error).__name__,
+                    self.metrics["last_write_failure_code"],
+                    len(batch),
                 )
             finally:
                 elapsed = (time.perf_counter() - start) * 1000
@@ -171,21 +175,45 @@ class TraceStore:
                     self.queue.task_done()
 
     async def _write_bounded(self, batch):
+        # The business loop can be inside its own synchronous SQLite wait.
+        # Retry in the writer thread so collecting a BUSY exception does not
+        # depend on that loop becoming available before the existing deadline.
+        deadline = time.perf_counter() + 2
+        # An executor Future is not an auxiliary Task that loop shutdown can
+        # independently cancel while its thread is still using the database.
+        work = asyncio.get_running_loop().run_in_executor(
+            None, copy_context().run, self._write_retry, batch, deadline
+        )
+        cancelled = None
+        while True:
+            try:
+                result = await asyncio.shield(work)
+                break
+            except asyncio.CancelledError as error:
+                # Even repeated cancellation must join the real transaction
+                # before queue.task_done or engine disposal can run.
+                cancelled = error
+            except Exception:
+                if cancelled:
+                    raise cancelled from None
+                raise
+        if cancelled:
+            raise cancelled
+        return result
+
+    def _write_retry(self, batch, deadline):
         # SQLite may reject a read-to-write transaction upgrade while a business
         # checkpoint commits. Retry the rolled-back projection transaction only;
         # the queue stays bounded and no tool or business transaction is repeated.
-        deadline = time.perf_counter() + 2
         for attempt in range(16):
             try:
-                return await asyncio.to_thread(self._write, batch)
+                return self._write(batch)
             except OperationalError as error:
                 code = getattr(error.orig, "sqlite_errorcode", 0)
                 if code & 0xFF not in {5, 6} or attempt == 15 or time.perf_counter() >= deadline:
                     raise
                 self.metrics["write_retries"] += 1
-                await asyncio.sleep(
-                    min(0.1, 0.025 * (attempt + 1), max(0, deadline - time.perf_counter()))
-                )
+                time.sleep(min(0.1, 0.025 * (attempt + 1), max(0, deadline - time.perf_counter())))
 
     def _write(self, batch):
         sessions = set()
