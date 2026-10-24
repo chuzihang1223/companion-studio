@@ -32,6 +32,7 @@ TREES = {
     "examples/agent-skills",
 }
 PUBLIC_DOCS = {
+    "FINAL_RELEASE_HARDENING.md",
     "VOICE_BASELINE.md",
     "VOICE_ARCHITECTURE.md",
     "VOICE_PROVIDERS.md",
@@ -148,6 +149,12 @@ LICENSE_ARCHIVE = (
     "licenses/source/electron-44.4.5/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz"
 )
 LICENSE_ARCHIVE_SHA = "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc"
+# Keep the prior exact path for reachable release-history audits. The upgraded
+# Electron pins the same FFmpeg revision/source bytes; no archive glob is allowed.
+LICENSE_ARCHIVES = {
+    LICENSE_ARCHIVE,
+    "licenses/source/electron-44.9.3/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
+}
 SCREENSHOTS = {
     "docs/screenshots/knowledge-search.png",
     "docs/screenshots/knowledge-memory.png",
@@ -245,7 +252,7 @@ def audit(root):
             and file.name != ".env.example"
         ):
             findings.append({"file": relative, "kind": "excluded-runtime-file"})
-        if relative == LICENSE_ARCHIVE:
+        if relative in LICENSE_ARCHIVES:
             if hashlib.sha256(content).hexdigest() != LICENSE_ARCHIVE_SHA:
                 findings.append({"file": relative, "kind": "corresponding-source-hash-mismatch"})
             continue

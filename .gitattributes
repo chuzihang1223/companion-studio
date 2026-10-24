@@ -5,3 +5,8 @@ licenses/python/pyjwt-2.15.1/licenses/AUTHORS.rst conflict-marker-size=32
 # These exact upstream license bytes include spaces; do not rewrite legal evidence.
 licenses/python/cffi-2.1.1/licenses/LICENSE whitespace=-blank-at-eol,-blank-at-eof
 licenses/python/pycparser-3.11/licenses/LICENSE whitespace=-blank-at-eol,-blank-at-eof
+# Preserve new upstream notice bytes, including their original trailing spaces.
+licenses/electron-44.9.3/LICENSES.chromium.html whitespace=-blank-at-eol,-blank-at-eof
+"licenses/native/libffi (cpython)-3.4.4/LICENSE.txt" whitespace=-blank-at-eol,-blank-at-eof
+licenses/python-runtime-3.13.17/license-and-acknowledgements.html whitespace=-blank-at-eol,-blank-at-eof
+licenses/python-runtime-3.13.17/LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof

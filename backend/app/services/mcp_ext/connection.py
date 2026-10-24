@@ -2,7 +2,7 @@
 
 import asyncio
 from collections import deque
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import datetime, timezone
 import random
 import logging
@@ -73,7 +73,9 @@ class MCPConnectionManager:
         self.connections = {}
         self.credentials = {}  # Values are delivered by main; never serialized.
         self.locks = {}
+        self.lock_users = {}
         self.on_discovery = None
+        self.on_removed = None
         self.closing = False
 
     def config(self, server_id):
@@ -107,8 +109,24 @@ class MCPConnectionManager:
             "recent_calls": list(c.history) if c else [],
         }
 
+    @asynccontextmanager
+    async def lifecycle(self, server_id):
+        # Registration happens without awaiting on this manager's event loop.
+        # Keep the same lock while owners OR waiters exist: deleting a lock at
+        # remove() alone would let a later connect overtake an existing waiter.
+        lock = self.locks.setdefault(server_id, asyncio.Lock())
+        self.lock_users[server_id] = self.lock_users.get(server_id, 0) + 1
+        try:
+            async with lock:
+                yield
+        finally:
+            self.lock_users[server_id] -= 1
+            if not self.lock_users[server_id]:
+                self.lock_users.pop(server_id)
+                self.locks.pop(server_id)
+
     async def connect(self, server_id, *, approved_fingerprint):
-        async with self.locks.setdefault(server_id, asyncio.Lock()):
+        async with self.lifecycle(server_id):
             if self.closing:
                 raise MCPError("MCP_SERVER_UNAVAILABLE")
             config = self.config(server_id)
@@ -123,7 +141,7 @@ class MCPConnectionManager:
                 and not creds.get("token")
             ) or any(not creds.get("environment", {}).get(k) for k in config.environment_names):
                 raise MCPError("MCP_AUTH_REQUIRED")
-            await self.disconnect(server_id)
+            await self._disconnect(server_id)
             c = Connection(config)
             self.connections[server_id] = c
             emit("MCP_CONNECTION_STARTED", server_id=server_id)
@@ -131,7 +149,7 @@ class MCPConnectionManager:
             try:
                 await c.ready.wait()
             except asyncio.CancelledError:
-                await self.disconnect(server_id)
+                await self._disconnect(server_id)
                 raise
             if c.status != S.CONNECTED:
                 raise MCPError(c.last_error or "MCP_SERVER_UNAVAILABLE")
@@ -280,6 +298,10 @@ class MCPConnectionManager:
             c.calls.discard(task)
 
     async def disconnect(self, server_id):
+        async with self.lifecycle(server_id):
+            await self._disconnect(server_id)
+
+    async def _disconnect(self, server_id):
         c = self.connections.get(server_id)
         if c:
             c.stop.set()
@@ -291,12 +313,16 @@ class MCPConnectionManager:
                 c.owner = None
 
     async def remove(self, server_id):
-        await self.disconnect(server_id)
-        self.credentials.pop(server_id, None)
-        self.store.delete("server", server_id)
-        for row in self.store.listing("tool"):
-            if row["server_id"] == server_id:
-                self.store.delete("tool", row["id"])
+        async with self.lifecycle(server_id):
+            await self._disconnect(server_id)
+            self.credentials.pop(server_id, None)
+            self.store.delete("server", server_id)
+            for row in self.store.listing("tool"):
+                if row["server_id"] == server_id:
+                    self.store.delete("tool", row["id"])
+            self.connections.pop(server_id, None)
+            if self.on_removed:
+                self.on_removed(server_id)
 
     async def close(self):
         self.closing = True
@@ -304,3 +330,9 @@ class MCPConnectionManager:
             *(self.disconnect(key) for key in list(self.connections)), return_exceptions=True
         )
         self.credentials.clear()
+        # Keep an owner whose shutdown failed reachable for diagnosis/retry.
+        for key, connection in tuple(self.connections.items()):
+            if connection.owner is None:
+                self.connections.pop(key, None)
+                if self.on_removed:
+                    self.on_removed(key)

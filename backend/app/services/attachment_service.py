@@ -6,7 +6,7 @@ from io import BytesIO
 from pathlib import Path
 import re
 from uuid import uuid4
-from zipfile import ZipFile, BadZipFile
+from zipfile import ZipFile, BadZipFile, ZIP_STORED, ZIP_DEFLATED
 import xml.etree.ElementTree as ET
 
 from app.core.config import settings
@@ -100,7 +100,15 @@ class AttachmentService:
                 entry = archive.getinfo("word/document.xml")
                 if entry.flag_bits & 1 or entry.file_size > 8 * 1024 * 1024:
                     raise ValueError("DOCX 文档内容超过限制或已加密")
-                xml = archive.read(entry)
+                # OOXML uses stored/deflated parts. BZIP2/LZMA are unnecessary
+                # here and older interpreters can overallocate before applying
+                # the declared size. Do not enter those decoders at all.
+                if entry.compress_type not in {ZIP_STORED, ZIP_DEFLATED}:
+                    raise ValueError("DOCX 正文使用了不支持的压缩方式")
+                with archive.open(entry) as stream:
+                    xml = stream.read(8 * 1024 * 1024 + 1)
+                if len(xml) > 8 * 1024 * 1024:
+                    raise ValueError("DOCX 文档内容超过限制")
             # OOXML document parts normally use UTF-8. Reject NUL-containing
             # encodings so UTF-16 cannot bypass the DTD/entity guard below.
             if b"\x00" in xml:

@@ -294,7 +294,11 @@ class Evidence:
         )
         report = read(self.root / "installer-result.json")
         require(
-            report["success"] and report["installed_snapshot"]["verified"],
+            report["success"]
+            and report["installed_snapshot"]["verified"]
+            and report["installed_snapshot"].get("runtime_read_access_prepared") is True
+            and report["installed_snapshot"].get("runtime_access_script_sha256")
+            == sha(self.source / "desktop/assets/prepare-runtime-access.ps1"),
             "Installer review did not pass",
         )
         program = Path(report["installed_snapshot"]["program"]).resolve()

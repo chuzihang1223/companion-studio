@@ -80,7 +80,7 @@ async def scheduled_run(h, graph):
     return row["occurrence_id"]
 
 
-async def complete_schedule(h, key):
+async def complete_schedule(h, key, before_approve=None):
     approvals = set()
     for _ in range(800):
         row = h.scheduler.store.occurrence(key, h.owner)
@@ -94,6 +94,8 @@ async def complete_schedule(h, key):
                 and pending["approval_id"] not in approvals
             ):
                 approvals.add(pending["approval_id"])
+                if before_approve:
+                    before_approve(pending)
                 h.app.state.workflows.approve(run_id, h.owner, pending["approval_id"], True)
             if run["state"] in {"COMPLETED", "FAILED", "CANCELLED", "NEEDS_REVIEW"}:
                 await asyncio.sleep(0.03)  # release the original coordinator task/lease

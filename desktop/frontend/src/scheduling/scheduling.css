@@ -8,7 +8,8 @@
 }
 .scheduler-overlay {
   position: absolute;
-  inset: 84px 0 0;
+  /* Match the actual 70px .chat-header; 84px left a clipped banner strip. */
+  inset: 70px 0 0;
   z-index: 20;
   background: var(--bg, #f5f8fa);
   height: auto;

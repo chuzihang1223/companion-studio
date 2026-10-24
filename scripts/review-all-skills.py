@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from visual_review_evidence import read, require, sha, source_identity, needs_artifact
 from collect_benchmark_evidence import collect as collect_benchmarks, current_router_export
 from unified_feature_evidence import feature_matrix
+from hardening_evidence import dependency_status
 from unified_review_contracts import (
     verify_gui,
     verify_router,
@@ -154,6 +155,23 @@ class UnifiedReview(original.Review):
         )
         self.step("U", "dependency-consistency", [sys.executable, "-m", "pip", "check"])
         self.step(
+            "U",
+            "dependency-advisories",
+            [
+                sys.executable,
+                "scripts/dependency-security-review.py",
+                "--output",
+                str(self.root / "dependency-review"),
+            ],
+            verify=lambda: require(
+                dependency_status(
+                    self.source, self.root / "dependency-review", self.identity["source_revision"]
+                )
+                != "FAIL",
+                "Known dependency advisory remains",
+            ),
+        )
+        self.step(
             "C",
             "computer-security-tests",
             [
@@ -175,6 +193,17 @@ class UnifiedReview(original.Review):
         self.step("C", "computer-main-security", [self.node, "tests/ui/computer-use-unit.cjs"])
 
     def gui(self, installed=False):
+        if not installed:
+            self.step(
+                "D",
+                "source-runtime-read-access",
+                self.ps(
+                    "desktop/assets/prepare-runtime-access.ps1",
+                    "-ProgramDirectory",
+                    self.source / "desktop/node_modules/electron/dist",
+                    "-DevelopmentRuntime",
+                ),
+            )
         # The original computer harness owns native UIA/OCR/permission tests and
         # its performance artifact. Never replace those with a simulated report.
         super().gui(installed)
@@ -392,6 +421,14 @@ class UnifiedReview(original.Review):
             integration_status = "PASS"
         except ValueError:
             integration_status = "FAIL" if integration else "NOT_RUN"
+        dependency_gate = labels("dependency-consistency", "dependency-advisories", "build")
+        if dependency_gate == "PASS":
+            try:
+                dependency_gate = dependency_status(
+                    self.source, self.root / "dependency-review", self.identity["source_revision"]
+                )
+            except (OSError, KeyError, ValueError):
+                dependency_gate = "FAIL"
         try:
             require(
                 bool(test_root) and latest.get("full-check", {}).get("status") == "PASS",
@@ -411,9 +448,7 @@ class UnifiedReview(original.Review):
             (
                 "02",
                 "Dependency/license/advisory",
-                "PARTIAL"
-                if labels("dependency-consistency", "build") == "PASS"
-                else labels("dependency-consistency", "build"),
+                dependency_gate,
             ),
             ("03", "Python", labels("full-check")),
             ("04", "Frontend/Electron", labels("full-check")),

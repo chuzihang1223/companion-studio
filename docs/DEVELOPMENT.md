@@ -4,7 +4,7 @@
 
 ## 1. 环境与锁定依赖
 
-当前实际验证环境为 Windows、Python **3.12.3**、Node.js **24.20.0**、npm **11.19.0**。其他补丁版本需自行验证；不要据此声明 macOS/Linux 的 Windows 自动化或安装流程已通过。
+本轮加固使用 Windows、Python **3.13.17**、Node.js **24.20.0**、npm **11.19.0**。Python 3.13 使用锁定的 `audioop-lts` 保留音频转换接口。其他版本需独立验证；不要据此声明 macOS/Linux 的 Windows 自动化或安装流程已通过。
 
 - Python 运行依赖锁定在 `backend/requirements.lock`。
 - `backend/requirements-dev.txt` 引用运行锁，并固定 pytest、PyInstaller、Ruff 等开发依赖。
@@ -14,7 +14,7 @@
 下面的命令在**项目根目录的 PowerShell** 运行，不需要激活虚拟环境：
 
 ```powershell
-py -3.12 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
 npm ci --prefix desktop
 ```

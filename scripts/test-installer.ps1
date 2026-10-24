@@ -185,7 +185,7 @@ $report = [ordered]@{success=$false;test_id=$testId;product='Companion Studio';v
   recovery_deferred=$false;
   installed_snapshot=[ordered]@{requested=[bool]$PreserveInstalledSnapshot;verified=$false;
     program=$snapshotFolder;files=0;excluded_installer_files=@();core_hashes=@{};manifest_sha256=$null;
-    inventory_sha256=$null};
+    inventory_sha256=$null;runtime_read_access_prepared=$false;runtime_access_script_sha256=$null};
   external_model_requests=0;external_voice_requests=0;error=$null;cleanup_errors=@();registry=@();shortcuts=@()}
 $registryRows = @()
 $shortcutRows = @()
@@ -335,6 +335,19 @@ function Save-InstalledSnapshot {
   [IO.File]::WriteAllText($inventoryPath,($inventory | ConvertTo-Json -Depth 6),$utf8)
   $report.installed_snapshot.inventory_sha256 = (Get-FileHash -LiteralPath $inventoryPath -Algorithm SHA256).Hash.ToLowerInvariant()
   $report.installed_snapshot.files = $files.Count
+  # Copy-Item preserves bytes but not the installer's explicit LPAC read ACEs.
+  # Reapply the very same audited, non-inherited public-runtime permissions to
+  # this new program-only snapshot; never grant access to a profile or Cache.
+  $runtimeAccess = Join-Path $project 'desktop\assets\prepare-runtime-access.ps1'
+  $packagedAccess = Join-Path $snapshotFolder 'resources\prepare-runtime-access.ps1'
+  $accessHash = (Get-FileHash -LiteralPath $runtimeAccess -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ((Get-FileHash -LiteralPath $packagedAccess -Algorithm SHA256).Hash.ToLowerInvariant() -ne $accessHash) {
+    throw 'Snapshot runtime permission helper differs from audited source'
+  }
+  & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $runtimeAccess -ProgramDirectory $snapshotFolder
+  if ($LASTEXITCODE -ne 0) { throw 'Installed snapshot runtime read preparation failed' }
+  $report.installed_snapshot.runtime_access_script_sha256 = $accessHash
+  $report.installed_snapshot.runtime_read_access_prepared = $true
   & $python -B $inventoryTool --root (Join-Path $deliveryRoot 'win-unpacked') --compare $snapshotFolder --report (Join-Path $snapshotRoot 'full-resource-inventory.json')
   if ($LASTEXITCODE -ne 0) { throw 'Installed snapshot omitted or changed a program resource' }
   $report.installed_snapshot.verified = $true

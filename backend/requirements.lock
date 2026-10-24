@@ -3,7 +3,7 @@
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
-certifi==2026.7.22
+certifi==2026.10.19
 click==8.5.0
 fastapi==0.141.1
 fish-audio-sdk==1.3.0
@@ -14,10 +14,10 @@ httpx-ws==0.9.0
 httpx==0.28.1
 idna==3.20
 ormsgpack==1.12.2
-pillow==12.3.0
+pillow==13.0.0
 pydantic==2.13.5
 pydantic_core==2.46.5
-pypdf==6.19.0
+pypdf==6.21.2
 python-dotenv==1.2.3
 SQLAlchemy==2.0.54
 starlette==1.7.0
@@ -49,3 +49,6 @@ sse-starlette==3.5.0
 truststore==0.10.5
 # Windows has no system IANA database; only this data dependency is new in Skill08.
 tzdata==2026.5
+# Python 3.13 removed stdlib audioop; the PSF-licensed compatibility wheel keeps
+# the existing bounded PCM/VAD/resampling API without changing its behavior.
+audioop-lts==0.2.2; python_version >= "3.13"

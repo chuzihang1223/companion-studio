@@ -96,11 +96,22 @@ def native_components(root: Path, network: bool) -> list[dict]:
     import ssl
     import sqlite3
     import zlib
+    from xml.parsers import expat
 
     openssl_version = ssl.OPENSSL_VERSION.split()[1]
     python_version = ".".join(map(str, sys.version_info[:3]))
     components = []
     data = [
+        (
+            "Expat",
+            expat.EXPAT_VERSION.removeprefix("expat_"),
+            "MIT",
+            "https://github.com/libexpat/libexpat/tree/R_"
+            + expat.EXPAT_VERSION.removeprefix("expat_").replace(".", "_"),
+            "https://raw.githubusercontent.com/libexpat/libexpat/R_"
+            + expat.EXPAT_VERSION.removeprefix("expat_").replace(".", "_")
+            + "/expat/COPYING",
+        ),
         (
             "OpenSSL",
             openssl_version,
@@ -161,6 +172,34 @@ def native_components(root: Path, network: bool) -> list[dict]:
     pins_relative = f"licenses/python-runtime-{python_version}/PCbuild-python.props"
     public_copy(root, pins_relative, pins_url, network)
     pins = (root / pins_relative).read_text(encoding="utf-8")
+    # These Windows libraries are separately versioned even though the complete
+    # original notices are already included in the PSF runtime's LICENSE.txt.
+    for name, element, prefix, expression in (
+        ("libffi (CPython)", "libffiDir", "libffi-", "MIT"),
+        ("bzip2 (CPython)", "bz2Dir", "bzip2-", "bzip2-1.0.6"),
+    ):
+        match = re.search(
+            r"<" + element + r"\b[^>]*>[^<]*" + prefix + r"([0-9.]+)\\</" + element + ">", pins
+        )
+        if not match:
+            raise RuntimeError("Review the CPython Windows dependency pin: " + name)
+        components.append(
+            {
+                "name": name,
+                "version": match.group(1),
+                "ecosystem": "native",
+                "scope": "Python runtime native library",
+                "license": expression,
+                "upstream": [pins_url],
+                "files": [
+                    save(
+                        root,
+                        f"licenses/native/{canonical(name)}-{match.group(1)}/LICENSE.txt",
+                        (Path(sys.base_prefix) / "LICENSE.txt").read_bytes(),
+                    )
+                ],
+            }
+        )
     xz_match = re.search(r"<lzmaDir\b[^>]*>[^<]*xz-([0-9.]+)\\</lzmaDir>", pins)
     if not xz_match:
         raise RuntimeError("Review the CPython liblzma dependency version")

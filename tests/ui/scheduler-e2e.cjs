@@ -76,6 +76,23 @@ async function run() {
   await driver.openConversation(owner);
   await driver.m.evaluate('globalThis.__schedulerQA.navigate();true');
   await driver.c.until('!!document.querySelector(\'[aria-label="调度工作会话"]\')');
+  const geometry = await driver.c.evaluate(`(()=>{
+    const pane=document.querySelector('[aria-label="定时任务管理"]');
+    const header=document.querySelector('.chat-header');
+    const title=pane.querySelector('h2');
+    const p=pane.getBoundingClientRect(),h=header.getBoundingClientRect(),t=title.getBoundingClientRect();
+    const hit=document.elementFromPoint(t.left+Math.min(20,t.width/2),t.top+t.height/2);
+    return {panelTop:p.top,headerBottom:h.bottom,panelBottom:p.bottom,viewport:innerHeight,
+      titleVisible:!!hit&&title.contains(hit),scrollable:getComputedStyle(pane).overflowY==='auto'};
+  })()`);
+  driver.check(
+    Math.abs(geometry.panelTop - geometry.headerBottom) <= 1 &&
+      geometry.panelBottom <= geometry.viewport + 1 &&
+      geometry.titleVisible &&
+      geometry.scrollable,
+    'Scheduler starts directly below the header with no clipped underlying banner',
+    geometry,
+  );
   await driver.c.until(
     `!!document.querySelector('[aria-label="调度工作会话"] option[value="${owner}"]')`,
   );

@@ -183,6 +183,15 @@ class StudioSmokeDriver {
           `(()=>{const require=process.getBuiltinModule('module').createRequire(process.execPath);return eval(${q(expression)})})()`,
         ),
     };
+    this.report.engineVersions = await this.m.evaluate('({...process.versions})');
+    const expectedElectron = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '../../desktop/package.json'), 'utf8'),
+    ).devDependencies.electron;
+    assert.equal(
+      this.report.engineVersions.electron,
+      expectedElectron,
+      'Actual Electron engine must match the audited dependency lock',
+    );
     await this.c.until(
       "!!document.querySelector('[aria-label=输入消息]') && !document.querySelector('[aria-label=输入消息]').disabled",
       50000,

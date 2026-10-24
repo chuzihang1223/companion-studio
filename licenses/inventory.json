@@ -94,8 +94,25 @@
       ]
     },
     {
+      "name": "audioop-lts",
+      "version": "0.2.2",
+      "ecosystem": "PyPI",
+      "scope": "runtime",
+      "license": "PSF-2.0",
+      "upstream": [
+        "https://github.com/AbstractUmbra/audioop"
+      ],
+      "files": [
+        {
+          "path": "licenses/python/audioop-lts-0.2.2/licenses/LICENSE",
+          "sha256": "343237e4be4e1787bb54019abcd61d48465ac7fc2e12f4183846fa68b8447371",
+          "bytes": 14215
+        }
+      ]
+    },
+    {
       "name": "certifi",
-      "version": "2026.7.22",
+      "version": "2026.10.19",
       "ecosystem": "PyPI",
       "scope": "runtime",
       "license": "MPL-2.0",
@@ -104,7 +121,7 @@
       ],
       "files": [
         {
-          "path": "licenses/python/certifi-2026.7.22/licenses/LICENSE",
+          "path": "licenses/python/certifi-2026.10.19/licenses/LICENSE",
           "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
           "bytes": 989
         }
@@ -560,20 +577,20 @@
     },
     {
       "name": "pillow",
-      "version": "12.3.0",
+      "version": "13.0.0",
       "ecosystem": "PyPI",
       "scope": "runtime",
       "license": "MIT-CMU",
       "upstream": [
         "https://pillow.readthedocs.io",
-        "https://python-pillow.github.io",
+        "https://python-pillow.org",
         "https://github.com/python-pillow/Pillow"
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -731,7 +748,7 @@
     },
     {
       "name": "pypdf",
-      "version": "6.19.0",
+      "version": "6.21.2",
       "ecosystem": "PyPI",
       "scope": "runtime",
       "license": "BSD-3-Clause",
@@ -741,7 +758,7 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pypdf-6.19.0/licenses/LICENSE",
+          "path": "licenses/python/pypdf-6.21.2/licenses/LICENSE",
           "sha256": "a97ac230e5f33ef10a5367a850eb01f91f1a0b064e34742c7794d2294557f524",
           "bytes": 1605
         }
@@ -969,7 +986,7 @@
     },
     {
       "name": "setuptools",
-      "version": "84.0.0",
+      "version": "84.1.0",
       "ecosystem": "PyPI",
       "scope": "build/test",
       "license": "MIT",
@@ -979,87 +996,87 @@
       ],
       "files": [
         {
-          "path": "licenses/python/setuptools-84.0.0/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/licenses/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/autocommand-2.2.2.dist-info/LICENSE",
           "sha256": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d",
           "bytes": 7634
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
           "sha256": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04",
           "bytes": 10278
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
           "sha256": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
           "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
           "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
           "bytes": 1053
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
           "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
           "bytes": 197
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
           "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
           "bytes": 10174
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
           "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
           "bytes": 1344
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
           "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
           "bytes": 1089
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
           "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
           "bytes": 1072
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
           "sha256": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
           "bytes": 1107
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
           "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/config/NOTICE",
+          "path": "licenses/python/setuptools-84.1.0/config/NOTICE",
           "sha256": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8",
           "bytes": 493
         },
         {
-          "path": "licenses/python/setuptools-84.0.0/config/_validate_pyproject/NOTICE",
+          "path": "licenses/python/setuptools-84.1.0/config/_validate_pyproject/NOTICE",
           "sha256": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7",
           "bytes": 18737
         }
@@ -1249,7 +1266,7 @@
     },
     {
       "name": "certifi-corresponding-source",
-      "version": "2026.7.22",
+      "version": "2026.10.19",
       "ecosystem": "source",
       "scope": "MPL corresponding source",
       "license": "MPL-2.0",
@@ -1258,32 +1275,32 @@
       ],
       "files": [
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/__init__.py",
-          "sha256": "7a52e5f4205f9b3d12a31898ceaa7e3f6837d19cc230700bcae1a9d91d1486c1",
+          "path": "licenses/source/certifi-2026.10.19/certifi/__init__.py",
+          "sha256": "f8ccfc10235998c7edd340f2f305b5f3d71aed978aea82a02af30d7877bee902",
           "bytes": 94
         },
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/__main__.py",
+          "path": "licenses/source/certifi-2026.10.19/certifi/__main__.py",
           "sha256": "c410688fdd394d45812d118034e71fee88ba7beddd30fe1c1281bd3b232cd758",
           "bytes": 243
         },
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/cacert.pem",
-          "sha256": "9cc2a774b5198dcff14d9be1e66091f538975d867ce029a96bce15a55dfd730f",
-          "bytes": 240216
+          "path": "licenses/source/certifi-2026.10.19/certifi/cacert.pem",
+          "sha256": "50f79f98dac192b20dbf73f35c56f0b0c557ab267ff5199d1117cc1180b70785",
+          "bytes": 238856
         },
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/core.py",
+          "path": "licenses/source/certifi-2026.10.19/certifi/core.py",
           "sha256": "5c55f2727746e697f7edac9e17c377d8752e0da7ecca191531b3b80403d61dad",
           "bytes": 3394
         },
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/tests/__init__.py",
+          "path": "licenses/source/certifi-2026.10.19/certifi/tests/__init__.py",
           "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
           "bytes": 0
         },
         {
-          "path": "licenses/source/certifi-2026.7.22/certifi/tests/test_certify.py",
+          "path": "licenses/source/certifi-2026.10.19/certifi/tests/test_certify.py",
           "sha256": "7c179d1edf37f7e912b133663735fb46c6338d5d0e5f8915d11c3bc287d227b8",
           "bytes": 467
         }
@@ -1342,7 +1359,7 @@
     },
     {
       "name": "electron",
-      "version": "44.4.5",
+      "version": "44.9.3",
       "ecosystem": "npm",
       "scope": "runtime",
       "license": "MIT",
@@ -1351,42 +1368,42 @@
       ],
       "files": [
         {
-          "path": "licenses/npm/electron-44.4.5/LICENSE",
+          "path": "licenses/npm/electron-44.9.3/LICENSE",
           "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d",
           "bytes": 1096
         },
         {
-          "path": "licenses/electron-44.4.5/LICENSE",
+          "path": "licenses/electron-44.9.3/LICENSE",
           "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d",
           "bytes": 1096
         },
         {
-          "path": "licenses/electron-44.4.5/LICENSES.chromium.html",
-          "sha256": "7b328b8c7463ac9bfc7dc648c751533517c8441a0b5b21047d6c0b2620e60d70",
-          "bytes": 20472830
+          "path": "licenses/electron-44.9.3/LICENSES.chromium.html",
+          "sha256": "e6e6b1f9cb0f32235412be113de7716333e88121f9159a0ea0ff3be652021af7",
+          "bytes": 20477229
         }
       ]
     },
     {
       "name": "CPython",
-      "version": "3.12.3",
+      "version": "3.13.17",
       "ecosystem": "runtime",
       "scope": "runtime",
       "license": "Python-2.0",
       "upstream": [
-        "https://github.com/python/cpython/tree/v3.12.3",
-        "https://docs.python.org/3.12/license.html"
+        "https://github.com/python/cpython/tree/v3.13.17",
+        "https://docs.python.org/3.13/license.html"
       ],
       "files": [
         {
-          "path": "licenses/python-runtime-3.12.3/LICENSE.txt",
-          "sha256": "e502c6b880ff58d614901495a9009c136539cd0b1e2a2abb8fc00b934c203419",
-          "bytes": 36874
+          "path": "licenses/python-runtime-3.13.17/LICENSE.txt",
+          "sha256": "62bec384df47b0328307db41455ff6ea2559e5546b394ac69148561b21703120",
+          "bytes": 33861
         },
         {
-          "path": "licenses/python-runtime-3.12.3/license-and-acknowledgements.html",
-          "sha256": "4aa9eb676fb9cbae7d73b91590335e25715a1b64efc3aa34b05a19c143ba3817",
-          "bytes": 81999
+          "path": "licenses/python-runtime-3.13.17/license-and-acknowledgements.html",
+          "sha256": "aa8c59e4e823b4c55e3123717b4fb500e79d909dc76bb5f1d2e41811f7beef62",
+          "bytes": 87025
         },
         {
           "path": "licenses/MPL-2.0.txt",
@@ -1396,17 +1413,34 @@
       ]
     },
     {
+      "name": "Expat",
+      "version": "2.8.5",
+      "ecosystem": "native",
+      "scope": "Python runtime native library",
+      "license": "MIT",
+      "upstream": [
+        "https://github.com/libexpat/libexpat/tree/R_2_8_5"
+      ],
+      "files": [
+        {
+          "path": "licenses/native/expat-2.8.5/LICENSE",
+          "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
+          "bytes": 1144
+        }
+      ]
+    },
+    {
       "name": "OpenSSL",
-      "version": "3.0.13",
+      "version": "3.5.9",
       "ecosystem": "native",
       "scope": "Python runtime native library",
       "license": "Apache-2.0",
       "upstream": [
-        "https://github.com/openssl/openssl/tree/openssl-3.0.13"
+        "https://github.com/openssl/openssl/tree/openssl-3.5.9"
       ],
       "files": [
         {
-          "path": "licenses/native/openssl-3.0.13/LICENSE",
+          "path": "licenses/native/openssl-3.5.9/LICENSE",
           "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
           "bytes": 10175
         }
@@ -1447,6 +1481,40 @@
       ]
     },
     {
+      "name": "libffi (CPython)",
+      "version": "3.4.4",
+      "ecosystem": "native",
+      "scope": "Python runtime native library",
+      "license": "MIT",
+      "upstream": [
+        "https://raw.githubusercontent.com/python/cpython/v3.13.17/PCbuild/python.props"
+      ],
+      "files": [
+        {
+          "path": "licenses/native/libffi (cpython)-3.4.4/LICENSE.txt",
+          "sha256": "62bec384df47b0328307db41455ff6ea2559e5546b394ac69148561b21703120",
+          "bytes": 33861
+        }
+      ]
+    },
+    {
+      "name": "bzip2 (CPython)",
+      "version": "1.0.8",
+      "ecosystem": "native",
+      "scope": "Python runtime native library",
+      "license": "bzip2-1.0.6",
+      "upstream": [
+        "https://raw.githubusercontent.com/python/cpython/v3.13.17/PCbuild/python.props"
+      ],
+      "files": [
+        {
+          "path": "licenses/native/bzip2 (cpython)-1.0.8/LICENSE.txt",
+          "sha256": "62bec384df47b0328307db41455ff6ea2559e5546b394ac69148561b21703120",
+          "bytes": 33861
+        }
+      ]
+    },
+    {
       "name": "liblzma (CPython)",
       "version": "5.2.5",
       "ecosystem": "native",
@@ -1466,7 +1534,7 @@
     },
     {
       "name": "SQLite",
-      "version": "3.45.1",
+      "version": "3.50.4",
       "ecosystem": "native",
       "scope": "Python runtime native library",
       "license": "blessing",
@@ -1475,7 +1543,7 @@
       ],
       "files": [
         {
-          "path": "licenses/native/sqlite-3.45.1/copyright.html",
+          "path": "licenses/native/sqlite-3.50.4/copyright.html",
           "sha256": "44ca9f793055c8e32fc65f65a4f5bcf813a33f5bdaaa084067dd617a4ed3cc70",
           "bytes": 8351
         }
@@ -1492,9 +1560,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1509,15 +1577,15 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
     {
       "name": "harfbuzz",
-      "version": "14.2.1",
+      "version": "14.5.0",
       "ecosystem": "native",
       "scope": "Pillow wheel native component",
       "license": "MIT",
@@ -1526,9 +1594,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1543,9 +1611,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1560,15 +1628,15 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
     {
       "name": "libjpeg-turbo",
-      "version": "3.1.4.1",
+      "version": "3.2.0",
       "ecosystem": "native",
       "scope": "Pillow wheel native component",
       "license": "IJG AND BSD-3-Clause AND Zlib",
@@ -1577,9 +1645,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1594,9 +1662,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1611,9 +1679,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1628,15 +1696,15 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
     {
       "name": "tiff",
-      "version": "4.7.1",
+      "version": "4.7.2",
       "ecosystem": "native",
       "scope": "Pillow wheel native component",
       "license": "libtiff",
@@ -1645,15 +1713,15 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
     {
       "name": "xz",
-      "version": "5.8.3",
+      "version": "5.8.4",
       "ecosystem": "native",
       "scope": "Pillow wheel native component",
       "license": "0BSD",
@@ -1662,9 +1730,9 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
@@ -1679,26 +1747,26 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pillow-12.3.0/licenses/LICENSE",
-          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
-          "bytes": 78016
+          "path": "licenses/python/pillow-13.0.0/licenses/LICENSE",
+          "sha256": "988ffe8ab3480b0f4e9a0ab2702bffd73d9fb6b47198043fb3ba101a62fac236",
+          "bytes": 78481
         }
       ]
     },
     {
       "name": "Chromium and embedded third-party components",
-      "version": "152.0.7977.130",
+      "version": "152.0.7977.167",
       "ecosystem": "native",
       "scope": "Electron runtime",
       "license": "LicenseRef-Chromium-ThirdParty",
       "upstream": [
-        "https://chromium.googlesource.com/chromium/src/+/152.0.7977.130"
+        "https://chromium.googlesource.com/chromium/src/+/152.0.7977.167"
       ],
       "files": [
         {
-          "path": "licenses/electron-44.4.5/LICENSES.chromium.html",
-          "sha256": "7b328b8c7463ac9bfc7dc648c751533517c8441a0b5b21047d6c0b2620e60d70",
-          "bytes": 20472830
+          "path": "licenses/electron-44.9.3/LICENSES.chromium.html",
+          "sha256": "e6e6b1f9cb0f32235412be113de7716333e88121f9159a0ea0ff3be652021af7",
+          "bytes": 20477229
         }
       ]
     },
@@ -1713,82 +1781,82 @@
       ],
       "files": [
         {
-          "path": "licenses/source/electron-44.4.5/DEPS",
-          "sha256": "c2b7667829993049e7a9ee9038b0f754fa5e7e50d250e35edefe8030a97e4068",
-          "bytes": 8472
+          "path": "licenses/source/electron-44.9.3/DEPS",
+          "sha256": "c254ca413381a28243b3808e10dc8842ff0bc09629e1663ee7e09ef79dd4514a",
+          "bytes": 8442
         },
         {
-          "path": "licenses/source/electron-44.4.5/chromium-DEPS",
-          "sha256": "7c2fd934009eb6f3f936c66853f01307e54175ff1fc19a49cdeee5fa43d498ab",
+          "path": "licenses/source/electron-44.9.3/chromium-DEPS",
+          "sha256": "c3cd8ae90218c260d5fadbe5d9095164693fe420812218a18dfcf65c3f1743b9",
           "bytes": 194497
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg-patches/.patches",
+          "path": "licenses/source/electron-44.9.3/ffmpeg-patches/.patches",
           "sha256": "eb2ff86699f3aa0f6ac1b484a8c8a117a3149465273699e136e132024e38e7c6",
           "bytes": 28
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg-patches/link_with_loader_path.patch",
+          "path": "licenses/source/electron-44.9.3/ffmpeg-patches/link_with_loader_path.patch",
           "sha256": "bc6cdc29ad4ec2641dd59b4c3a25375b9166c35e202e5122cb73190885ec647d",
           "bytes": 1219
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/COPYING.LGPLv2.1",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/COPYING.LGPLv2.1",
           "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
           "bytes": 26517
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/LICENSE.md",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/LICENSE.md",
           "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
           "bytes": 4346
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/BUILD.gn",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/BUILD.gn",
           "sha256": "30e75bd4fbff5145ccc7b28800566a6ec788300cc579d85282ec4380333cc45f",
           "bytes": 15960
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/README.chromium",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/README.chromium",
           "sha256": "17df0ad137aa566137074686d5930abfe48cc2707ac4ccca0251f71db2f7c8be",
           "bytes": 1267
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/CREDITS.chromium",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/CREDITS.chromium",
           "sha256": "903a6faa336b60d419bc6eb2bcffe4ca8bd9446735e5de4fcc901c80e9f22327",
           "bytes": 47960
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg/chromium/config/Chrome/win/x64/config.h",
+          "path": "licenses/source/electron-44.9.3/ffmpeg/chromium/config/Chrome/win/x64/config.h",
           "sha256": "4c935fe035611b9e72376de36a49539cc6a915f4cc22aeefa76c4f972193de60",
           "bytes": 25773
         },
         {
-          "path": "licenses/source/electron-44.4.5/electron/build/args/release.gn",
+          "path": "licenses/source/electron-44.9.3/electron/build/args/release.gn",
           "sha256": "b4490cee911e0ed136a6d095c69a7914cb3f4aa2d5517e3f987a2b5f45d3cd56",
           "bytes": 902
         },
         {
-          "path": "licenses/source/electron-44.4.5/electron/build/args/all.gn",
-          "sha256": "5ef3dcead9ec7d5a5b556d7db92ab6a40166801913298702250a455fd244388d",
-          "bytes": 3900
+          "path": "licenses/source/electron-44.9.3/electron/build/args/all.gn",
+          "sha256": "d4ba5836bdadee7d07368351d49feebf1169db2ab49e800903f693b95fc517d8",
+          "bytes": 4812
         },
         {
-          "path": "licenses/source/electron-44.4.5/electron/patches/config.json",
-          "sha256": "6e05b47b2c62205c9f343de9bfcf6afd0eebc117d8735ff7b0cb6196ebb69b92",
-          "bytes": 1583
+          "path": "licenses/source/electron-44.9.3/electron/patches/config.json",
+          "sha256": "5fbf6a7e9e641fbff4faa13f30c6c438fbd534292152328d0820cbdee913e489",
+          "bytes": 1645
         },
         {
-          "path": "licenses/source/electron-44.4.5/chromium/media/ffmpeg/README.md",
+          "path": "licenses/source/electron-44.9.3/chromium/media/ffmpeg/README.md",
           "sha256": "b9cc0d90692745ac60da41b0fb41eaaac672e4a2af156d850f9a3978c57183c8",
           "bytes": 3315
         },
         {
-          "path": "licenses/source/electron-44.4.5/chromium/media/ffmpeg/scripts/build_ffmpeg.py",
+          "path": "licenses/source/electron-44.9.3/chromium/media/ffmpeg/scripts/build_ffmpeg.py",
           "sha256": "14fa3b55ececcb4182052bbf0309bff8c66dc03656e49b40938b1033e11fafe1",
           "bytes": 42542
         },
         {
-          "path": "licenses/source/electron-44.4.5/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
+          "path": "licenses/source/electron-44.9.3/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
           "sha256": "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc",
           "bytes": 18818370
         }
@@ -1796,98 +1864,98 @@
     }
   ],
   "electron_provenance": {
-    "electron_version": "44.4.5",
-    "electron_tag": "v44.4.5",
-    "chromium_version": "152.0.7977.130",
+    "electron_version": "44.9.3",
+    "electron_tag": "v44.9.3",
+    "chromium_version": "152.0.7977.167",
     "ffmpeg_revision": "2b68d2babae73714846961fb0ee47e3b3d2e39a9",
     "ffmpeg_license": "LGPL-2.1-or-later",
     "ffmpeg_source": "https://chromium.googlesource.com/chromium/third_party/ffmpeg/+/2b68d2babae73714846961fb0ee47e3b3d2e39a9",
     "ffmpeg_source_archive": "https://chromium.googlesource.com/chromium/third_party/ffmpeg/+archive/2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
-    "electron_source": "https://github.com/electron/electron/tree/v44.4.5",
+    "electron_source": "https://github.com/electron/electron/tree/v44.9.3",
     "electron_build_instructions": "https://www.electronjs.org/docs/latest/development/build-instructions-gn",
     "electron_ffmpeg_patches": [
-      "https://raw.githubusercontent.com/electron/electron/v44.4.5/patches/ffmpeg/link_with_loader_path.patch"
+      "https://raw.githubusercontent.com/electron/electron/v44.9.3/patches/ffmpeg/link_with_loader_path.patch"
     ],
     "modified_by_companion_studio": false,
-    "ffmpeg_dll_sha256": "22e07be5d900ecad1fa47cbd9f783143af0058e18793b4804b887253988273ac",
+    "ffmpeg_dll_sha256": "1f8549b6788a643ec122cffb3016cce4bf194e07ff81ec327fc8aef6231809d6",
     "files": [
       {
-        "path": "licenses/source/electron-44.4.5/DEPS",
-        "sha256": "c2b7667829993049e7a9ee9038b0f754fa5e7e50d250e35edefe8030a97e4068",
-        "bytes": 8472
+        "path": "licenses/source/electron-44.9.3/DEPS",
+        "sha256": "c254ca413381a28243b3808e10dc8842ff0bc09629e1663ee7e09ef79dd4514a",
+        "bytes": 8442
       },
       {
-        "path": "licenses/source/electron-44.4.5/chromium-DEPS",
-        "sha256": "7c2fd934009eb6f3f936c66853f01307e54175ff1fc19a49cdeee5fa43d498ab",
+        "path": "licenses/source/electron-44.9.3/chromium-DEPS",
+        "sha256": "c3cd8ae90218c260d5fadbe5d9095164693fe420812218a18dfcf65c3f1743b9",
         "bytes": 194497
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg-patches/.patches",
+        "path": "licenses/source/electron-44.9.3/ffmpeg-patches/.patches",
         "sha256": "eb2ff86699f3aa0f6ac1b484a8c8a117a3149465273699e136e132024e38e7c6",
         "bytes": 28
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg-patches/link_with_loader_path.patch",
+        "path": "licenses/source/electron-44.9.3/ffmpeg-patches/link_with_loader_path.patch",
         "sha256": "bc6cdc29ad4ec2641dd59b4c3a25375b9166c35e202e5122cb73190885ec647d",
         "bytes": 1219
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/COPYING.LGPLv2.1",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/COPYING.LGPLv2.1",
         "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
         "bytes": 26517
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/LICENSE.md",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/LICENSE.md",
         "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
         "bytes": 4346
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/BUILD.gn",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/BUILD.gn",
         "sha256": "30e75bd4fbff5145ccc7b28800566a6ec788300cc579d85282ec4380333cc45f",
         "bytes": 15960
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/README.chromium",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/README.chromium",
         "sha256": "17df0ad137aa566137074686d5930abfe48cc2707ac4ccca0251f71db2f7c8be",
         "bytes": 1267
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/CREDITS.chromium",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/CREDITS.chromium",
         "sha256": "903a6faa336b60d419bc6eb2bcffe4ca8bd9446735e5de4fcc901c80e9f22327",
         "bytes": 47960
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg/chromium/config/Chrome/win/x64/config.h",
+        "path": "licenses/source/electron-44.9.3/ffmpeg/chromium/config/Chrome/win/x64/config.h",
         "sha256": "4c935fe035611b9e72376de36a49539cc6a915f4cc22aeefa76c4f972193de60",
         "bytes": 25773
       },
       {
-        "path": "licenses/source/electron-44.4.5/electron/build/args/release.gn",
+        "path": "licenses/source/electron-44.9.3/electron/build/args/release.gn",
         "sha256": "b4490cee911e0ed136a6d095c69a7914cb3f4aa2d5517e3f987a2b5f45d3cd56",
         "bytes": 902
       },
       {
-        "path": "licenses/source/electron-44.4.5/electron/build/args/all.gn",
-        "sha256": "5ef3dcead9ec7d5a5b556d7db92ab6a40166801913298702250a455fd244388d",
-        "bytes": 3900
+        "path": "licenses/source/electron-44.9.3/electron/build/args/all.gn",
+        "sha256": "d4ba5836bdadee7d07368351d49feebf1169db2ab49e800903f693b95fc517d8",
+        "bytes": 4812
       },
       {
-        "path": "licenses/source/electron-44.4.5/electron/patches/config.json",
-        "sha256": "6e05b47b2c62205c9f343de9bfcf6afd0eebc117d8735ff7b0cb6196ebb69b92",
-        "bytes": 1583
+        "path": "licenses/source/electron-44.9.3/electron/patches/config.json",
+        "sha256": "5fbf6a7e9e641fbff4faa13f30c6c438fbd534292152328d0820cbdee913e489",
+        "bytes": 1645
       },
       {
-        "path": "licenses/source/electron-44.4.5/chromium/media/ffmpeg/README.md",
+        "path": "licenses/source/electron-44.9.3/chromium/media/ffmpeg/README.md",
         "sha256": "b9cc0d90692745ac60da41b0fb41eaaac672e4a2af156d850f9a3978c57183c8",
         "bytes": 3315
       },
       {
-        "path": "licenses/source/electron-44.4.5/chromium/media/ffmpeg/scripts/build_ffmpeg.py",
+        "path": "licenses/source/electron-44.9.3/chromium/media/ffmpeg/scripts/build_ffmpeg.py",
         "sha256": "14fa3b55ececcb4182052bbf0309bff8c66dc03656e49b40938b1033e11fafe1",
         "bytes": 42542
       },
       {
-        "path": "licenses/source/electron-44.4.5/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
+        "path": "licenses/source/electron-44.9.3/ffmpeg-source-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
         "sha256": "115841ee8a7a7afc1a037b031bf14a469b4e9b04f2d37c0ac515e1181574a5fc",
         "bytes": 18818370
       }

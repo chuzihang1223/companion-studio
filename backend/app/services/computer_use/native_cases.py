@@ -69,8 +69,33 @@ async def verify_case(f, index):
             else "PHYSICAL_DPI_ENVIRONMENT_UNAVAILABLE"
         )
     if index == 16:
-        await f.inspect()
-        return "DISPLAY_CHANGE_ENVIRONMENT_UNAVAILABLE"  # do not modify user display settings
+        before = await f.inspect()
+        if before["monitor_count"] < 2:
+            return "DISPLAY_CHANGE_ENVIRONMENT_UNAVAILABLE"
+        old = await f.find("CounterAction")
+        await f.click("MoveMonitor", {"kind": "element_present", "automation_id": "SampleInput"})
+        after = await f.inspect()
+        stale = await f.tool(
+            "click",
+            {
+                **old,
+                "verification": {
+                    "kind": "text_equals",
+                    "automation_id": "CounterState",
+                    "expected": "1",
+                },
+            },
+            allow_failure=True,
+        )
+        fresh = await f.click(
+            "CounterAction",
+            {"kind": "text_equals", "automation_id": "CounterState", "expected": "1"},
+        )
+        return (
+            before["window_bounds"] != after["window_bounds"]
+            and not stale["verified"]
+            and fresh["verified"]
+        )
     if index == 17:
         # A filtered password subtree cannot prove arbitrary absence. Prepare
         # an entirely observable fixture area through an ordinary approved tool.

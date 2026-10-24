@@ -215,7 +215,7 @@ def test_INT_013_character_memory_conversation_and_voice_snapshot_isolation(tmp_
     asyncio.run(run())
 
 
-def test_INT_015_same_host_four_conversations_cancel_isolation(tmp_path, monkeypatch):
+def test_INT_015_same_host_five_conversations_cancel_isolation(tmp_path, monkeypatch):
     from sqlalchemy import select
     from app.models.model_routing import ModelRequestRow
     from app.api.chat_stream_v4 import router
@@ -225,14 +225,16 @@ def test_INT_015_same_host_four_conversations_cancel_isolation(tmp_path, monkeyp
     async def run():
         async with unified_host(tmp_path) as h:
             h.app.include_router(router)
-            h.fixture.state(max_requests_per_task=1)
+            h.fixture.state(max_requests_per_task=2)
             owners = [h.owner]
-            for _ in range(3):
+            for _ in range(4):
                 with SessionLocal.begin() as db:
                     key = str(uuid4())
                     db.add(Conversation(id=key, character_id="assistant", conversation_type="work"))
                 owners.append(key)
                 h.app.state.work_state.ensure(key)
+            work_session = h.app.state.work_state.ensure(owners[4])
+            h.app.state.work_state.set_workspace(work_session, str(h.workspace))
             barrier, release = asyncio.Event(), asyncio.Event()
             original = h.app.state.workflows.executor.execute
 
@@ -314,10 +316,15 @@ def test_INT_015_same_host_four_conversations_cancel_isolation(tmp_path, monkeyp
                     )
                 )
                 await asyncio.sleep(0)
+                from unified_skill_fixture import UnifiedHost
+
+                work_task = asyncio.create_task(
+                    UnifiedHost.agent(SimpleNamespace(**{**h.__dict__, "owner": owners[4]}))
+                )
                 await h.app.state.workflows.control(key, owners[1], "cancel")
                 release.set()
-                chat, voice, scheduled_result = await asyncio.gather(
-                    chat_task, voice_task, complete_schedule(fourth, schedule)
+                chat, voice, scheduled_result, work_result = await asyncio.gather(
+                    chat_task, voice_task, complete_schedule(fourth, schedule), work_task
                 )
             assert chat.status_code == voice.status_code == 200
             assert (
@@ -327,6 +334,12 @@ def test_INT_015_same_host_four_conversations_cancel_isolation(tmp_path, monkeyp
             )
             assert (await settle(h.app, owners[1], key))["state"] == "CANCELLED"
             assert scheduled_result[0]["status"] == "COMPLETED"
+            assert len(work_result[1]["tools"]) == 1
+            assert "Synthetic workflow file" in work_result[1]["tools"][0]["result"]["content"]
+            work_detail = h.app.state.checkpoint_manager.detail(
+                work_result[0]["plan_id"], owners[4]
+            )
+            assert work_detail["checkpoints"][0]["step_state"] == "COMMITTED"
             with SessionLocal() as db:
                 chat_rows = db.scalars(
                     select(Message).where(Message.conversation_id == owners[0])
@@ -342,7 +355,7 @@ def test_INT_015_same_host_four_conversations_cancel_isolation(tmp_path, monkeyp
             assert any(r.content == "CHAT_SCOPE_MARKER" for r in chat_rows)
             assert not any(r.content == "CHAT_SCOPE_MARKER" for r in voice_rows)
             assert len(requests) == 1 and requests[0].task_id == scheduled_result[1]["run_id"]
-            assert len(h.requests) == 3 and not h.app.state.runtime_registry.active
+            assert len(h.requests) == 5 and not h.app.state.runtime_registry.active
             with pytest.raises(ValueError):
                 h.app.state.workflows.repository.run(key, owners[3])
 

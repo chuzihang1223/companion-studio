@@ -11,6 +11,7 @@ using System.Windows.Threading;
 
 public sealed class VisualFixture : Window {
     [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr context);
+    [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr window,IntPtr after,int x,int y,int width,int height,uint flags);
     Canvas canvas=new Canvas(); TextBox input; TextBlock result,counter,generation; int clicks,rebuilds;
     T Put<T>(T element,string id,double x,double y,double w,double h) where T:FrameworkElement {
         element.Name=id;AutomationProperties.SetAutomationId(element,id);
@@ -40,6 +41,18 @@ public sealed class VisualFixture : Window {
         var painted=Put(new PaintedArea(),"PaintedArea",25,370,740,150);
         Button("SensitiveToggle","Sensitive paint",535,315,()=>{painted.Sensitive=!painted.Sensitive;painted.InvalidateVisual();});
         Button("DelayedControl","Show delayed",25,550,()=>{var timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(500)};timer.Tick+=(s,e)=>{timer.Stop();Put(new TextBlock{Text="Delayed ready"},"DelayedState",220,555,230,30);};timer.Start();});
+        // Move only this owned fixture. Never change display settings or move
+        // another application's window to manufacture a multi-monitor result.
+        Button("MoveMonitor","Next monitor",465,550,()=>{
+            var screens=System.Windows.Forms.Screen.AllScreens;
+            if(screens.Length<2)return;
+            var handle=new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            var current=System.Windows.Forms.Screen.FromHandle(handle);
+            int index=Array.FindIndex(screens,s=>s.DeviceName==current.DeviceName);
+            var bounds=screens[(index+1)%screens.Length].WorkingArea;
+            SetWindowPos(handle,IntPtr.Zero,bounds.X+24,bounds.Y+24,
+                Math.Min(850,bounds.Width-48),Math.Min(690,bounds.Height-48),0x0014);
+        });
         var menu=Put(new Menu(),"SampleMenu",0,0,800,30);menu.Items.Add(new MenuItem{Header="Fixture"});
     }
     [STAThread] public static void Main(){System.Windows.Media.RenderOptions.ProcessRenderMode=System.Windows.Interop.RenderMode.SoftwareOnly;SetProcessDpiAwarenessContext(new IntPtr(-4));new Application().Run(new VisualFixture());}

@@ -136,6 +136,7 @@ class VisualQA {
         window_dpi: frame.geometry.window_dpi,
         monitor_dpi: frame.geometry.monitor_dpi,
         monitor_count: frame.geometry.monitors.length,
+        window_bounds: frame.geometry.bounds,
         uia_ms: frame.uia_duration_ms,
         ocr_ms: frame.ocr_duration_ms,
         capture_ms: frame.capture_duration_ms,
@@ -160,6 +161,8 @@ class VisualQA {
           '/nologo',
           '/target:winexe',
           '/r:System.Xaml.dll',
+          '/r:System.Windows.Forms.dll',
+          '/r:System.Drawing.dll',
           ...['PresentationFramework', 'PresentationCore', 'WindowsBase', 'UIAutomationTypes'].map(
             (n) => '/r:' + path.join(base, 'WPF', n + '.dll'),
           ),

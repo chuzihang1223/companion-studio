@@ -56,6 +56,12 @@ class ExternalToolRegistry:
         self.store, self.connections = store, connections
         self.tools = {}
         connections.on_discovery = self.discover
+        connections.on_removed = self.forget
+
+    def forget(self, server_id):
+        # Deletion releases the discovered generation as well as DB rows. Normal
+        # disconnect retains bounded metadata; removed IDs must not accumulate.
+        self.tools = {key: row for key, row in self.tools.items() if row["server_id"] != server_id}
 
     async def discover(self, server_id, client=None):
         if client is None:
