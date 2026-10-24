@@ -4,7 +4,7 @@
 
 ## 1. 环境与锁定依赖
 
-本轮加固使用 Windows、Python **3.13.17**、Node.js **24.20.0**、npm **11.19.0**。Python 3.13 使用锁定的 `audioop-lts` 保留音频转换接口。其他版本需独立验证；不要据此声明 macOS/Linux 的 Windows 自动化或安装流程已通过。
+本轮加固使用 Windows、Python **3.13.17**、Node.js **24.22.1**、npm **11.19.1**。Python 3.13 使用锁定的 `audioop-lts` 保留音频转换接口。其他版本需独立验证；不要据此声明 macOS/Linux 的 Windows 自动化或安装流程已通过。
 
 - Python 运行依赖锁定在 `backend/requirements.lock`。
 - `backend/requirements-dev.txt` 引用运行锁，并固定 pytest、PyInstaller、Ruff 等开发依赖。
