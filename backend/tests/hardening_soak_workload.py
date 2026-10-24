@@ -238,10 +238,11 @@ def test_real_duration_original_services(tmp_path):
                     for calls in h.fixture.calls.values():
                         calls.clear()
                     gc.collect()
+                    elapsed = time.monotonic() - began
                     sample = {
                         "cycle": index,
-                        "elapsed_seconds": time.monotonic() - began,
-                        "phase": "core" if time.monotonic() - began < 1800 else "mixed_cancel",
+                        "elapsed_seconds": elapsed,
+                        "phase": "core" if elapsed < 1800 else "mixed_cancel",
                         **process_metrics(),
                         "trace_queue": h.trace.queue.qsize(),
                         "trace_metrics": dict(h.trace.metrics),

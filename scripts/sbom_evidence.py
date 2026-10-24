@@ -45,6 +45,11 @@ def validate_sbom(source, home, combined, python_pins):
             continue
         parent_ref = reverse[identity(path)] if path else root_ref
         names = set(row.get("dependencies", {}))
+        names.update(
+            name
+            for name in row.get("peerDependencies", {})
+            if not row.get("peerDependenciesMeta", {}).get(name, {}).get("optional")
+        )
         if not path:
             names.update(row.get("devDependencies", {}))
         for name in names - set(row.get("optionalDependencies", {})):
@@ -60,6 +65,10 @@ def validate_sbom(source, home, combined, python_pins):
         "Combined SBOM omits or changes npm components",
     )
     merged_graph = {d["ref"]: set(d.get("dependsOn", [])) for d in combined["dependencies"]}
+    require(
+        len(merged_graph) == len(combined["dependencies"]),
+        "Combined SBOM has duplicate dependency references",
+    )
     require(
         all(
             merged_graph.get(ref, set()) >= children

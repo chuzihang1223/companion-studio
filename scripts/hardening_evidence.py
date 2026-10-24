@@ -154,11 +154,51 @@ def soak_status(path, source=None):
         "Soak omitted a workload phase",
     )
     require(
+        all(
+            row["phase"] == ("core" if row["elapsed_seconds"] < 1800 else "mixed_cancel")
+            for row in samples
+        ),
+        "Soak phase labels disagree with actual elapsed time",
+    )
+    require(
         len(report["mcp_children"]) == (cycles + 5) // 6
         and len(report.get("schedule_receipts", [])) == (cycles + 29) // 30
         and len(report.get("cancel_receipts", [])) >= 20
         and report.get("synthetic_model_requests", 0) >= cycles,
         "Soak did not exercise MCP, scheduler, model and cancellation workloads",
+    )
+    schedules, cancellations = report["schedule_receipts"], report["cancel_receipts"]
+    require(
+        [row.get("cycle") for row in schedules] == list(range(0, cycles, 30))
+        and all(row.get("status") == "COMPLETED" for row in schedules),
+        "Soak scheduler receipts are incomplete or unsuccessful",
+    )
+    for rows, field in (
+        (schedules, "occurrence_id"),
+        (schedules, "workflow_run_id"),
+        (cancellations, "workflow_run_id"),
+    ):
+        require(
+            all(row.get(field) for row in rows) and len({row[field] for row in rows}) == len(rows),
+            "Soak scheduler/cancellation IDs are missing or reused",
+        )
+    cancel_cycles = [row.get("cycle") for row in cancellations]
+    completed_runs = {row["workflow_run_id"] for row in receipts + schedules}
+    require(
+        not completed_runs.intersection(row["workflow_run_id"] for row in cancellations),
+        "A completed workflow cannot also certify cancellation",
+    )
+    require(
+        len(set(cancel_cycles)) == len(cancel_cycles)
+        and all(
+            type(index) is int
+            and 0 <= index < cycles
+            and index % 3 == 0
+            and samples[index]["elapsed_seconds"] >= 1800
+            for index in cancel_cycles
+        )
+        and all(row.get("state") == "CANCELLED" for row in cancellations),
+        "Soak cancellation receipts are incomplete or unsuccessful",
     )
     require(
         len(samples) >= 180 and samples[-1]["elapsed_seconds"] >= 3590,

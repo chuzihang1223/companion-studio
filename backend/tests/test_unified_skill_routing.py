@@ -46,10 +46,17 @@ def test_INT_010_transient_same_target_fallback_executes_tool_once(tmp_path):
             detail = h.app.state.checkpoint_manager.detail(plan["plan_id"], h.owner)
             assert len(detail["checkpoints"]) == 1
             assert detail["checkpoints"][0]["step_state"] == "COMMITTED"
-            assert (
-                sum(row["decision"].get("is_fallback", False) for row in h.fixture.ledger.recent())
-                == 1
-            )
+            from sqlalchemy import select
+            from app.models.model_routing import ModelRequestRow
+
+            with SessionLocal() as db:
+                rows = db.scalars(
+                    select(ModelRequestRow).where(ModelRequestRow.task_id == plan["plan_id"])
+                ).all()
+            # Retain other tasks' durable unknown-usage reservations; count
+            # only this plan's actual fallback rather than summing the ledger.
+            assert len(rows) == 3
+            assert sum(json.loads(row.decision_json).get("is_fallback", False) for row in rows) == 1
 
     asyncio.run(run())
 
