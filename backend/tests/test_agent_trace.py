@@ -184,7 +184,10 @@ def test_concurrent_contexts_and_failed_writer_do_not_break_agent(runtime_app, m
             store, "_write", lambda batch: (_ for _ in ()).throw(OSError("private path"))
         )
         _, reply = await execute(app)
-        assert reply["content"] and await store.flush()
+        assert reply["content"]
+        # A usable Agent reply does not certify a failed Trace projection.
+        assert not await store.flush()
+        assert store.journal.snapshot()["pending"] > 0
         assert store.metrics["write_failures"] > 0
         await store.stop()
 

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import timezone
 import json
 import time
+from types import SimpleNamespace
 
 from sqlalchemy import delete, func, select
 
@@ -69,6 +70,14 @@ def span_dto(row):
 class TraceRepository:
     def __init__(self, store):
         self.store = store
+
+    @classmethod
+    def read_only(cls, factory):
+        # Historical evaluation archives never own a writer, journal, migration
+        # or process. Their SQLite URI independently enforces read-only access.
+        return cls(
+            SimpleNamespace(factory=factory, event_limit=5000, metrics={"last_query_ms": 0.0})
+        )
 
     @contextmanager
     def read(self):
@@ -171,6 +180,11 @@ class TraceRepository:
                 "has_more": more,
                 "next_cursor": cursor + limit if more else None,
                 "limit": limit,
+                **(
+                    {"integrity": self.store.journal.integrity(conversation_id, work_session_id)}
+                    if hasattr(self.store, "journal")
+                    else {}
+                ),
             }
 
     def detail(self, trace_id, conversation_id, work_session_id=None, *, voice=False):
@@ -316,7 +330,13 @@ class TraceRepository:
             row = self.owned(db, trace_id, conversation_id, work_session_id)
             if row.status not in {"completed", "failed", "cancelled", "interrupted"}:
                 raise ValueError("请等任务结束后再删除轨迹")
-            db.execute(delete(TraceEvent).where(TraceEvent.trace_id == trace_id))
+            from app.services.trace.projection import projection_totals
+
+            totals = projection_totals(db)
+            totals.pruned_events += db.execute(
+                delete(TraceEvent).where(TraceEvent.trace_id == trace_id)
+            ).rowcount
+            totals.pruned_traces += 1
             db.execute(delete(TraceSpan).where(TraceSpan.trace_id == trace_id))
             db.delete(row)
             db.commit()

@@ -125,7 +125,8 @@ def test_event_limit_and_writer_failure_are_bounded(trace_database, monkeypatch)
         )
         for _ in range(25):
             store.enqueue("event", {"trace_id": trace, "event_type": "OBSERVATION_CREATED"})
-        assert await store.flush()
+        assert not await store.flush()
+        assert store.journal.snapshot()["states"]["FAILED"] == 5
         with factory() as db:
             row = db.get(AgentTrace, trace)
             assert row.event_count == 20 and row.incomplete and row.dropped_events == 5
@@ -137,8 +138,9 @@ def test_event_limit_and_writer_failure_are_bounded(trace_database, monkeypatch)
         for _ in range(50):
             store.enqueue("event", {"trace_id": trace, "event_type": "OBSERVATION_CREATED"})
         assert store.queue.qsize() <= 32
-        assert await store.flush()
+        assert not await store.flush()
         assert store.metrics["write_failures"] and store.metrics["dropped"]
+        assert store.journal.snapshot()["pending"] > 0
         await store.stop()
 
     asyncio.run(scenario())

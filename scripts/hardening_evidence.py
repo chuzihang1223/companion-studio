@@ -116,7 +116,7 @@ def soak_status(path, source=None):
     receipts = report.get("workload_receipts", [])
     cycles = report.get("cycles", 0)
     require(
-        cycles >= 180 and len(receipts) == len(samples) == cycles,
+        cycles >= 360 and len(receipts) == len(samples) == cycles,
         "Soak did not execute the recorded workload",
     )
     require(
@@ -162,14 +162,14 @@ def soak_status(path, source=None):
     )
     require(
         len(report["mcp_children"]) == (cycles + 5) // 6
-        and len(report.get("schedule_receipts", [])) == (cycles + 29) // 30
-        and len(report.get("cancel_receipts", [])) >= 20
+        and len(report.get("schedule_receipts", [])) == 12
+        and len(report.get("cancel_receipts", [])) >= 60
         and report.get("synthetic_model_requests", 0) >= cycles,
         "Soak did not exercise MCP, scheduler, model and cancellation workloads",
     )
     schedules, cancellations = report["schedule_receipts"], report["cancel_receipts"]
     require(
-        [row.get("cycle") for row in schedules] == list(range(0, cycles, 30))
+        [row.get("cycle") for row in schedules] == list(range(0, 360, 30))
         and all(row.get("status") == "COMPLETED" for row in schedules),
         "Soak scheduler receipts are incomplete or unsuccessful",
     )
@@ -201,7 +201,7 @@ def soak_status(path, source=None):
         "Soak cancellation receipts are incomplete or unsuccessful",
     )
     require(
-        len(samples) >= 180 and samples[-1]["elapsed_seconds"] >= 3590,
+        len(samples) >= 360 and samples[-1]["elapsed_seconds"] >= 3590,
         "Soak samples are incomplete",
     )
     require(
@@ -229,6 +229,40 @@ def soak_status(path, source=None):
         ),
         "Resources failed to drain at a quiescent boundary",
     )
+    require(
+        report.get("trace_write_failures") == report.get("trace_dropped_commands") == 0
+        and report.get("sqlite_busy_terminal") == 0
+        and report.get("queue_final") == 0
+        and report.get("trace_events_generated", -1)
+        == report.get("trace_events_accepted")
+        == report.get("trace_events_committed")
+        and report.get("trace_events_recoverably_pending") == 0,
+        "Accepted event accounting or terminal failure gate failed",
+    )
+    accounting = report["trace_accounting"]
+    totals, journal = accounting["projection"], accounting["journal"]
+    require(
+        journal["accepted"] == journal["committed"] == totals["committed_commands"]
+        and journal["pending"] == journal["write_failures"] == 0
+        and accounting["retained_events"]
+        == totals["legacy_events"]
+        + totals["committed_events"]
+        + totals["recovery_events"]
+        - totals["pruned_events"],
+        "Projection retention accounting is incomplete",
+    )
+    observation, cleanup = report["sql_observation"], report["resource_cleanup"]
+    require(
+        report.get("database_integrity") == report.get("journal_integrity") == "ok"
+        and observation["transaction"]["count"] > 0
+        and not observation["counters"].get("transaction_sample_overflow")
+        and not observation["checked_out"]
+        and not observation["active_write_holders"]
+        and cleanup["business_checked_out"] == cleanup["trace_checked_out"] == 0
+        and cleanup["trace_journal_connection_closed"]
+        and cleanup["trace_writer_done"],
+        "Database or resource cleanup evidence is incomplete",
+    )
     if source:
         expected = {
             path.relative_to(source).as_posix() for path in (source / "backend/app").rglob("*.py")
@@ -240,6 +274,7 @@ def soak_status(path, source=None):
                 "unified_skill_scenarios.py",
                 "workflow_fixture.py",
                 "scheduler_fixture.py",
+                "trace_sql_observer.py",
             )
         }
         require(

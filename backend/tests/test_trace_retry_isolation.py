@@ -99,19 +99,26 @@ def test_failed_projection_is_bounded_and_next_batch_can_run(tmp_path, persisten
     async def run():
         store.start()
         began = time.monotonic()
-        assert await store.flush(timeout=4)
+        assert not await store.flush(timeout=4)
         elapsed = time.monotonic() - began
-        assert store.metrics["write_failures"] == store.metrics["dropped"] == 1
+        assert store.metrics["write_failures"] == 1 and store.metrics["dropped"] == 0
+        assert store.journal.snapshot()["pending"] == 1
         if persistent_busy:
             assert 1.5 <= elapsed < 3.5 and 0 < store.metrics["write_retries"] <= 15
         else:
             assert store.metrics["write_retries"] == 0  # NOT NULL is not BUSY
         lock.rollback()
+        store.retry_pending()
+        if persistent_busy:
+            assert await store.flush()
+        else:
+            assert not await store.flush()
+            assert store.journal.snapshot()["states"]["NEEDS_REVIEW"] == 1
         good = str(uuid4())
         store.enqueue("create", {"trace_id": good, "task_id": good})
-        assert await store.flush()
+        assert await store.flush() if persistent_busy else not await store.flush()
         with store.factory() as db:
-            assert db.get(AgentTrace, key) is None
+            assert bool(db.get(AgentTrace, key)) is persistent_busy
             assert db.get(AgentTrace, good) is not None
         await store.stop()
 
@@ -149,9 +156,10 @@ def test_cancelled_projection_still_records_its_eventual_database_failure(tmp_pa
         result = await asyncio.gather(store.worker, return_exceptions=True)
         assert isinstance(result[0], asyncio.CancelledError)
         assert store.queue.unfinished_tasks == 0
-        assert store.metrics["write_failures"] == store.metrics["dropped"] == 1
+        assert store.metrics["write_failures"] == 1 and store.metrics["dropped"] == 0
         assert store.metrics["last_write_failure_code"] & 0xFF == 5
-        assert key in store.lost
+        assert not await store.flush()
+        assert store.journal.snapshot()["states"]["RETRY_PENDING"] == 1
         await store.stop()
 
     try:

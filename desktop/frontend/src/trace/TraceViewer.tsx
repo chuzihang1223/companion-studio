@@ -49,6 +49,7 @@ function TraceSession({ conversationId, sessionId, revision, visible, source, re
   const [onlySession, setOnlySession] = useState(false);
   const [historyCursor, setHistoryCursor] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [integrity, setIntegrity] = useState({ pending: 0, needs_review: 0, failed: 0 });
   const [exporting, setExporting] = useState(false);
   const [exportName, setExportName] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -100,6 +101,7 @@ function TraceSession({ conversationId, sessionId, revision, visible, source, re
           if (!active) return;
           setTraces(page.items);
           setHistoryCursor(page.next_cursor);
+          setIntegrity(page.integrity || { pending: 0, needs_review: 0, failed: 0 });
           setError('');
           setSelected((old) =>
             page.items.some((row) => row.trace_id === old) ? old : page.items[0]?.trace_id || '',
@@ -230,6 +232,12 @@ function TraceSession({ conversationId, sessionId, revision, visible, source, re
         只读回放 · 不会重新操作电脑或调用模型。默认保留 30 天、最多 1000 个任务；每任务最多 5000
         条事件。
       </p>
+      {(integrity.pending > 0 || integrity.needs_review > 0 || integrity.failed > 0) && (
+        <p role="status" className="trace-warning">
+          追踪记录尚未全部写入：{integrity.pending} 条等待恢复，
+          {integrity.needs_review + integrity.failed} 条需要检查。历史可能不完整。
+        </p>
+      )}
       {!readOnly && (
         <div className="trace-filters">
           <select

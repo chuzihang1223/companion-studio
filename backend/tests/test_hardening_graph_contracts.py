@@ -152,7 +152,7 @@ def test_soak_rejects_contradictory_success_receipts(modules, tmp_path, contradi
     receipts = [
         {
             "cycle": i,
-            "phase": "core" if i < 90 else "mixed_cancel",
+            "phase": "core" if i < 180 else "mixed_cancel",
             "agent_plan_id": "agent-" + str(i),
             "workflow_run_id": "workflow-" + str(i),
             "voice_session_id": "voice-" + str(i),
@@ -161,20 +161,20 @@ def test_soak_rejects_contradictory_success_receipts(modules, tmp_path, contradi
             "rag_results": 1,
             "rag_content_sha256": "a" * 64,
         }
-        for i in range(180)
+        for i in range(360)
     ]
     report = {
         "status": "PASS",
         "requested_seconds": 3600,
         "actual_seconds": 3601,
-        "cycles": 180,
+        "cycles": 360,
         "workload_receipts": receipts,
-        "synthetic_model_requests": 180,
+        "synthetic_model_requests": 360,
         "samples": [
             {
                 "cycle": i,
                 "phase": row["phase"],
-                "elapsed_seconds": i * 20 + 10,
+                "elapsed_seconds": i * 10 + 5,
                 "owned_live_children": 0,
                 "mcp_connections": 0,
                 "workflow_tasks": 0,
@@ -183,7 +183,7 @@ def test_soak_rejects_contradictory_success_receipts(modules, tmp_path, contradi
             }
             for i, row in enumerate(receipts)
         ],
-        "mcp_children": [{"pid": i + 1, "exit_code": 0} for i in range(30)],
+        "mcp_children": [{"pid": i + 1, "exit_code": 0} for i in range(60)],
         "schedule_receipts": [
             {
                 "cycle": i,
@@ -191,24 +191,57 @@ def test_soak_rejects_contradictory_success_receipts(modules, tmp_path, contradi
                 "workflow_run_id": "scheduled-" + str(i),
                 "status": "COMPLETED",
             }
-            for i in range(0, 180, 30)
+            for i in range(0, 360, 30)
         ],
         "cancel_receipts": [
             {"cycle": i, "workflow_run_id": "cancel-" + str(i), "state": "CANCELLED"}
-            for i in range(90, 180, 3)
+            for i in range(180, 360, 3)
         ],
         "sqlite_errors": [],
         "unexpected_async_errors": [],
         "owned_live_children_at_close": 0,
+        "trace_write_failures": 0,
+        "trace_dropped_commands": 0,
+        "sqlite_busy_terminal": 0,
+        "queue_final": 0,
+        "trace_events_generated": 360,
+        "trace_events_accepted": 360,
+        "trace_events_committed": 360,
+        "trace_events_recoverably_pending": 0,
+        "trace_accounting": {
+            "journal": {"accepted": 720, "committed": 720, "pending": 0, "write_failures": 0},
+            "projection": {
+                "committed_commands": 720,
+                "committed_events": 360,
+                "legacy_events": 0,
+                "recovery_events": 0,
+                "pruned_events": 10,
+            },
+            "retained_events": 350,
+        },
+        "database_integrity": "ok",
+        "journal_integrity": "ok",
+        "sql_observation": {
+            "transaction": {"count": 720},
+            "counters": {},
+            "checked_out": 0,
+            "active_write_holders": 0,
+        },
+        "resource_cleanup": {
+            "business_checked_out": 0,
+            "trace_checked_out": 0,
+            "trace_journal_connection_closed": True,
+            "trace_writer_done": True,
+        },
     }
     path = tmp_path / "controlled-soak.json"
     write(path, report)
     assert evidence.soak_status(path) == "PASS"  # validator-only synthetic baseline
     if contradiction == "failed_receipts":
-        report["schedule_receipts"] = [{"status": "FAILED"}] * 6
-        report["cancel_receipts"] = [{"state": "COMPLETED"}] * 30
+        report["schedule_receipts"] = [{"status": "FAILED"}] * 12
+        report["cancel_receipts"] = [{"state": "COMPLETED"}] * 60
     elif contradiction == "opposite_terminal_states":
-        report["cancel_receipts"][0]["workflow_run_id"] = receipts[90]["workflow_run_id"]
+        report["cancel_receipts"][0]["workflow_run_id"] = receipts[180]["workflow_run_id"]
     else:
         for sample, receipt in zip(report["samples"], receipts):
             sample["phase"] = receipt["phase"] = (

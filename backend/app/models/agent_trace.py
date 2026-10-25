@@ -70,3 +70,38 @@ class TraceEvent(Base):
     status: Mapped[str] = mapped_column(String(24))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     data_json: Mapped[str] = mapped_column(Text, default="{}")
+
+
+class TraceProjectionReceipt(Base):
+    """Committed with its projection, including the commit-before-journal-ACK window.
+
+    No FK to the prunable viewer history: a receipt must outlive a pending source.
+    It contains identifiers/digests only, never the original command payload.
+    """
+
+    __tablename__ = "trace_projection_receipts"
+    __table_args__ = (Index("ix_projection_trace_order", "trace_id", "stream_id", "sequence"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    trace_id: Mapped[str] = mapped_column(String(36))
+    stream_id: Mapped[str] = mapped_column(String(36))
+    sequence: Mapped[int] = mapped_column(Integer)
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    event_written: Mapped[bool] = mapped_column(Boolean, default=False)
+    event_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    applied_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, index=True
+    )
+
+
+class TraceProjectionTotals(Base):
+    """Small lifetime counters distinguish retained history from lawful pruning."""
+
+    __tablename__ = "trace_projection_totals"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    committed_commands: Mapped[int] = mapped_column(Integer, default=0)
+    committed_events: Mapped[int] = mapped_column(Integer, default=0)
+    legacy_events: Mapped[int] = mapped_column(Integer, default=0)
+    recovery_events: Mapped[int] = mapped_column(Integer, default=0)
+    pruned_events: Mapped[int] = mapped_column(Integer, default=0)
+    pruned_traces: Mapped[int] = mapped_column(Integer, default=0)
+    limited_events: Mapped[int] = mapped_column(Integer, default=0)

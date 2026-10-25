@@ -21,13 +21,15 @@ from uuid import uuid4
 
 import win32api
 import win32process
-from sqlalchemy import event
+from sqlalchemy import event, func, select
+from trace_sql_observer import Recorder
 
 from unified_skill_fixture import unified_host
 from unified_skill_scenarios import complete_schedule, scheduled_run
 from workflow_fixture import graph, settle, start
 from app.database.session import SessionLocal, engine
 from app.models import Conversation
+from app.models.agent_trace import TraceEvent, TraceProjectionTotals
 from app.services.evaluation.voice_cases import signal
 from app.services.knowledge.contracts import SearchQuery
 from app.services.realtime_voice.contracts import Frame, Scope, StartRequest
@@ -110,6 +112,7 @@ def test_real_duration_original_services(tmp_path):
         source / "backend/tests/unified_skill_scenarios.py",
         source / "backend/tests/workflow_fixture.py",
         source / "backend/tests/scheduler_fixture.py",
+        source / "backend/tests/trace_sql_observer.py",
     ]
     report["source_files"] = {
         file.relative_to(source).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest()
@@ -147,8 +150,10 @@ def test_real_duration_original_services(tmp_path):
             )
         )
         children = []
+        observer = None
         try:
             async with unified_host(tmp_path) as h:
+                observer = Recorder({"business": engine, "trace": h.trace.engine})
                 owners = []
                 with SessionLocal.begin() as db:
                     for _ in range(4):
@@ -160,7 +165,13 @@ def test_real_duration_original_services(tmp_path):
                 collection = await h.indexed()
                 query = SearchQuery(query="Orchard", collection_ids=[collection])
                 schedule_host = SimpleNamespace(**{**h.__dict__, "owner": owners[2]})
-                while time.monotonic() - began < duration:
+                minimum = 360 if duration >= 3600 else 0
+                while (
+                    time.monotonic() - began < duration
+                    or report["cycles"] < minimum
+                    or minimum
+                    and len(report["cancel_receipts"]) < 60
+                ):
                     cycle_started = time.monotonic()
                     index = report["cycles"]
                     definition = graph()
@@ -185,10 +196,16 @@ def test_real_duration_original_services(tmp_path):
                         report["mcp_children"].append(
                             {"pid": child.pid, "exit_code": child.returncode}
                         )
+                        # Keep every exit receipt, but not a strong reference to
+                        # every completed Process. On Windows those references
+                        # each retain a handle and distort the resource trend.
+                        # Any unconfirmed child stays owned in children/finally.
+                        children.remove(child)
+                        del child
                     # The production per-owner scheduler quota is 12/hour.
                     # Exercise it every five minutes; never reset its ledger or
                     # advance the synthetic clock to manufacture extra budget.
-                    if index % 30 == 0:
+                    if index % 30 == 0 and len(report["schedule_receipts"]) < 12:
                         occurrence = await scheduled_run(schedule_host, graph())
                         final, scheduled_result, _ = await complete_schedule(
                             schedule_host, occurrence
@@ -219,7 +236,7 @@ def test_real_duration_original_services(tmp_path):
                         report["cancel_receipts"].append(
                             {"cycle": index, "workflow_run_id": pending, "state": "CANCELLED"}
                         )
-                    await h.trace.flush()
+                    assert await h.trace.flush(), "Accepted Trace sources did not commit"
                     await asyncio.sleep(0.05)
                     assert not h.app.state.runtime_registry.active
                     assert not h.app.state.realtime_voice.rows
@@ -246,6 +263,11 @@ def test_real_duration_original_services(tmp_path):
                         **process_metrics(),
                         "trace_queue": h.trace.queue.qsize(),
                         "trace_metrics": dict(h.trace.metrics),
+                        "business_connections_checked_out": engine.pool.checkedout(),
+                        "trace_connections_checked_out": h.trace.engine.pool.checkedout(),
+                        "trace_pending_sources": h.trace.journal.snapshot()["pending"],
+                        "voice_sessions": len(h.app.state.realtime_voice.rows),
+                        "trace_write_gate": h.trace.write_gate.snapshot(),
                         "owned_live_children": sum(child.returncode is None for child in children),
                         "workflow_tasks": len(h.app.state.workflows.tasks),
                         "mcp_connections": len(h.app.state.mcp_connections.connections),
@@ -275,6 +297,86 @@ def test_real_duration_original_services(tmp_path):
                             ),
                         )
                     )
+                journal = h.trace.journal.snapshot()
+                with SessionLocal() as db:
+                    totals = db.get(TraceProjectionTotals, 1)
+                    retained = db.scalar(select(func.count()).select_from(TraceEvent))
+                    accounting = {
+                        field: getattr(totals, field)
+                        for field in (
+                            "committed_commands",
+                            "committed_events",
+                            "legacy_events",
+                            "recovery_events",
+                            "pruned_events",
+                            "pruned_traces",
+                            "limited_events",
+                        )
+                    }
+                with engine.connect() as connection:
+                    report["database_integrity"] = connection.exec_driver_sql(
+                        "PRAGMA integrity_check"
+                    ).scalar()
+                with h.trace.journal.transaction() as connection:
+                    report["journal_integrity"] = connection.execute(
+                        "PRAGMA integrity_check"
+                    ).fetchone()[0]
+                report["trace_accounting"] = {
+                    "generated_commands": h.trace.metrics["generated"],
+                    "generated_events": h.trace.metrics["generated_events"],
+                    "journal": journal,
+                    "projection": accounting,
+                    "retained_events": retained,
+                }
+                assert (
+                    journal["accepted"] == journal["committed"] == accounting["committed_commands"]
+                )
+                assert (
+                    journal["accepted_events"]
+                    == journal["committed_events"]
+                    == accounting["committed_events"]
+                )
+                assert retained == (
+                    accounting["legacy_events"]
+                    + accounting["committed_events"]
+                    + accounting["recovery_events"]
+                    - accounting["pruned_events"]
+                )
+                assert not journal["pending"] and not journal["write_failures"]
+                assert not h.trace.metrics["write_failures"] and not h.trace.metrics["dropped"]
+                report.update(
+                    trace_events_generated=h.trace.metrics["generated_events"],
+                    trace_events_accepted=journal["accepted_events"],
+                    trace_events_committed=journal["committed_events"],
+                    trace_events_recoverably_pending=h.trace.metrics["recoverably_pending"],
+                    trace_write_failures=h.trace.metrics["write_failures"],
+                    trace_dropped_commands=h.trace.metrics["dropped"],
+                    sqlite_busy_transient=h.trace.metrics["sqlite_busy_transient"],
+                    sqlite_busy_terminal=h.trace.metrics["sqlite_busy_terminal"],
+                    retry_count=h.trace.metrics["write_retries"],
+                    queue_peak=h.trace.metrics["queue_peak"],
+                    queue_final=h.trace.queue.qsize(),
+                )
+            # Observe shutdown too: the owned Trace Engine is disposed by host.
+            gc.collect()
+            report["resource_cleanup"] = {
+                **process_metrics(),
+                "business_checked_out": engine.pool.checkedout(),
+                "trace_checked_out": h.trace.engine.pool.checkedout(),
+                "trace_journal_connection_closed": h.trace.journal.connection is None,
+                "trace_writer_done": h.trace.worker.done(),
+                "trace_queue": h.trace.queue.qsize(),
+                "workflow_tasks": len(h.app.state.workflows.tasks),
+                "voice_sessions": len(h.app.state.realtime_voice.rows),
+            }
+            assert report["resource_cleanup"]["business_checked_out"] == 0
+            assert report["resource_cleanup"]["trace_checked_out"] == 0
+            assert report["resource_cleanup"]["trace_journal_connection_closed"]
+            if duration >= 3600:
+                assert report["cycles"] >= 360 and len(report["mcp_children"]) >= 60
+                assert (
+                    len(report["schedule_receipts"]) == 12 and len(report["cancel_receipts"]) >= 60
+                )
             assert all(child.returncode is not None for child in children)
             assert not report["sqlite_errors"] and not report["unexpected_async_errors"]
             report["status"] = "PASS" if duration >= 3600 else "DIAGNOSTIC_PASS_ONLY"
@@ -284,6 +386,14 @@ def test_real_duration_original_services(tmp_path):
             raise
         finally:
             report["actual_seconds"] = time.monotonic() - began
+            report["actual_duration_seconds"] = report["actual_seconds"]
+            report["completed_cycles"] = report["cycles"]
+            if observer:
+                report["sql_observation"] = observer.snapshot()
+                report["sqlite_transaction_p95"] = report["sql_observation"]["transaction"][
+                    "p95_ms"
+                ]
+                observer.close()
             report["real_core_phase_seconds"] = min(1800, report["actual_seconds"])
             report["owned_live_children_at_close"] = sum(
                 child.returncode is None for child in children

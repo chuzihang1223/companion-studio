@@ -95,12 +95,24 @@ class EnvironmentManager:
 
     def check_capacity(self):
         total = 0
-        for path in self.root.glob("*/*/data/chat.db"):
-            try:
-                if not path.is_symlink():
-                    total += path.stat().st_size
-            except FileNotFoundError:
-                continue  # A completed run can be removed during this scan.
+        # Include the new bounded durable sources, including abandoned owned
+        # staging. Retaining them on archive failure must not evade the old cap.
+        for pattern in (
+            "*/*/data/chat.db",
+            "*/*/data/chat.db.trace-pending/*",
+            "_w/*/data/chat.db",
+            "_w/*/data/chat.db.trace-pending/*",
+        ):
+            for path in self.root.glob(pattern):
+                try:
+                    if path.is_file() and not any(
+                        p.is_symlink() or p.is_junction()
+                        for p in (path, *path.parents)
+                        if p.is_relative_to(self.root)
+                    ):
+                        total += path.stat().st_size
+                except FileNotFoundError:
+                    continue  # A completed run can be removed during this scan.
         if total >= 256 * 1024 * 1024:
             raise ValueError("评测证据已达 256 MiB，请删除旧评测历史")
 
@@ -209,6 +221,7 @@ class EnvironmentManager:
                 raise WorkerFailure("UNEXPECTED_WORKER_EXIT")
             return result
         finally:
+            archived = False
             try:
                 # Closed worker DBs may retain a WAL after abrupt termination.
                 # SQLite backup reads a consistent snapshot and folds that WAL
@@ -216,8 +229,13 @@ class EnvironmentManager:
                 source = data / "chat.db"
                 if source.is_file():
                     await asyncio.to_thread(self.archive_database, source, archive)
+                archived = True
             finally:
-                if home.resolve().parent == (self.root / "_w").resolve() and not home.is_symlink():
+                if (
+                    archived
+                    and home.resolve().parent == (self.root / "_w").resolve()
+                    and not home.is_symlink()
+                ):
                     # Skills may contain immutable revisions below MAX_PATH.
                     # Ownership is checked above, before applying the IO prefix.
                     await asyncio.to_thread(shutil.rmtree, disk_path(home))
@@ -345,6 +363,9 @@ class EnvironmentManager:
             closing(sqlite3.connect(archive / "data" / "chat.db")) as dest,
         ):
             src.backup(dest)
+        from app.services.trace.journal import TraceJournal
+
+        TraceJournal.archive(source, archive / "data" / "chat.db")
 
     def recover_links(self, run_id, attempt_id):
         """仅在 worker 结束后恢复自己的 Trace，强制终止只能标记中断。"""
@@ -359,7 +380,11 @@ class EnvironmentManager:
         engine = create_engine(f"sqlite:///{path.as_posix()}")
         try:
             factory = sessionmaker(engine, expire_on_commit=False)
-            TraceStore(factory).recover()
+            store = TraceStore(factory)
+            try:
+                store.recover()
+            finally:
+                store.close_idle()
             with factory() as db:
                 row = db.scalar(select(AgentTrace))
                 if row:
@@ -384,44 +409,48 @@ class EnvironmentManager:
                 and not child.is_symlink()
                 and child.resolve().is_relative_to(self.root)
             ):
+                archived = False
                 try:
                     owner = json.loads((child / "owner.json").read_text(encoding="utf-8"))
                     run_id, attempt_id = str(UUID(owner["run_id"])), str(UUID(owner["attempt_id"]))
                     repository.attempt(run_id, attempt_id)
                     archive = self.path(run_id, attempt_id)
                     source = child / "data" / "chat.db"
-                    if (
-                        source.is_file()
-                        and source.resolve().is_relative_to(child.resolve())
-                        and not (archive / "data" / "chat.db").exists()
-                    ):
+                    if source.is_file() and source.resolve().is_relative_to(child.resolve()):
+                        # Retry both backups after an interrupted copy. The
+                        # exited worker's owned staging remains authoritative
+                        # until the main DB AND its pending sources are sealed.
                         archive.mkdir(parents=True, exist_ok=True)
                         self.archive_database(source, archive)
                     links = self.recover_links(run_id, attempt_id)
                     repository.attach_recovered_trace(run_id, attempt_id, links)
+                    archived = True
                 except (OSError, ValueError, KeyError, LookupError):
                     pass  # Unknown/corrupt staging is not evidence of task success.
                 finally:
-                    shutil.rmtree(child)
+                    if archived:
+                        shutil.rmtree(child)
 
     @contextmanager
     def trace_repository(self, run_id, attempt_id):
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         from app.services.trace.repository import TraceRepository
-        from app.services.trace.store import TraceStore
 
         path = self.path(run_id, attempt_id) / "data" / "chat.db"
         if not path.is_file() or path.is_symlink():
             raise LookupError("该评测没有可用 Trace")
+        wal = path.with_name(path.name + "-wal")
+        if wal.exists() and wal.stat().st_size:
+            raise LookupError("评测 Trace 归档尚未封存")
         # Immutable read-only connection: opening a history panel cannot migrate,
         # create a SQLite file, modify a trace or resume an Agent task.
         engine = create_engine(
-            f"sqlite:///file:{path.as_posix()}?mode=ro&uri=true",
+            f"sqlite:///file:{path.as_posix()}?mode=ro&immutable=1&uri=true",
             connect_args={"check_same_thread": False},
         )
         try:
-            yield TraceRepository(TraceStore(sessionmaker(engine, expire_on_commit=False)))
+            yield TraceRepository.read_only(sessionmaker(engine, expire_on_commit=False))
         finally:
             engine.dispose()
 
