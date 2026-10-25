@@ -17,6 +17,7 @@ import sys
 import tarfile
 import time
 from pathlib import Path, PurePosixPath
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from packaging.requirements import Requirement
@@ -310,7 +311,30 @@ def upstream(dist: metadata.Distribution) -> list[str]:
     home = dist.metadata.get("Home-page", "")
     if home.startswith("https://") and home not in values:
         values.append(home)
+    if not values:
+        # Some wheels (e.g. pluggy 1.6) omit project URLs entirely. Keep a
+        # version-specific distribution origin, not an invented repository.
+        name = dist.metadata.get("Name")
+        if not name:
+            raise RuntimeError("Distribution identity missing for upstream provenance")
+        values.append(
+            f"https://pypi.org/project/{quote(name, safe='')}/{quote(dist.version, safe='')}/"
+        )
     return values
+
+
+def notice_relative_paths(values: list[str]) -> dict[str, str]:
+    paths = {value: PurePosixPath(value) for value in values}
+    if any(path.is_absolute() or ".." in path.parts for path in paths.values()):
+        raise RuntimeError("Redistribution notice must have a package-relative path")
+    containers = {path.parts[0] for path in paths.values() if len(path.parts) > 1}
+    # Multi-package wheels such as pywin32 have distinct adodbapi/license.txt,
+    # pythonwin/License.txt and win32com/License.txt. Dropping their container
+    # overwrites different grants on Windows' case-insensitive filesystem.
+    return {
+        value: value if len(containers) > 1 or len(path.parts) == 1 else "/".join(path.parts[1:])
+        for value, path in paths.items()
+    }
 
 
 def python_packages(root: Path) -> list[dict]:
@@ -354,11 +378,15 @@ def python_packages(root: Path) -> list[dict]:
         folder = f"licenses/python/{canonical(actual_name)}-{dist.version}"
         copies = []
         seen = set()
+        notices = []
         for installed in dist.files or []:
             value = str(installed).replace("\\", "/")
             filename = PurePosixPath(value).name
             if not any(token in filename.lower() for token in LICENSE_NAMES):
                 continue
+            notices.append((installed, value))
+        relative_paths = notice_relative_paths([value for _, value in notices])
+        for installed, value in notices:
             if value in seen:
                 continue
             seen.add(value)
@@ -367,8 +395,7 @@ def python_packages(root: Path) -> list[dict]:
                 continue
             # Preserve vendor notice subdirectories; never copy RECORD/METADATA,
             # direct_url.json, installation logs or absolute package paths.
-            parts = PurePosixPath(value).parts
-            relative = "/".join(parts[1:]) if len(parts) > 1 else filename
+            relative = relative_paths[value]
             copies.append(save(root, f"{folder}/{relative}", source.read_bytes()))
         if not copies:
             raise RuntimeError(f"Missing redistribution notice: {actual_name} {dist.version}")

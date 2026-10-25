@@ -600,7 +600,9 @@
       "ecosystem": "PyPI",
       "scope": "build/test",
       "license": "MIT",
-      "upstream": [],
+      "upstream": [
+        "https://pypi.org/project/pluggy/1.6.0/"
+      ],
       "files": [
         {
           "path": "licenses/python/pluggy-1.6.0/licenses/LICENSE",
@@ -829,82 +831,82 @@
       ],
       "files": [
         {
-          "path": "licenses/python/pywin32-312/license.txt",
+          "path": "licenses/python/pywin32-312/adodbapi/license.txt",
           "sha256": "5ea2f23c7f00c3006bacf267183e816d8d4b6dc95ea57a4ddb0ff81de6d8719e",
           "bytes": 26925
         },
         {
-          "path": "licenses/python/pywin32-312/License.txt",
+          "path": "licenses/python/pywin32-312/pythonwin/License.txt",
           "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
           "bytes": 1541
         },
         {
-          "path": "licenses/python/pywin32-312/Scintilla-License.txt",
+          "path": "licenses/python/pywin32-312/pythonwin/Scintilla-License.txt",
           "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
           "bytes": 873
         },
         {
-          "path": "licenses/python/pywin32-312/pywin/idle/LICENSE.txt",
+          "path": "licenses/python/pywin32-312/pythonwin/pywin/idle/LICENSE.txt",
           "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
           "bytes": 12540
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/adodbapi/license.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/adodbapi/license.txt",
           "sha256": "5ea2f23c7f00c3006bacf267183e816d8d4b6dc95ea57a4ddb0ff81de6d8719e",
           "bytes": 26925
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/com/License.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/com/License.txt",
           "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
           "bytes": 1570
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/com/win32comext/mapi/src/MAPIStubLibrary/LICENSE",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/com/win32comext/mapi/src/MAPIStubLibrary/LICENSE",
           "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
           "bytes": 1087
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/pythonwin/License.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/pythonwin/License.txt",
           "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
           "bytes": 1541
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/pythonwin/Scintilla/License.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/pythonwin/Scintilla/License.txt",
           "sha256": "57ec79bbeab4fd1cf7460a7ad450d2ab01471810459aeae9e75e4c66b472095f",
           "bytes": 873
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/pythonwin/pywin/idle/LICENSE.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/pythonwin/pywin/idle/LICENSE.txt",
           "sha256": "a0fa1e7b8a4230055685e796548ac084a6c0eea395294574093bba72efd9191b",
           "bytes": 12540
         },
         {
-          "path": "licenses/python/pywin32-312/licenses/win32/License.txt",
+          "path": "licenses/python/pywin32-312/pywin32-312.dist-info/licenses/win32/License.txt",
           "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
           "bytes": 1541
         },
         {
-          "path": "licenses/python/pywin32-312/License.txt",
+          "path": "licenses/python/pywin32-312/win32/License.txt",
           "sha256": "a74d826efb242db087b850348e20abbfd591b51e2081f2048735290913872924",
           "bytes": 1541
         },
         {
-          "path": "licenses/python/pywin32-312/License.txt",
+          "path": "licenses/python/pywin32-312/win32com/License.txt",
           "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
           "bytes": 1570
         },
         {
-          "path": "licenses/python/pywin32-312/License.txt",
+          "path": "licenses/python/pywin32-312/win32comext/License.txt",
           "sha256": "fad39c18fc3825fa278db1c86fd52cf88d7c525b3c2fbf7817fa383cbae4d423",
           "bytes": 1570
         },
         {
-          "path": "licenses/python/pywin32-312/mapi/MAPIStubLibrary-License.txt",
+          "path": "licenses/python/pywin32-312/win32comext/mapi/MAPIStubLibrary-License.txt",
           "sha256": "1c4cf44d2fb8bf2d10214d6da80cc9e05502824cc4460f35be4c7bcb4cde53da",
           "bytes": 1087
         },
         {
-          "path": "licenses/python/pywin32-312/mapi/NOTICE.md",
+          "path": "licenses/python/pywin32-312/win32comext/mapi/NOTICE.md",
           "sha256": "dedf997c8f5568a0e0aff57d009f501226ea30c401323d67912b6a8f8735a825",
           "bytes": 476
         }
@@ -996,87 +998,87 @@
       ],
       "files": [
         {
-          "path": "licenses/python/setuptools-84.1.0/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools-84.1.0.dist-info/licenses/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
           "sha256": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d",
           "bytes": 7634
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
           "sha256": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04",
           "bytes": 10278
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
           "bytes": 1023
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
           "sha256": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
           "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
           "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
           "bytes": 1053
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
           "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
           "bytes": 197
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
           "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
           "bytes": 10174
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
           "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
           "bytes": 1344
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
           "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
           "bytes": 1089
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
           "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
           "bytes": 1072
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
           "sha256": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
           "bytes": 1107
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
           "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
           "bytes": 1076
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/config/NOTICE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/config/NOTICE",
           "sha256": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8",
           "bytes": 493
         },
         {
-          "path": "licenses/python/setuptools-84.1.0/config/_validate_pyproject/NOTICE",
+          "path": "licenses/python/setuptools-84.1.0/setuptools/config/_validate_pyproject/NOTICE",
           "sha256": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7",
           "bytes": 18737
         }

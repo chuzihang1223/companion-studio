@@ -49,12 +49,12 @@ This inventory records the actual dependency versions in the build environment. 
 | pytest | 9.1.1 | build/test | MIT | [Files](licenses/python/pytest-9.1.1/licenses/LICENSE) |
 | python-dotenv | 1.2.3 | runtime | BSD-3-Clause | [Files](licenses/python/python-dotenv-1.2.3/licenses/LICENSE) |
 | python-multipart | 0.0.32 | runtime | Apache-2.0 | [Files](licenses/python/python-multipart-0.0.32/licenses/LICENSE.txt) |
-| pywin32 | 312 | runtime | LicenseRef-PyWin32 AND PSF-2.0 AND MIT AND LGPL-2.1-or-later | [Files](licenses/python/pywin32-312/license.txt) |
+| pywin32 | 312 | runtime | LicenseRef-PyWin32 AND PSF-2.0 AND MIT AND LGPL-2.1-or-later | [Files](licenses/python/pywin32-312/adodbapi/license.txt) |
 | pywin32-ctypes | 0.2.3 | build/test | BSD-3-Clause | [Files](licenses/python/pywin32-ctypes-0.2.3/LICENSE.txt) |
 | PyYAML | 6.0.3 | runtime | MIT | [Files](licenses/python/pyyaml-6.0.3/licenses/LICENSE) |
 | referencing | 0.37.0 | runtime | MIT | [Files](licenses/python/referencing-0.37.0/licenses/COPYING) |
 | rpds-py | 2026.9.1 | runtime | MIT | [Files](licenses/python/rpds-py-2026.9.1/licenses/LICENSE) |
-| setuptools | 84.1.0 | build/test | MIT | [Files](licenses/python/setuptools-84.1.0/licenses/LICENSE) |
+| setuptools | 84.1.0 | build/test | MIT | [Files](licenses/python/setuptools-84.1.0/setuptools-84.1.0.dist-info/licenses/LICENSE) |
 | SQLAlchemy | 2.0.54 | runtime | MIT | [Files](licenses/python/sqlalchemy-2.0.54/licenses/AUTHORS) |
 | sse-starlette | 3.5.0 | runtime | BSD-3-Clause | [Files](licenses/python/sse-starlette-3.5.0/licenses/AUTHORS) |
 | starlette | 1.7.0 | runtime | BSD-3-Clause | [Files](licenses/python/starlette-1.7.0/licenses/LICENSE.md) |
