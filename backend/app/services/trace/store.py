@@ -153,19 +153,7 @@ class TraceStore:
                         except Exception:
                             pass  # A closed UI subscription cannot affect execution.
             except Exception as error:
-                self.metrics["last_write_failure_code"] = getattr(
-                    getattr(error, "orig", None), "sqlite_errorcode", None
-                )
-                self.metrics["write_failures"] += 1
-                self.metrics["dropped"] += len(batch)
-                for _, data in batch:
-                    self._lost(data["trace_id"])
-                self.logger.warning(
-                    "trace_batch_failed type=%s sqlite_code=%s count=%d",
-                    type(error).__name__,
-                    self.metrics["last_write_failure_code"],
-                    len(batch),
-                )
+                self._record_failure(batch, error)
             finally:
                 elapsed = (time.perf_counter() - start) * 1000
                 self.metrics["write_ms"] += elapsed
@@ -173,6 +161,21 @@ class TraceStore:
                 self.metrics["batches"] += 1
                 for _ in batch:
                     self.queue.task_done()
+
+    def _record_failure(self, batch, error):
+        self.metrics["last_write_failure_code"] = getattr(
+            getattr(error, "orig", None), "sqlite_errorcode", None
+        )
+        self.metrics["write_failures"] += 1
+        self.metrics["dropped"] += len(batch)
+        for _, data in batch:
+            self._lost(data["trace_id"])
+        self.logger.warning(
+            "trace_batch_failed type=%s sqlite_code=%s count=%d",
+            type(error).__name__,
+            self.metrics["last_write_failure_code"],
+            len(batch),
+        )
 
     async def _write_bounded(self, batch):
         # The business loop can be inside its own synchronous SQLite wait.
@@ -193,8 +196,12 @@ class TraceStore:
                 # Even repeated cancellation must join the real transaction
                 # before queue.task_done or engine disposal can run.
                 cancelled = error
-            except Exception:
+            except Exception as error:
                 if cancelled:
+                    # Cancellation still exits the worker, but cannot erase a
+                    # real transaction failure learned while joining its thread.
+                    # _run does not catch CancelledError, so account exactly once.
+                    self._record_failure(batch, error)
                     raise cancelled from None
                 raise
         if cancelled:

@@ -120,3 +120,43 @@ def test_failed_projection_is_bounded_and_next_batch_can_run(tmp_path, persisten
     finally:
         lock.close()
         engine.dispose()
+
+
+def test_cancelled_projection_still_records_its_eventual_database_failure(tmp_path):
+    path = tmp_path / "cancelled-failure.db"
+    engine = create_engine(
+        f"sqlite:///{path.as_posix()}", connect_args={"check_same_thread": False, "timeout": 0.1}
+    )
+    migrate(engine)
+    store = TraceStore(sessionmaker(engine, expire_on_commit=False))
+    busy = threading.Event()
+    event.listen(engine, "handle_error", lambda context: busy.set())
+    lock = sqlite3.connect(path)
+    lock.execute("BEGIN IMMEDIATE")
+    key = str(uuid4())
+    store.enqueue("create", {"trace_id": key, "task_id": key})
+
+    async def run():
+        store.start()
+        for _ in range(2000):
+            if busy.is_set():
+                break
+            await asyncio.sleep(0.001)
+        assert busy.is_set()
+        store.worker.cancel()
+        await asyncio.sleep(0.02)
+        store.worker.cancel()
+        result = await asyncio.gather(store.worker, return_exceptions=True)
+        assert isinstance(result[0], asyncio.CancelledError)
+        assert store.queue.unfinished_tasks == 0
+        assert store.metrics["write_failures"] == store.metrics["dropped"] == 1
+        assert store.metrics["last_write_failure_code"] & 0xFF == 5
+        assert key in store.lost
+        await store.stop()
+
+    try:
+        asyncio.run(run())
+    finally:
+        lock.rollback()
+        lock.close()
+        engine.dispose()
