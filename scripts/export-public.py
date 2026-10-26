@@ -32,6 +32,7 @@ TREES = {
     "examples/agent-skills",
 }
 PUBLIC_DOCS = {
+    "RESOURCE_LIFECYCLE.md",
     "FINAL_RELEASE_HARDENING.md",
     "VOICE_BASELINE.md",
     "VOICE_ARCHITECTURE.md",
