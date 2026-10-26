@@ -238,15 +238,18 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
         # Preserve the original five-second drain assertion. If it fails, keep
         # the live queue/Future state: later shutdown may finish the durable ACK
         # and erase the distinction between slow persistence and notification.
-        assert flushed, {
-            "flush_elapsed_ms": (time.perf_counter() - flush_started) * 1000,
-            "queue_unfinished": store.queue.unfinished_tasks,
-            "queue_size": store.queue.qsize(),
-            "blocked": store.blocked,
-            "worker_done": store.worker.done() if store.worker else None,
-            "inflight_done": store.inflight.done() if store.inflight else None,
-            "metrics": dict(store.metrics),
-        }
+        assert flushed, json.dumps(
+            {
+                "flush_elapsed_ms": (time.perf_counter() - flush_started) * 1000,
+                "queue_unfinished": store.queue.unfinished_tasks,
+                "queue_size": store.queue.qsize(),
+                "blocked": store.blocked,
+                "worker_done": store.worker.done() if store.worker else None,
+                "inflight_done": store.inflight.done() if store.inflight else None,
+                "metrics": dict(store.metrics),
+            },
+            sort_keys=True,
+        )
         with store.factory() as db:
             from app.models.agent_trace import AgentTrace
 
