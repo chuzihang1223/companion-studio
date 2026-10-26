@@ -118,6 +118,7 @@ def test_1000_event_write_query_performance_and_retention(trace_database):
             "create", {"trace_id": trace, "task_id": str(uuid4()), "conversation_id": conversation}
         )
         started = time.perf_counter()
+        cpu_started = time.process_time()
         for _ in range(1000):
             assert store.enqueue(
                 "event",
@@ -128,6 +129,7 @@ def test_1000_event_write_query_performance_and_retention(trace_database):
                 },
             )
         enqueue_ms = (time.perf_counter() - started) * 1000
+        enqueue_cpu_ms = (time.process_time() - cpu_started) * 1000
         assert await store.flush(timeout=10)
         repo = TraceRepository(store)
         all_rows = []
@@ -136,19 +138,21 @@ def test_1000_event_write_query_performance_and_retention(trace_database):
         assert len(all_rows) == 1000
         assert store.metrics["dropped"] == 0
         assert len(json.dumps(all_rows)) < 2_000_000
-        assert enqueue_ms < 3000 and store.metrics["last_query_ms"] < 1500
+        # Retain timing context even when the original performance gate fails.
         print(
             json.dumps(
                 {
                     "trace_performance": {
                         "events": 1000,
                         "enqueue_ms": enqueue_ms,
+                        "enqueue_cpu_ms": enqueue_cpu_ms,
                         **store.metrics,
                         "dto_bytes": len(json.dumps(all_rows)),
                     }
                 }
             )
         )
+        assert enqueue_ms < 3000 and store.metrics["last_query_ms"] < 1500
         with factory() as db:
             db.get(AgentTrace, trace).started_at = utc_now() - timedelta(days=40)
             db.add(WorkEvent(session_id=session, type="workflow_updated", detail_json="{}"))
