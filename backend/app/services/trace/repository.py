@@ -6,9 +6,10 @@ import json
 import time
 from types import SimpleNamespace
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 
 from app.models import Conversation, WorkSession
+from app.database.write_gate import claim_write
 from app.models.agent_trace import AgentTrace, TraceEvent, TraceSpan
 from app.services.trace import privacy
 from app.services.trace.types import ERRORS, PHASES, STATUSES, TraceEventType
@@ -327,6 +328,10 @@ class TraceRepository:
 
     def remove(self, trace_id, conversation_id, work_session_id=None):
         with self.read() as db:
+            # Read-modify-write totals must be read after writer admission, not
+            # from a stale ORM snapshot while another deletion/prune commits.
+            claim_write(db)
+            db.execute(text("BEGIN IMMEDIATE"))
             row = self.owned(db, trace_id, conversation_id, work_session_id)
             if row.status not in {"completed", "failed", "cancelled", "interrupted"}:
                 raise ValueError("请等任务结束后再删除轨迹")
