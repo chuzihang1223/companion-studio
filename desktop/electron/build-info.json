@@ -1,8 +1,8 @@
 {
-  "version": "0.3.0-rc.3",
+  "version": "0.3.0-rc.4",
   "product_name": "Companion Studio",
-  "build_label": "Companion Studio Trace Integrity Local Review",
-  "build_id": "studio-0.3.0-rc.3-source",
+  "build_label": "Companion Studio Final Production Local Candidate",
+  "build_id": "studio-0.3.0-rc.4-source",
   "built_at": null,
   "channel": "review",
   "app_id": "com.companionstudio.desktop",

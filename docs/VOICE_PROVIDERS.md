@@ -1,7 +1,8 @@
 # 语音 Provider 的实际能力
 
-源码锁定依赖不变。新增本地路径使用 Windows 已安装的 `.NET Framework System.Speech`；
-Python 3.12 的 audioop 实际重采样。Python 3.13 已移除 audioop，不能直接升级解释器。
+当前本地路径使用 Windows 已安装的 `.NET Framework System.Speech`；
+验证构建使用 Python 3.13.17 和锁定的 `audioop-lts` 执行实际重采样。
+Python 3.13 不再自带 audioop，必须安装项目锁定依赖，不能只更换解释器。
 ASR/TTS 不共用其他产品的环境、模型或声音素材。
 
 | 路径 | 真实接口能力 | 网络 / 配置 | 验收边界 |

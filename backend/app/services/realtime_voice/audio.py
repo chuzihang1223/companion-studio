@@ -87,7 +87,7 @@ class ActivityDetector:
 class CaptureBuffer:
     """One turn has one sample format and at most 30 seconds of RAM-only audio.
 
-    audioop.ratecv is the pinned Python 3.12 stdlib C resampler. Its filter state
+    audioop.ratecv uses the locked audioop-lts C resampler on Python 3.13. Its filter state
     continues across packets; changing a WAV rate label is never resampling.
     Keep the complete manual utterance including pre-roll/pauses for batch ASR.
     """

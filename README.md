@@ -1,8 +1,8 @@
 # Companion Studio（伴舟）
 
-**0.3.0-rc.3 本地候选 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
+**0.3.0-rc.4 本地候选 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.3.0-rc.3 本地候选版**，包含 Skill 01–10 的实现、Trace 完整性修复及联合审核入口；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，旧发行版不包含本分支候选功能。请在独立档案测试，勿覆盖正式版数据。候选功能是否达到发布门，以对应构建的实际审核报告为准。
+> 本开发分支为 **0.3.0-rc.4 本地候选版**，包含 Skill 01–10 的实现、Trace 完整性修复、资源回收和联合审核入口；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，旧发行版不包含本分支候选功能。请在独立档案测试，勿覆盖正式版数据。候选功能是否达到发布门，以对应构建的实际审核报告为准。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -39,7 +39,7 @@ Chat / Work 输入框旁的麦克风可开启语音面板。选择设备、中�
 
 当前 Windows 本地 ASR 是终句识别，没有逐字字幕；中英混读存在误识别，免提和自动语音打断尚未开放。
 系统音色无角色克隆或显式情绪能力。Fish/Index 需要用户自行配置，云端朗读另需文字传输允许。
-语音功能现随 `0.3.0-rc.3` 本地候选一起审核；上方下载链接仍指向已公开版本。
+语音功能现随 `0.3.0-rc.4` 本地候选一起审核；上方下载链接仍指向已公开版本。
 [操作和架构](docs/VOICE_ARCHITECTURE.md) · [引擎能力](docs/VOICE_PROVIDERS.md) ·
 [隐私与资源](docs/VOICE_PRIVACY.md) · [36 项分层评测](docs/VOICE_EVALUATION.md)
 
@@ -205,7 +205,8 @@ Evaluation 新增 28 项 Knowledge Core，使用合成资料和固定模型，�
 
 支持手动触发、输入、模型分析、内置工具、MCP 工具、Agent Skill、条件、数据转换、人工审批、
 Merge 和输出共 11 种节点。Tool Node 经过原权限和 Agent Runtime；人工审批不会提前授权下游工具。
-当前为有界串行 DAG，不支持循环、定时任务、自动后台续跑或任意代码节点。
+当前为有界串行 DAG，不支持循环、图内定时触发节点、自动后台续跑或任意代码节点。
+独立「定时任务」模块可以按原权限运行已发布的固定工作流版本。
 
 下图来自 `0.2.0-workflow.1` 实际安装版的独立测试档案；模型测试使用本机模拟服务，不代表真实 AI 质量：
 
@@ -287,7 +288,7 @@ $env:COMPANION_HOME = 'D:\CompanionStudioData'
 
 ### 从源码安装
 
-适用于 Windows 10 / 11。使用 **Python 3.12**、**Node.js 24** 和 npm；锁定运行依赖见 `backend/requirements.lock`，开发及构建工具见 `backend/requirements-dev.txt` 与 `desktop/package-lock.json`。本地 TTS 使用独立环境。
+适用于 Windows 10 / 11。本轮验证环境为 **Python 3.13.17**、**Node.js 24.22.1** 和 **npm 11.19.1**；锁定运行依赖见 `backend/requirements.lock`，开发及构建工具见 `backend/requirements-dev.txt` 与 `desktop/package-lock.json`。Python 3.13 通过锁定的 `audioop-lts` 提供重采样接口。本地 TTS 使用独立环境。
 
 在 PowerShell 打开包含本 README、`backend`、`desktop` 的项目根目录，再执行：
 
@@ -308,7 +309,7 @@ py -3.13 -m venv .venv
 npm.cmd ci --prefix desktop
 ```
 
-如果没有 `py` 启动器，用已安装的 Python 3.12 执行 `python -m venv .venv`。无需激活虚拟环境；`npm.cmd` 可避免 PowerShell 对 `npm.ps1` 的执行策略限制。
+如果没有 `py` 启动器，用已安装的 Python 3.13 执行 `python -m venv .venv`。无需激活虚拟环境；`npm.cmd` 可避免 PowerShell 对 `npm.ps1` 的执行策略限制。
 
 在同一窗口启动开发模式：
 
