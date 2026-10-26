@@ -38,7 +38,7 @@ from app.services.application_catalog import resolvable_applications
 from app.services.application_alias import ApplicationAliasResolver
 from app.services.local_action_intent import LocalActionIntentResolver
 from app.services.llm.model_roles import ExecutionModelUnavailable
-from app.services.desktop.lifecycle import TaskCancelled
+from app.services.desktop.lifecycle import TaskCancelled, TaskHandle
 from app.services.trace.integration import traced_planning
 from app.services.trace.scope import planning_task_id
 
@@ -83,6 +83,7 @@ class AgentContext:
     model_routes: Any = None
     has_attachments: bool = False
     requires_vision: bool = False
+    prepared_handle: TaskHandle | None = None
 
 
 class AgentService:
@@ -92,6 +93,26 @@ class AgentService:
         self.registry = ToolRegistry()
         self.executor = ToolExecutor(settings.data_root / "agent_workspace")
         self.pending: dict[str, AgentContext] = {}
+
+    def _release_prepared(self, app: FastAPI, contexts: list[AgentContext]) -> None:
+        runtime = getattr(app.state, "task_runtime", None)
+        if runtime:
+            retained = {context.work_session_id for context in self.pending.values()}
+            for context in contexts:
+                if context.work_session_id not in retained:
+                    runtime.discard_prepared(context.work_session_id, context.prepared_handle)
+
+    def expire_pending(self, app: FastAPI, now: float | None = None) -> int:
+        """Evict only expired in-memory plans and their identity-matched handles.
+
+        Persistent permission plans remain restorable. Workflow/Recovery-owned
+        handles never enter this pending map and are not swept by age.
+        """
+        now = time.monotonic() if now is None else now
+        expired = [key for key, value in self.pending.items() if now - value.created >= 300]
+        contexts = [self.pending.pop(key) for key in expired]
+        self._release_prepared(app, contexts)
+        return len(contexts)
 
     @traced_planning
     async def plan(
@@ -410,9 +431,7 @@ class AgentService:
         now = time.monotonic()
         # 仅清理内存计划；持久 waiting_permission/planning 记录仍可恢复，
         # 因而这里不等同所有计划统一在300秒后永久失效。
-        self.pending = {
-            key: value for key, value in self.pending.items() if now - value.created < 300
-        }
+        self.expire_pending(app, now)
         plan_id = planning_task_id() or getattr(roles, "_budget_task_id", None) or str(uuid4())
         # Store the user's request before waiting for permissions or running tools.
         with SessionLocal() as db:
@@ -541,6 +560,9 @@ class AgentService:
             context = self._restore_context(app, stored)
             self.pending[plan_id] = context
         if context is None or stored is None or time.monotonic() - context.created > 300:
+            if context is not None and time.monotonic() - context.created > 300:
+                self.pending.pop(plan_id, None)
+                self._release_prepared(app, [context])
             raise LookupError("任务计划已过期，请重新发送")
         resolution = context.local_resolution or {}
         candidates = resolution.get("candidates", [])
@@ -691,94 +713,100 @@ class AgentService:
             if stored:
                 context = self._restore_context(app, stored)
         if context is None or time.monotonic() - context.created > 300:
+            if context is not None:
+                self._release_prepared(app, [context])
             raise LookupError("任务计划已过期，请重新发送")
         context.task_id = plan_id
-        recorder = getattr(app.state, "trace_recorder", None)
-        tracing = (
-            await recorder.execution_scope(
-                plan_id, context.conversation_id, context.work_session_id
+        runtime = getattr(app.state, "task_runtime", None)
+        guard = runtime.handle_scope(context.work_session_id) if runtime else nullcontext()
+        # Reserve synchronously before trace admission can await/fail/cancel.
+        # The same handle remains live through the final reply and checkpoint.
+        with guard as handle:
+            context.prepared_handle = handle
+            recorder = getattr(app.state, "trace_recorder", None)
+            tracing = (
+                await recorder.execution_scope(
+                    plan_id, context.conversation_id, context.work_session_id
+                )
+                if recorder
+                else nullcontext()
             )
-            if recorder
-            else nullcontext()
-        )
-        with tracing:
-            try:
-                registry = getattr(app.state, "runtime_registry", None)
-                if registry:
-                    async with registry.run(
-                        plan_id,
-                        context.conversation_id,
-                        context.work_session_id,
-                        context.renderer_id,
-                    ):
-                        return await self._execute_context(
-                            app,
-                            context,
-                            approved_ids,
-                            expression,
-                            voice_enabled,
-                            speed_factor,
-                            on_text,
-                            on_started,
+            with tracing:
+                try:
+                    registry = getattr(app.state, "runtime_registry", None)
+                    if registry:
+                        async with registry.run(
+                            plan_id,
+                            context.conversation_id,
+                            context.work_session_id,
+                            context.renderer_id,
+                        ):
+                            return await self._execute_context(
+                                app,
+                                context,
+                                approved_ids,
+                                expression,
+                                voice_enabled,
+                                speed_factor,
+                                on_text,
+                                on_started,
+                            )
+                    return await self._execute_context(
+                        app,
+                        context,
+                        approved_ids,
+                        expression,
+                        voice_enabled,
+                        speed_factor,
+                        on_text,
+                        on_started,
+                    )
+                except asyncio.CancelledError:
+                    manager = getattr(app.state, "checkpoint_manager", None)
+                    if manager:
+                        closing = getattr(getattr(app.state, "recovery", None), "closing", False)
+                        await asyncio.to_thread(
+                            manager.settle, plan_id, "INTERRUPTED" if closing else "CANCELLED"
                         )
-                return await self._execute_context(
-                    app,
-                    context,
-                    approved_ids,
-                    expression,
-                    voice_enabled,
-                    speed_factor,
-                    on_text,
-                    on_started,
-                )
-            except asyncio.CancelledError:
-                manager = getattr(app.state, "checkpoint_manager", None)
-                if manager:
-                    closing = getattr(getattr(app.state, "recovery", None), "closing", False)
-                    await asyncio.to_thread(
-                        manager.settle, plan_id, "INTERRUPTED" if closing else "CANCELLED"
+                    if context.work_session_id:
+                        app.state.work_state.emit(
+                            context.work_session_id,
+                            "task_cancelled",
+                            {"summary": "任务已停止"},
+                            status="cancelled",
+                        )
+                    raise
+                except TaskCancelled:
+                    manager = getattr(app.state, "checkpoint_manager", None)
+                    if manager:
+                        await asyncio.to_thread(manager.settle, plan_id, "CANCELLED")
+                    handle = getattr(app.state, "task_runtime", None).handles.get(
+                        context.work_session_id
                     )
-                if context.work_session_id:
+                    status = "interrupted" if handle and handle.exit_reason else "cancelled"
                     app.state.work_state.emit(
                         context.work_session_id,
-                        "task_cancelled",
-                        {"summary": "任务已停止"},
-                        status="cancelled",
+                        "task_" + status,
+                        {"summary": "目标应用已关闭" if status == "interrupted" else "任务已停止"},
+                        status=status,
                     )
-                raise
-            except TaskCancelled:
-                manager = getattr(app.state, "checkpoint_manager", None)
-                if manager:
-                    await asyncio.to_thread(manager.settle, plan_id, "CANCELLED")
-                handle = getattr(app.state, "task_runtime", None).handles.get(
-                    context.work_session_id
-                )
-                status = "interrupted" if handle and handle.exit_reason else "cancelled"
-                app.state.work_state.emit(
-                    context.work_session_id,
-                    "task_" + status,
-                    {"summary": "目标应用已关闭" if status == "interrupted" else "任务已停止"},
-                    status=status,
-                )
-                raise
-            except Exception:
-                manager = getattr(app.state, "checkpoint_manager", None)
-                if manager:
-                    await asyncio.to_thread(manager.settle, plan_id, "NEEDS_REVIEW")
-                if context.work_session_id and not app.state.work_state.is_stopped(
-                    context.work_session_id
-                ):
-                    app.state.work_state.emit(
-                        context.work_session_id,
-                        "task_failed",
-                        {"summary": "任务请求未完成，请查看错误提示"},
-                        status="failed",
-                    )
-                raise
-            finally:
-                trusted_actions.finish_task(context.work_session_id)
-                if getattr(app.state, "task_runtime", None):
-                    app.state.task_runtime.handles.pop(context.work_session_id, None)
+                    raise
+                except Exception:
+                    manager = getattr(app.state, "checkpoint_manager", None)
+                    if manager:
+                        await asyncio.to_thread(manager.settle, plan_id, "NEEDS_REVIEW")
+                    if context.work_session_id and not app.state.work_state.is_stopped(
+                        context.work_session_id
+                    ):
+                        app.state.work_state.emit(
+                            context.work_session_id,
+                            "task_failed",
+                            {"summary": "任务请求未完成，请查看错误提示"},
+                            status="failed",
+                        )
+                    raise
+                finally:
+                    trusted_actions.finish_task(context.work_session_id)
 
     async def _execute_context(
         self,

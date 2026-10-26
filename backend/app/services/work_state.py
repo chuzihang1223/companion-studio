@@ -546,7 +546,8 @@ class WorkState:
     async def stream(self, session_id: str, after: int = 0):
         self.loop = asyncio.get_running_loop()
         queue: asyncio.Queue[int] = asyncio.Queue(maxsize=100)
-        self.subscribers.setdefault(session_id, set()).add(queue)
+        subscribers = self.subscribers.setdefault(session_id, set())
+        subscribers.add(queue)
         try:
             last = after
             while True:
@@ -557,9 +558,17 @@ class WorkState:
                         .order_by(WorkEvent.id)
                         .limit(100)
                     ).all()
-                    for item in rows:
-                        last = item.id
-                        yield f"id: {item.id}\nevent: {item.type}\ndata: {item.detail_json}\n\n"
+                    events = [
+                        (
+                            item.id,
+                            f"id: {item.id}\nevent: {item.type}\ndata: {item.detail_json}\n\n",
+                        )
+                        for item in rows
+                    ]
+                # A slow/disconnected SSE consumer must not retain a checked-out
+                # database connection while it is paused at a yield.
+                for last, message in events:
+                    yield message
                 try:
                     notification = await asyncio.wait_for(queue.get(), timeout=15)
                     if notification == 0:
@@ -569,4 +578,8 @@ class WorkState:
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"
         finally:
-            self.subscribers.get(session_id, set()).discard(queue)
+            subscribers.discard(queue)
+            # No await: another subscriber cannot join between this check
+            # and removal on the host loop. Preserve every remaining queue.
+            if not subscribers and self.subscribers.get(session_id) is subscribers:
+                self.subscribers.pop(session_id, None)

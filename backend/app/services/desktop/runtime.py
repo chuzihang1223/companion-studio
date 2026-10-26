@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from contextlib import contextmanager
 import json
 from typing import TYPE_CHECKING, Any
 from app.services.desktop.lifecycle import TaskHandle, TaskCancelled
@@ -63,7 +64,43 @@ class AgentTaskRuntime:
         self.app = app
         self.handles: dict[str, TaskHandle] = {}
         self.executions: dict[str, RecoveryExecution] = {}
+        self._handle_users: dict[str, int] = {}
         self.logger = file_logger("app.runtime", "agent-runtime.log")
+
+    def discard_prepared(self, session_id: str | None, expected: TaskHandle | None) -> bool:
+        """Release only this expired plan's idle handle, never an active owner."""
+        registry = getattr(self.app.state, "runtime_registry", None)
+        active_id = registry.by_session.get(session_id) if registry else None
+        if (
+            not session_id
+            or expected is None
+            or self.handles.get(session_id) is not expected
+            or self._handle_users.get(session_id, 0)
+            or session_id in self.executions
+            or registry
+            and active_id in registry.active
+        ):
+            return False
+        self.handles.pop(session_id)
+        return True
+
+    @contextmanager
+    def handle_scope(self, session_id: str | None):
+        """Reserve across trace admission and final reply, not just tool run."""
+        if not session_id:
+            yield None
+            return
+        handle = self.handles.setdefault(session_id, TaskHandle())
+        self._handle_users[session_id] = self._handle_users.get(session_id, 0) + 1
+        try:
+            yield handle
+        finally:
+            remaining = self._handle_users[session_id] - 1
+            if remaining:
+                self._handle_users[session_id] = remaining
+            else:
+                self._handle_users.pop(session_id)
+                self.discard_prepared(session_id, handle)
 
     def prepare(self, context: AgentContext) -> None:
         """从工具生成可见步骤并准备 Handle；此阶段不执行任何工具。"""
@@ -81,7 +118,7 @@ class AgentTaskRuntime:
                 titles.append(LABELS.get(call["name"], call["name"]))
         titles.append("验证目标并反馈")
         self.app.state.work_state.set_steps(context.work_session_id, titles)
-        self.handles.setdefault(context.work_session_id, TaskHandle())
+        context.prepared_handle = self.handles.setdefault(context.work_session_id, TaskHandle())
 
     def control(self, session_id: str, action: str) -> None:
         """变更暂停/接管/取消状态，取消时同时唤醒注册器中的任务。"""
@@ -116,6 +153,7 @@ class AgentTaskRuntime:
         session = context.work_session_id
         work = self.app.state.work_state
         handle = self.handles.setdefault(session, TaskHandle())
+        context.prepared_handle = handle
         trusted_actions.bind_extension_task(session, context.conversation_id)
         observations, details = [], []
         handle.position = 0
@@ -243,7 +281,7 @@ class AgentTaskRuntime:
         finally:
             self.executions.pop(session, None)
             if handle.cancelled:
-                self.handles.pop(session, None)
+                self.discard_prepared(session, handle)
 
     async def step(
         self,

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -164,7 +164,7 @@ class RuntimeTaskRegistry:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def watchdog(self) -> None:
+    async def watchdog(self, on_tick: Callable[[], None] | None = None) -> None:
         """每 15 秒检查无等待原因且 180 秒无进度的活动执行。
 
         一旦收到明确事件原因，主要依赖工具/暂停/总任务期限；此机制
@@ -172,6 +172,13 @@ class RuntimeTaskRegistry:
         """
         while True:
             await asyncio.sleep(15)
+            if on_tick:
+                try:
+                    on_tick()
+                except Exception:
+                    import logging
+
+                    logging.getLogger(__name__).warning("runtime_idle_cleanup_failed")
             now = time.monotonic()
             for task_id, (last, reason) in list(self.progress.items()):
                 # Tool and permission waits have TaskWaiter/checkpoint deadlines.

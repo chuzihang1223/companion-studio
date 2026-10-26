@@ -110,10 +110,12 @@ async def services_lifespan(app: FastAPI):
         import logging
 
         logging.getLogger(__name__).warning("evaluation_initialization_unavailable")
-    runtime_watchdog = asyncio.create_task(app.state.runtime_registry.watchdog())
     app.state.work_state.registry = app.state.runtime_registry
     app.state.desktop_bridge = DesktopBridge()
     app.state.task_runtime = AgentTaskRuntime(app)
+    runtime_watchdog = asyncio.create_task(
+        app.state.runtime_registry.watchdog(lambda: app.state.agent_service.expire_pending(app))
+    )
     app.state.mcp_connections = app.state.external_tools = app.state.mcp_adapter = (
         app.state.agent_skills
     ) = None
