@@ -343,8 +343,18 @@ def test_remove_owned_long_path_archive_preserves_other_data(tmp_path):
 
     # Keep each component short while the archived journal filename exceeds
     # classic Win32 MAX_PATH. The real SQLite writer already supports it.
-    manager = EnvironmentManager(tmp_path / ("owned-" + "x" * 45))
     run_id, attempt_id = str(uuid4()), str(uuid4())
+    unpadded = (
+        tmp_path
+        / "owned-"
+        / run_id
+        / attempt_id
+        / "data"
+        / "chat.db.trace-pending"
+        / "pending.sqlite3"
+    )
+    padding = max(45, 285 - len(str(unpadded)))
+    manager = EnvironmentManager(tmp_path / ("owned-" + "x" * padding))
     archive = manager.path(run_id, attempt_id)
     data = archive / "data"
     disk_path(data).mkdir(parents=True)
