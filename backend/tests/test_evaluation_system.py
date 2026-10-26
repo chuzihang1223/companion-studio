@@ -273,8 +273,19 @@ def test_pause_cancel_timeout_and_setup_failure(evaluation, monkeypatch):
     assert not value.environment.active
 
 
-def test_gui_missing_environment_and_implicit_live_are_not_passed(evaluation):
+def test_gui_missing_environment_and_implicit_live_are_not_passed(evaluation, monkeypatch):
     value, app, _ = evaluation
+    delayed_start = []
+    original_status = value.repository.status
+
+    def status_after_worker_delay(run_id, status, *args, **kwargs):
+        if status == "RUNNING":
+            # Exercise a real thread scheduling delay beyond the old blind sleep.
+            time.sleep(0.2)
+            delayed_start.append(True)
+        return original_status(run_id, status, *args, **kwargs)
+
+    monkeypatch.setattr(value.repository, "status", status_after_worker_delay)
     with TestClient(app) as client:
         assert (
             client.post(
@@ -287,10 +298,21 @@ def test_gui_missing_environment_and_implicit_live_are_not_passed(evaluation):
             headers=HEADERS,
             json={"mode": "windows_gui", "case_ids": ["EVAL-013"]},
         ).json()
-        time.sleep(0.1)
-        result = client.get(
-            "/api/evaluation/runs/" + started["run_id"] + "/results", headers=HEADERS
-        ).json()["items"][0]
+
+        async def wait_for_owned_evaluation():
+            # Completion, not a 100ms startup guess, is the functional barrier.
+            # Keep the existing production case timeout; do not alter runtime budgets.
+            task = value.tasks.get(started["run_id"])
+            if task is not None:
+                await asyncio.wait_for(asyncio.shield(task), RunRequest().timeout_seconds)
+
+        client.portal.call(wait_for_owned_evaluation)
+        assert delayed_start == [True]
+        url = "/api/evaluation/runs/" + started["run_id"]
+        assert client.get(url, headers=HEADERS).json()["status"] == "COMPLETED"
+        items = client.get(url + "/results", headers=HEADERS).json()["items"]
+        assert len(items) == 1
+        result = items[0]
         assert result["execution_status"] == "BLOCKED"
         assert result["error_code"] == "INTERACTIVE_FIXTURE_BRIDGE_UNAVAILABLE"
 
@@ -312,6 +334,82 @@ def test_setup_failure_closes_owned_server_and_directories(evaluation, monkeypat
     asyncio.run(run())
     assert not value.environment.active
     assert not list((value.environment.root / "_w").iterdir())
+
+
+def test_remove_owned_long_path_archive_preserves_other_data(tmp_path):
+    from app.core.filesystem import disk_path
+    from app.services.evaluation.environment import EnvironmentManager
+    from app.services.trace.journal import TraceJournal
+
+    # Keep each component short while the archived journal filename exceeds
+    # classic Win32 MAX_PATH. The real SQLite writer already supports it.
+    manager = EnvironmentManager(tmp_path / ("owned-" + "x" * 45))
+    run_id, attempt_id = str(uuid4()), str(uuid4())
+    archive = manager.path(run_id, attempt_id)
+    data = archive / "data"
+    disk_path(data).mkdir(parents=True)
+    database = data / "chat.db"
+    disk_path(database).touch()
+    journal = TraceJournal(database, capacity=8)
+    pending = journal.path
+    journal.close()
+    assert len(str(pending)) > 260
+    assert disk_path(pending).is_file()
+    outside = tmp_path / "unrelated.txt"
+    outside.write_text("preserve unrelated data", encoding="utf-8")
+    target = manager.path(run_id)
+    assert target.resolve().is_relative_to(manager.root.resolve())
+    manager.remove(run_id)
+    assert not disk_path(target).exists()
+    assert outside.read_text(encoding="utf-8") == "preserve unrelated data"
+
+
+def test_evaluation_run_directory_alias_is_not_an_owned_run(tmp_path):
+    import os
+    import subprocess
+    from app.core.filesystem import disk_path
+    from app.services.evaluation.environment import EnvironmentManager
+
+    manager = EnvironmentManager(tmp_path / "evaluation")
+    target = manager.path(str(uuid4()))
+    target.mkdir()
+    sentinel = target / "preserve.txt"
+    sentinel.write_text("another run", encoding="utf-8")
+    alias_id = str(uuid4())
+    alias = manager.root / alias_id
+    if os.name == "nt":
+        # Native directory junctions do not need symlink privileges. Only these
+        # two synthetic paths are passed through environment values, not code.
+        env = dict(os.environ, STUDIO_TEST_JUNCTION=str(alias), STUDIO_TEST_TARGET=str(target))
+        subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "$ErrorActionPreference='Stop'; New-Item -ItemType Junction "
+                "-Path $env:STUDIO_TEST_JUNCTION -Target $env:STUDIO_TEST_TARGET | Out-Null",
+            ],
+            env=env,
+            check=True,
+            capture_output=True,
+            timeout=20,
+        )
+        assert alias.is_junction()
+    else:
+        alias.symlink_to(target, target_is_directory=True)
+    try:
+        with pytest.raises(ValueError, match="所有权"):
+            manager.path(alias_id)
+        with pytest.raises(ValueError, match="所有权"):
+            manager.remove(alias_id)
+        assert sentinel.read_text(encoding="utf-8") == "another run"
+    finally:
+        assert alias.parent == manager.root and target.resolve().is_relative_to(manager.root)
+        if os.name == "nt":
+            disk_path(alias).rmdir()  # Remove this verified junction, not its target.
+        else:
+            alias.unlink()
 
 
 def test_scoped_sse_and_thousand_synthetic_metric_records(evaluation):

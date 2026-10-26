@@ -121,7 +121,7 @@ class EnvironmentManager:
         if attempt_id:
             target /= str(UUID(attempt_id))
         if not target.resolve().is_relative_to(self.root) or any(
-            parent.is_symlink()
+            parent.is_symlink() or parent.is_junction()
             for parent in [target, *target.parents]
             if parent.is_relative_to(self.root)
         ):
@@ -235,6 +235,7 @@ class EnvironmentManager:
                     archived
                     and home.resolve().parent == (self.root / "_w").resolve()
                     and not home.is_symlink()
+                    and not home.is_junction()
                 ):
                     # Skills may contain immutable revisions below MAX_PATH.
                     # Ownership is checked above, before applying the IO prefix.
@@ -400,13 +401,19 @@ class EnvironmentManager:
 
     def cleanup_abandoned(self, repository):
         folder = self.root / "_w"
-        if not folder.exists() or not folder.resolve().is_relative_to(self.root):
+        if (
+            not folder.exists()
+            or folder.is_symlink()
+            or folder.is_junction()
+            or not folder.resolve().is_relative_to(self.root)
+        ):
             return
         for child in folder.iterdir():
             if (
                 re.fullmatch(r"[0-9a-f]{16}", child.name)
                 and child.is_dir()
                 and not child.is_symlink()
+                and not child.is_junction()
                 and child.resolve().is_relative_to(self.root)
             ):
                 archived = False
@@ -429,7 +436,7 @@ class EnvironmentManager:
                     pass  # Unknown/corrupt staging is not evidence of task success.
                 finally:
                     if archived:
-                        shutil.rmtree(child)
+                        shutil.rmtree(disk_path(child))
 
     @contextmanager
     def trace_repository(self, run_id, attempt_id):
@@ -457,7 +464,9 @@ class EnvironmentManager:
     def remove(self, run_id):
         target = self.path(run_id)
         if target.is_dir():
-            shutil.rmtree(target)
+            # path() has already checked the UUID and owned-root boundary.
+            # Journal files may exceed MAX_PATH even when this run path does not.
+            shutil.rmtree(disk_path(target))
 
 
 class WorkerFailure(RuntimeError):
