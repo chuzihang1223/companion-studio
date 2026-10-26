@@ -1,6 +1,6 @@
 # Skill 01–10 统一自动验收
 
-本地候选版本：0.2.0-router.1。默认只生成本地证据和 Windows 候选，不操作远程仓库或发布。
+本入口最初建立于 0.2.0-router.1 阶段；当前候选版本以 `desktop/package.json`、源码 Commit 和实际验收证据为准。默认只生成本地证据和 Windows 候选，不操作远程仓库或发布。
 
 ## PowerShell 入口
 

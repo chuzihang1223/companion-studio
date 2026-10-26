@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib
 import json
 import runpy
+import re
 from email.message import Message
 from types import SimpleNamespace
 
@@ -47,6 +48,18 @@ def test_public_export_contains_every_manifest_source_with_original_bytes():
             hashlib.sha256(selected[evidence["path"]].read_bytes()).hexdigest()
             == evidence["sha256"]
         )
+
+
+def test_export_keeps_linked_docs_and_the_unified_runner_feature_input():
+    selected = {file.relative_to(ROOT).as_posix() for file in POLICY["collect"](ROOT)}
+    # These are consumer requirements, not a copy of the exporter allowlist:
+    # the README links must resolve and the unified reviewer reads this JSON.
+    linked = set(re.findall(r"\]\((docs/[^)#]+)", (ROOT / "README.md").read_text(encoding="utf-8")))
+    required = "docs/SKILL_01_10_FEATURES.json"
+    assert linked <= selected
+    assert required in selected
+    features = json.loads((ROOT / required).read_text(encoding="utf-8"))
+    assert len(features) == 120 and len({row["feature_id"] for row in features}) == 120
 
 
 def test_upstream_build_sources_survive_while_generated_builds_are_excluded(tmp_path):
