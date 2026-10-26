@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -232,7 +233,20 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
                 await execute(app)
         else:
             await execute(app)
-        assert await store.flush()
+        flush_started = time.perf_counter()
+        flushed = await store.flush()
+        # Preserve the original five-second drain assertion. If it fails, keep
+        # the live queue/Future state: later shutdown may finish the durable ACK
+        # and erase the distinction between slow persistence and notification.
+        assert flushed, {
+            "flush_elapsed_ms": (time.perf_counter() - flush_started) * 1000,
+            "queue_unfinished": store.queue.unfinished_tasks,
+            "queue_size": store.queue.qsize(),
+            "blocked": store.blocked,
+            "worker_done": store.worker.done() if store.worker else None,
+            "inflight_done": store.inflight.done() if store.inflight else None,
+            "metrics": dict(store.metrics),
+        }
         with store.factory() as db:
             from app.models.agent_trace import AgentTrace
 

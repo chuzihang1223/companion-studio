@@ -1,53 +1,50 @@
-# Codex progress
+# Codex 进度
 
-## Current scope
+## 当前断点
 
-- Skill: Final Production Release, resource cleanup and release gates for v0.3.0.
-- Working version: **0.3.0-rc.4**. No final release, tag, upload, or remote push is authorized in this stage.
-- Branch: `release/0.3.0-final-hardening`.
-- Last tested source commit: `a598d20115c7d1f9551e2bfc911278dbdbe419d1`.
-- This file records the continuation; newer documentation commits do not turn old test results into new-source passes.
+- Skill：Final Production Release；目标 v0.3.0，当前仍为 **0.3.0-rc.4**。
+- 分支：`release/0.3.0-final-hardening`；所有修改和提交仅在本地，未推送、建 Tag 或发布。
+- 本轮运行时实测提交：`0ce5cda33348ef4949c7e831584e2b2653d14d2d`。
+- 此后只补充测试失败现场与本文件；产品运行时没有因此修改。进度提交的准确 SHA 见 `git log -1` 和本机续接索引。
+- **尚未完成，发行状态 BLOCKED。** 原始失败保留；没有新的 rc.4 安装包，未替换正式用户版本。
 
-## Completed
+## 已完成
 
-- Fixed SSE subscription/Session lifetime and prepared Agent handle ownership, including cancellation and pending-plan expiry.
-- Serialized Trace deletion accounting with its SQLite transaction.
-- Fixed deletion of owned long-path evaluation archives; rejected junction aliases and waited for actual evaluation task completion in tests.
-- Repaired public source export closure: 992 tracked files, including required feature metadata and linked documentation.
-- Added real lifecycle/resource counters and the required 3600-second mixed-load plus idle observation harness. Short diagnostic runs are explicitly not final stability evidence.
-- Preserved every failed or interrupted check and its source identity in local evidence.
+- 修复 SSE 订阅与 Session 生命周期、Agent prepared Handle 引用/取消清理、未执行计划过期回收。
+- 修复 Trace 并发删除累计账本，保留 SQLite 原事务、耐久性与容量限制。
+- 修复私有测试归档的 Windows 长路径删除、拒绝 junction 别名；评测测试等待真实 Task 完成。
+- 公开源码导出保留完整文档/功能 JSON，加入本进度文件后共 993 个跟踪文件。
+- 上述实现文件重点：`work_state.py`、`agent_service.py`、`desktop/runtime.py`、`runtime_registry.py`、`trace/repository.py`、`evaluation/environment.py`。
 
-## Evidence and remaining failures
+## 本轮实际验证
 
-- Targeted resource/Trace suite: 93 passed on its recorded earlier source; final cancellation test passed. These results cover only the files and revisions recorded with them.
-- Evaluation fixes: 15 passed; boundary checks: 3 passed; portable short-root long-path checks: 3 passed.
-- Latest original complete check (`final-production-release-05`): **847 total, 842 passed, 3 failed, 2 skipped**. The two skips require Windows symbolic-link privileges.
-- Failures: Recovery Trace flush (`WriteGateTimeout`, 20 accepted / 19 committed, one durable retry-pending command); 1000-event admission at 5151.97 ms versus the unchanged 3000 ms limit; crash-recovery child exceeding its unchanged 12-second limit.
-- The failed recovery source remains durable. No event loss or successful recovery is inferred from that fact.
-- The complete source check stopped the dependent build. No rc.4 installer or final one-hour run has been produced.
-- One bounded diagnostic run of those same three failing tests passed (24.61 s). Admission took 2498.54 ms; measured journal transaction exits accounted for 2198.16 ms. The sampled Recovery run had no gate wait over 50 ms. These observations do **not** explain or supersede the failed complete run; the timing/reliability blocker remains open.
+- 原真实混合压力：**3600.0011 秒**；另有 **61.7007 秒**空闲观察，整体 3662.59 秒。360 轮、60 次 MCP 子进程、12 次调度、60 次取消均完成。
+- 21774 个 Trace 事件全部接受并提交；待处理、丢弃、写入失败、SQLite BUSY、遗留子进程均为 0。每轮/空闲/关闭边界的 13 项 live counter 均归零。事务 P95 14.032 ms。
+- 独立三次服务启停及关闭后 7 次空闲采样通过；这是本机服务/合成模型与音频验证，不替代真实云模型、物理麦克风或主观音质验收。
+- 十个源码界面模块通过。原生窗口复查 21 项通过，3 项为实际 DPI/显示硬件条件限制；界面性能通过。
+- 首次原生窗口 CU-022 因 FOCUS_LOST 失败；用户确认桌面空闲后，只复查原原生脚本通过，没有重复十个模块。旧失败未删除。
+- 源码/历史/依赖只读审计：待本次诊断与进度提交后记录，不等同于独立 Security 签署。
 
-## Key files
+## 尚未解决的实际失败
 
-- `backend/app/services/work_state.py`
-- `backend/app/services/agent_service.py`
-- `backend/app/services/desktop/runtime.py`
-- `backend/app/services/runtime_registry.py`
-- `backend/app/services/trace/repository.py`
-- `backend/app/services/evaluation/environment.py`
-- `backend/tests/test_work_stream_resources.py`
-- `backend/tests/test_agent_prepared_resources.py`
-- `backend/tests/test_trace_deletion_accounting.py`
-- `backend/tests/test_evaluation_system.py`
-- `backend/tests/hardening_soak_workload.py`
-- `backend/tests/production_resources_workload.py`
+- 最新原完整回归：**847 项，844 PASS、1 FAIL、2 SKIP**，1335.56 秒，提交为上面的 0ce5cda。
+- 唯一失败：`test_agent_trace.py::test_runtime_step_outcomes[cancel]`，预期取消后 `store.flush()` 返回 False。原五秒断言未放宽。
+- 原失败退出后日志为 26 accepted / 26 committed / 0 pending / 0 write failure；退出清理可能完成 ACK，因此不能倒推失败当时的现场，也不能声称未发生问题。
+- 一次取消单项观察通过（0.371 秒）；完整收集 847 项但仅执行同序前 17 项的诊断通过（39.96 秒，830 项明确 deselected）。它们都不替代完整回归 PASS。
+- 已补充失败时的耗时、队列 unfinished/size、blocked、worker/Future 状态和受控指标，文件为 `backend/tests/test_agent_trace.py`。没有更改产品行为、重试次数、时间预算或断言结果。
+- 原 check05 的另外三项失败本轮通过，但其原始时延/失败根因仍未确认；全部旧证据保留。
 
-## Blockers and next action
+## 审核阻断
 
-1. Diagnose the three latest failures using their retained logs and owned test databases; run affected tests with timing/lock diagnostics before changing production behavior. Do not relax durability, retries, timeouts, performance limits, or assertions.
-2. After a justified correction, freeze the source, run the required original checks/build, then the real 3600-second mixed workload, lifecycle/idle checks, native source/installed GUI and isolated install/uninstall verification. Reuse unaffected evidence only with explicit file/revision binding.
-3. Complete allowed independent engineering evidence reviews and artifact/privacy/signature checks.
-4. GATE-07 and the required Security portion of GATE-13 remain **BLOCKED**: the independent Security continuation was denied by automatic review for possible cybersecurity risk, with no specific rule supplied. The denied dependency-audit installation is also not retried. Ordinary local audits cannot substitute for independent Security signoff.
-5. Keep delivery local and truthfully blocked until every mandatory gate passes. Do not change formal user profiles or the separate private edition.
+- **GATE-07 / GATE-13 的必需 Security 部分仍 BLOCKED**：独立 Security continuation 被自动审批以“可能存在网络安全风险”拒绝，未提供具体规则。不能重试、改名、拆分绕过或用主开发者摘要冒充签署。
+- 原依赖审计工具安装也曾被拒绝，没有重试安装；允许的只读源码/历史/依赖元数据检查不替代该签署。
+- 完整回归失败，原依赖构建自动停止；安装、安装后界面、当前发行包 AV/签名/一致性检查没有新包可验，必须保持 NOT_RUN，不能套用 rc.3 的包或结果。
 
-Local raw evidence is intentionally excluded from public source. The continuation index is `.cache/final-production-01/CONTINUATION_STATE.json`; failed full-check evidence is retained under that directory.
+## 下一步具体操作
+
+1. 优先看本机续接索引 `.cache/final-production-01/CONTINUATION_STATE.json`，以及 `failed-full-check-06`、`cancel-diagnostic31`、`prefix-diagnostic32`。不要重新扫描整个项目或再次盲跑全套。
+2. 使用同序前 17 项诊断入口捕捉取消失败的现场；依据实际队列/Future/耗时证据定位原因，不把单项通过当作修复，不放宽 5s/2s/16 次等原约束。
+3. 一小时、生命周期和界面证据属于 0ce5cda。仅在逐文件 SHA 证明实际执行范围未变时复用，并保留原提交标识；测试诊断/文档变化不冒充新版本全量通过。产品行为一旦修改，应重新判断受影响范围并执行 Skill 必需质量门。
+4. 确认真实修复后再集中完成原完整回归、不跳测构建、隔离安装/恢复及允许的独立复审。必需 Security 签署仍需获准的实际入口；此前不能发布。
+
+不读取或导入正式聊天数据库，不混用私用版本、凭据、角色资产、档案、依赖或进程清理。原始测试档案、日志和缓存不进入公开源码。
