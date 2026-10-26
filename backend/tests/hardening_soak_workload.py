@@ -8,6 +8,7 @@ are synthetic, and cannot establish hardware, voice quality or live-provider SLA
 
 import asyncio
 import ctypes
+from ctypes import wintypes
 import gc
 import hashlib
 import json
@@ -15,6 +16,7 @@ import os
 from pathlib import Path
 import threading
 import subprocess
+import sys
 import time
 from types import SimpleNamespace
 from uuid import uuid4
@@ -35,6 +37,51 @@ from app.services.knowledge.contracts import SearchQuery
 from app.services.realtime_voice.contracts import Frame, Scope, StartRequest
 
 
+class ThreadEntry(ctypes.Structure):
+    # https://learn.microsoft.com/windows/win32/api/tlhelp32/ns-tlhelp32-threadentry32
+    _fields_ = [
+        ("size", wintypes.DWORD),
+        ("usage", wintypes.DWORD),
+        ("thread", wintypes.DWORD),
+        ("owner", wintypes.DWORD),
+        ("priority", wintypes.LONG),
+        ("delta", wintypes.LONG),
+        ("flags", wintypes.DWORD),
+    ]
+
+
+_threads = ctypes.WinDLL("kernel32", use_last_error=True)
+_threads.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+_threads.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+for _name in ("Thread32First", "Thread32Next"):
+    getattr(_threads, _name).argtypes = [wintypes.HANDLE, ctypes.POINTER(ThreadEntry)]
+    getattr(_threads, _name).restype = wintypes.BOOL
+_threads.CloseHandle.argtypes = [wintypes.HANDLE]
+_threads.CloseHandle.restype = wintypes.BOOL
+
+
+def system_thread_count():
+    """Store only this process's count; close every read-only snapshot handle."""
+    snapshot = _threads.CreateToolhelp32Snapshot(0x00000004, 0)
+    if snapshot == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        entry = ThreadEntry()
+        entry.size = ctypes.sizeof(entry)
+        count = 0
+        found = _threads.Thread32First(snapshot, ctypes.byref(entry))
+        while found:
+            count += entry.owner == os.getpid()
+            found = _threads.Thread32Next(snapshot, ctypes.byref(entry))
+        if ctypes.get_last_error() != 18:
+            raise ctypes.WinError(ctypes.get_last_error())
+        assert count >= 1
+        return count
+    finally:
+        if not _threads.CloseHandle(snapshot):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+
 def process_metrics():
     handle = win32api.GetCurrentProcess()
     memory = win32process.GetProcessMemoryInfo(handle)
@@ -48,7 +95,56 @@ def process_metrics():
         "peak_rss_bytes": memory["PeakWorkingSetSize"],
         "handle_count": handles.value,
         "python_threads": threading.active_count(),
+        "system_threads": system_thread_count(),
+        "python_allocated_blocks": sys.getallocatedblocks(),
         "cpu_seconds": time.process_time(),
+    }
+
+
+def live_resources(h):
+    state = h.app.state
+    return {
+        "agent_pending": len(state.agent_service.pending),
+        "agent_handles": len(state.task_runtime.handles),
+        "agent_handle_references": sum(state.task_runtime._handle_users.values()),
+        "runtime_active": len(state.runtime_registry.active),
+        "runtime_session_owners": len(state.runtime_registry.by_session),
+        "runtime_executions": len(state.task_runtime.executions),
+        "stream_keys": len(state.work_state.subscribers),
+        "stream_queues": sum(len(bucket) for bucket in state.work_state.subscribers.values()),
+        "workflow_tasks": len(state.workflows.tasks),
+        "voice_sessions": len(state.realtime_voice.rows),
+        "mcp_connections": len(state.mcp_connections.connections),
+        "business_checked_out": engine.pool.checkedout(),
+        "trace_checked_out": h.trace.engine.pool.checkedout(),
+    }
+
+
+def retained_size(value, seen=None):
+    """Size only our explicit diagnostic containers, not a process heap dump."""
+    from collections import deque
+
+    seen = set() if seen is None else seen
+    if id(value) in seen:
+        return 0
+    seen.add(id(value))
+    size = sys.getsizeof(value)
+    if isinstance(value, dict):
+        size += sum(retained_size(k, seen) + retained_size(v, seen) for k, v in value.items())
+    elif isinstance(value, (tuple, list, deque)):
+        size += sum(retained_size(item, seen) for item in value)
+    return size
+
+
+def pool_retention(h):
+    return {
+        label: {
+            "checked_in": pool.checkedin(),
+            "checked_out": pool.checkedout(),
+            "configured_size": pool.size(),
+            "overflow": pool.overflow(),
+        }
+        for label, pool in (("business", engine.pool), ("trace", h.trace.engine.pool))
     }
 
 
@@ -272,7 +368,10 @@ def test_real_duration_original_services(tmp_path):
                         "workflow_tasks": len(h.app.state.workflows.tasks),
                         "mcp_connections": len(h.app.state.mcp_connections.connections),
                         "cycle_seconds": time.monotonic() - cycle_started,
+                        "live_resources": live_resources(h),
+                        "pool_retention": pool_retention(h),
                     }
+                    assert not any(sample["live_resources"].values())
                     report["workload_receipts"].append(
                         {
                             "cycle": index,
@@ -297,6 +396,44 @@ def test_real_duration_original_services(tmp_path):
                             ),
                         )
                     )
+                # Preserve the original hour/cycles, then measure a separate
+                # real idle minute; no fake clock replaces either duration.
+                report["mixed_load_duration_seconds"] = time.monotonic() - began
+                report["idle_samples"] = []
+                idle_started = time.monotonic()
+                for _ in range(13):
+                    gc.collect()
+                    idle = {
+                        "idle_seconds": time.monotonic() - idle_started,
+                        **process_metrics(),
+                        "live_resources": live_resources(h),
+                    }
+                    assert not any(idle["live_resources"].values())
+                    report["idle_samples"].append(idle)
+                    persist()
+                    if len(report["idle_samples"]) < 13:
+                        await asyncio.sleep(5)
+                report["diagnostic_retention"] = {
+                    "observer_bytes": retained_size(
+                        {
+                            name: getattr(observer, name)
+                            for name in (
+                                "transactions",
+                                "write_intervals",
+                                "statement_waits",
+                                "tail",
+                                "busy_intervals",
+                                "connections",
+                                "counters",
+                                "engines",
+                            )
+                        }
+                    ),
+                    "owned_report_bytes": retained_size(report),
+                    "observer_sample_cap_per_series": observer.sample_limit,
+                    "classification": "EXPECTED_RETENTION",
+                    "limit": "Owned diagnostic container sizes are not a numeric reconciliation of RSS/private bytes; residual growth remains UNATTRIBUTED_GROWTH unless separately proven.",
+                }
                 journal = h.trace.journal.snapshot()
                 with SessionLocal() as db:
                     totals = db.get(TraceProjectionTotals, 1)
@@ -368,7 +505,10 @@ def test_real_duration_original_services(tmp_path):
                 "trace_queue": h.trace.queue.qsize(),
                 "workflow_tasks": len(h.app.state.workflows.tasks),
                 "voice_sessions": len(h.app.state.realtime_voice.rows),
+                "live_resources": live_resources(h),
+                "pool_retention": pool_retention(h),
             }
+            assert not any(report["resource_cleanup"]["live_resources"].values())
             assert report["resource_cleanup"]["business_checked_out"] == 0
             assert report["resource_cleanup"]["trace_checked_out"] == 0
             assert report["resource_cleanup"]["trace_journal_connection_closed"]
