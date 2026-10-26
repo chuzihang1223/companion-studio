@@ -89,6 +89,25 @@ async function run() {
   await driver.c.until("document.querySelectorAll('.trace-row').length>0");
   driver.check((await read('detail', options)).event_count === perf.eventCount, 'Historical trace and module layout survive application restart');
   await driver.close();
+  // Preserve a real, sanitized NEEDS_REVIEW source while the test backend is
+  // stopped. The production serializer, IPC and mounted Viewer must carry it.
+  const pendingSeed = spawnSync(python, ['-B', path.resolve(__dirname, '../../backend/tests/trace_pending_seed.py'), path.join(driver.home, 'UserData/chat.db'), trace.trace_id, trace.task_id, conversation.id], {
+    encoding:'utf8', windowsHide:true, env:{...process.env,
+      PYTHONPATH:path.resolve(__dirname,'../../backend'),
+      COMPANION_DATA_DIR:path.join(driver.home,'UserData'), COMPANION_CLEAN_DISTRIBUTION:'1',
+      OPENAI_API_KEY:'', FISH_API_KEY:'', OPENAI_BASE_URL:'http://127.0.0.1:9/v1'},
+  });
+  assert.equal(pendingSeed.status, 0, pendingSeed.stderr);
+  await driver.launch();
+  await driver.openConversation(conversation.id);
+  await driver.c.until("document.querySelector('.trace-viewer')?.innerText.includes('追踪记录尚未全部写入')");
+  driver.check((await read('list', scope)).integrity?.needs_review === 1, 'Real API preserves scoped pending-source counts through its response schema');
+  driver.check(await driver.c.evaluate("document.querySelector('.trace-viewer')?.innerText.includes('历史可能不完整')"), 'Mounted TraceViewer reports incomplete history after restart');
+  await driver.screenshot('trace-pending-integrity');
+  await driver.click('新聊天');
+  await driver.c.until("!document.querySelector('.trace-viewer')?.innerText.includes('追踪记录尚未全部写入')");
+  driver.check(true, 'Changing conversation clears the previous pending-source warning');
+  await driver.close();
   driver.report.pass = true;
   driver.report.manual.push('This test drives the real Chromium UI through the local test debugger; it does not measure native desktop focus, voice quality or renderer FPS.');
   driver.persist();

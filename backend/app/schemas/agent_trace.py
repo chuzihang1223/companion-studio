@@ -81,12 +81,19 @@ class TraceEvent(BaseModel):
     schema_version: int = 1
 
 
+class TraceIntegrity(BaseModel):
+    pending: int = Field(default=0, ge=0)
+    needs_review: int = Field(default=0, ge=0)
+    failed: int = Field(default=0, ge=0)
+
+
 class TracePage(BaseModel):
     items: list[AgentTrace]
     next_cursor: int | None
     has_more: bool
     limit: int
     schema_version: int = 1
+    integrity: TraceIntegrity | None = None
 
 
 class TraceEventPage(BaseModel):

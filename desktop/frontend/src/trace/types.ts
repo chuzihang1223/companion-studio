@@ -69,7 +69,7 @@ export type TraceEvent = {
   schema_version: number;
 };
 export type TracePage<T> = {
-  integrity?: { pending: number; needs_review: number; failed: number };
+  integrity?: { pending: number; needs_review: number; failed: number } | null;
   items: T[];
   next_cursor: number | null;
   has_more: boolean;
