@@ -100,6 +100,7 @@ class TraceJournal:
                 UUID(self.stream)
                 if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise ValueError("TRACE_JOURNAL_INTEGRITY")
+                self._reconcile_capacity(db)
         except BaseException:
             if getattr(self, "connection", None):
                 self.connection.close()
@@ -149,19 +150,38 @@ class TraceJournal:
     def add(db, key, amount):
         db.execute("UPDATE meta SET value=CAST(value AS INTEGER)+? WHERE key=?", (amount, key))
 
+    @staticmethod
+    def _reconcile_capacity(db):
+        # One scan on open/recovery, not one increasingly large scan for each
+        # admission. The hot-path counters change in the same FULL transaction
+        # as the source row; an interrupted commit cannot split these values.
+        count, size = db.execute(
+            "SELECT count(*),coalesce(sum(length(payload)),0) FROM commands WHERE state!='COMMITTED'"
+        ).fetchone()
+        db.executemany(
+            "INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            [("pending_commands", str(count)), ("pending_payload_bytes", str(size))],
+        )
+
     def accept(self, command, data):
         payload, digest = encode(command, data)
         key = str(uuid4())
         created = time.time()
         with self.transaction() as db:
-            count, size = db.execute(
-                "SELECT count(*),coalesce(sum(length(payload)),0) FROM commands WHERE state IN ('QUEUED','PERSISTING','RETRY_PENDING','NEEDS_REVIEW','FAILED')"
-            ).fetchone()
+            counters = {
+                key: int(value)
+                for key, value in db.execute(
+                    "SELECT key,value FROM meta WHERE key IN ('pending_commands','pending_payload_bytes','accepted')"
+                )
+            }
+            count, size = counters["pending_commands"], counters["pending_payload_bytes"]
+            if count < 0 or size < 0:
+                raise ValueError("TRACE_JOURNAL_CAPACITY_INTEGRITY")
             if count >= self.capacity or size + len(payload) > 16 * 1024 * 1024:
                 raise ValueError("TRACE_JOURNAL_CAPACITY")
             # Only confirmed COMMITTED history is pruned; pending/failed sources
             # never disappear to make space. Counters remain in the atomic meta.
-            accepted = int(db.execute("SELECT value FROM meta WHERE key='accepted'").fetchone()[0])
+            accepted = counters["accepted"]
             if accepted % 256 == 0:
                 db.execute("""DELETE FROM commands WHERE state='COMMITTED' AND sequence <
                     coalesce((SELECT sequence FROM commands WHERE state='COMMITTED'
@@ -188,8 +208,13 @@ class TraceJournal:
                     key,
                 ),
             )
-            self.add(db, "accepted", 1)
-            self.add(db, "accepted_events", int(bool(data["event_type"])))
+            db.execute(
+                """UPDATE meta SET value=CAST(value AS INTEGER)+CASE key
+                WHEN 'accepted' THEN 1 WHEN 'accepted_events' THEN ?
+                WHEN 'pending_commands' THEN 1 ELSE ? END
+                WHERE key IN ('accepted','accepted_events','pending_commands','pending_payload_bytes')""",
+                (int(bool(data["event_type"])), len(payload)),
+            )
         # The caller may return True only after the FULL transaction above exits.
         return self.envelope(command, data, key, sequence, digest)
 
@@ -214,6 +239,7 @@ class TraceJournal:
 
     def recover(self):
         with self.transaction() as db:
+            self._reconcile_capacity(db)
             # An expired source remains explicit and bounded, never silently
             # deleted or replayed outside the projection receipt's safety window.
             db.execute(
@@ -258,11 +284,12 @@ class TraceJournal:
             self.add(db, "write_failures", 1)
 
     def acknowledge(self, receipts):
-        committed = events = 0
+        committed = events = released_bytes = 0
         with self.transaction() as db:
             for key, event_written in receipts:
                 source = db.execute(
-                    "SELECT event FROM commands WHERE id=? AND state!='COMMITTED'", (key,)
+                    "SELECT event,length(payload) FROM commands WHERE id=? AND state!='COMMITTED'",
+                    (key,),
                 ).fetchone()
                 if source and source[0] and not event_written:
                     # The pre-existing per-trace display cap remains enforced.
@@ -278,10 +305,17 @@ class TraceJournal:
                     WHERE id=? AND state!='COMMITTED'""",
                     (key,),
                 ).rowcount
-                self.add(db, "committed", changed)
-                self.add(db, "committed_events", changed * int(event_written))
                 committed += changed
                 events += changed * int(event_written)
+                released_bytes += changed * (source[1] or 0) if source else 0
+            if committed:
+                db.execute(
+                    """UPDATE meta SET value=CAST(value AS INTEGER)+CASE key
+                    WHEN 'committed' THEN ? WHEN 'committed_events' THEN ?
+                    WHEN 'pending_commands' THEN ? ELSE ? END
+                    WHERE key IN ('committed','committed_events','pending_commands','pending_payload_bytes')""",
+                    (committed, events, -committed, -released_bytes),
+                )
         return committed, events
 
     @staticmethod
