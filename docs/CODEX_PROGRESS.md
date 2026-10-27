@@ -2,6 +2,10 @@
 
 ## 当前断点
 
+本次 Sprint 已推进：live runtime 测试 fixture 原为 DELETE，和产品正常启动的 WAL 配置不一致。真实 BEGIN/read snapshot 对照在旧配置下失败（database is locked，7.41s）；fixture 仅补 WAL，不改变原超时。新增 `cancel_with_reader`，保留原四种 outcome ID 及五秒 flush 断言。80 项相关回归通过（68.31s），完整回归待集中执行。产品运行时代码未修改，原一小时/生命周期执行文件 SHA 全部一致；原提交标识保留。证据入口：`.cache/final-release-sprint-01/fixture-fix-evidence.json`。
+
+这证明了测试配置缺陷及其修正，不倒推历史那次偶发取消失败的唯一原因；以新的完整回归决定是否解除该阻断。
+
 - Skill：Final Production Release；目标 v0.3.0，当前仍为 **0.3.0-rc.4**。
 - 分支：`release/0.3.0-final-hardening`；所有修改和提交仅在本地，未推送、建 Tag 或发布。
 - 本轮运行时实测提交：`0ce5cda33348ef4949c7e831584e2b2653d14d2d`。
@@ -44,7 +48,7 @@
 
 ## 下一步具体操作
 
-1. 优先看本机续接索引 `.cache/final-production-01/CONTINUATION_STATE.json`，以及 `failed-full-check-06`、`cancel-diagnostic31`、`prefix-diagnostic32`。不要重新扫描整个项目或再次盲跑全套。
+1. 先看 `.cache/final-release-sprint-01/SPRINT_STATE.json`（本次完整回归/构建状态），再看旧本机续接索引 `.cache/final-production-01/CONTINUATION_STATE.json`，以及 `failed-full-check-06`、`cancel-diagnostic31`、`prefix-diagnostic32`。不要重新扫描整个项目或再次盲跑全套。
 2. 使用同序前 17 项诊断入口捕捉取消失败的现场（复制到新证据目录，不覆盖旧结果）；依据实际队列/Future/耗时证据定位原因，不把单项通过当作修复，不放宽 5s/2s/16 次等原约束。
 3. 一小时、生命周期和界面证据属于 0ce5cda。仅在逐文件 SHA 证明实际执行范围未变时复用，并保留原提交标识；测试诊断/文档变化不冒充新版本全量通过。产品行为一旦修改，应重新判断受影响范围并执行 Skill 必需质量门。
 4. 确认真实修复后再集中完成原完整回归、不跳测构建、隔离安装/恢复及允许的独立复审。必需 Security 签署仍需获准的实际入口；此前不能发布。

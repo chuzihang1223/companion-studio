@@ -3,7 +3,7 @@ import json
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, event, select
 from sqlalchemy.orm import sessionmaker
 
 from app.database.session import Base
@@ -18,6 +18,18 @@ def trace_database(tmp_path):
     engine = create_engine(
         "sqlite:///" + str(tmp_path / "trace.db"), connect_args={"check_same_thread": False}
     )
+
+    @event.listens_for(engine, "connect")
+    def configure_live_database(connection, _):
+        # runtime_app uses this factory for both business and Trace writes.
+        # Match the application's WAL mode: a live read snapshot must not
+        # block their commits. Keep the fixture's existing timeout unchanged.
+        cursor = connection.execute("PRAGMA journal_mode=WAL")
+        try:
+            assert cursor.fetchone()[0] == "wal"
+        finally:
+            cursor.close()
+
     Base.metadata.create_all(engine)
     factory = sessionmaker(engine, expire_on_commit=False)
     conversation, session = str(uuid4()), str(uuid4())

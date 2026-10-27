@@ -195,7 +195,7 @@ def test_concurrent_contexts_and_failed_writer_do_not_break_agent(runtime_app, m
     asyncio.run(run())
 
 
-@pytest.mark.parametrize("outcome", ["timeout", "cancel", "retry", "failure"])
+@pytest.mark.parametrize("outcome", ["timeout", "cancel", "retry", "failure", "cancel_with_reader"])
 def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
     app, store, _, _ = runtime_app
     original = app.state.task_runtime.execute_call
@@ -274,7 +274,21 @@ def test_runtime_step_outcomes(runtime_app, monkeypatch, outcome):
         assert not app.state.runtime_registry.active
         await store.stop()
 
-    asyncio.run(run())
+    if outcome == "cancel_with_reader":
+        from app.models.agent_trace import AgentTrace
+
+        outcome = "cancel"
+        with store.factory() as reader:
+            # Keep a real SQLite snapshot, not merely an open ORM Session.
+            # The normal application configures WAL so this reader must not
+            # block cancellation's business writes or its Trace commit.
+            reader.connection().exec_driver_sql("BEGIN")
+            assert reader.scalar(select(AgentTrace)) is None
+            assert reader.connection().connection.driver_connection.in_transaction
+            asyncio.run(run())
+            assert reader.scalar(select(AgentTrace)) is None
+    else:
+        asyncio.run(run())
     assert original
 
 
