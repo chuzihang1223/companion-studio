@@ -1,8 +1,8 @@
 # Companion Studio（伴舟）
 
-**0.3.0-rc.4 本地候选 · Windows 桌面应用 · Electron / React / FastAPI / SQLite**
+**v0.3.0 · Windows x64 桌面应用 · Electron / React / FastAPI / SQLite**
 
-> 本开发分支为 **0.3.0-rc.4 本地候选版**，包含 Skill 01–10 的实现、Trace 完整性修复、资源回收和联合审核入口；尚未公开发布。下面的下载链接仍指向已发布的 v0.1.2，旧发行版不包含本分支候选功能。请在独立档案测试，勿覆盖正式版数据。候选功能是否达到发布门，以对应构建的实际审核报告为准。
+> v0.3.0 整合 Skill 01–10、Trace 完整性和资源回收修复。模型和可选语音服务需自行配置，工程测试不等于所有云服务、语音质量和硬件场景均已验证。安装器未签名。维护者决定接受已披露限制发布；独立第三方安全审查未执行，历史审核状态未改为通过。详见[发布说明](docs/RELEASE_NOTES_0.3.0.md)。
 
 Companion Studio 把持续聊天、可配置角色和本机工作台放在同一个桌面应用中，方便保存对话、管理角色设定，以及从聊天切换到项目和本机任务。用户可以直接使用通用助手，也可以导入角色卡或创建自己的角色。
 
@@ -10,11 +10,11 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 [![CI](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/chuzihang1223/companion-studio/actions/workflows/ci.yml)
 
-**[Download for Windows · v0.1.2](https://github.com/chuzihang1223/companion-studio/releases/download/v0.1.2/Companion-Studio-0.1.2-Setup.exe)** · [发布说明与 SHA256](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2)
+**[Windows 安装包与 SHA256 · GitHub Releases](https://github.com/chuzihang1223/companion-studio/releases/latest)** · [旧版 v0.1.2](https://github.com/chuzihang1223/companion-studio/releases/tag/v0.1.2)
 
 ## 系统架构与 Agent 实现
 
-### 智能模型路由（本地候选）
+### 智能模型路由
 
 设置 → API →「智能模型路由」，默认关闭。可保持手动指定、按现有模型职责，或明确允许自动选择。
 先检查模型类型、明确声明的能力、上下文、数据授权和预算，再按用户偏好、实测延迟与健康状态排序。
@@ -31,7 +31,7 @@ Companion Studio 把持续聊天、可配置角色和本机工作台放在同一
 
 [路由设计和限制](docs/MODEL_ROUTER.md) · [十阶段审核入口](docs/UNIFIED_ACCEPTANCE.md)
 
-### 语音会话（本地审核候选）
+### 语音会话
 
 Chat / Work 输入框旁的麦克风可开启语音面板。选择设备、中文或英文和系统/已配置音色，
 确认后再点击录音；结束后本地转写，校对终句再发送。回复沿用原模型、角色、记忆及工具权限，
@@ -39,11 +39,11 @@ Chat / Work 输入框旁的麦克风可开启语音面板。选择设备、中�
 
 当前 Windows 本地 ASR 是终句识别，没有逐字字幕；中英混读存在误识别，免提和自动语音打断尚未开放。
 系统音色无角色克隆或显式情绪能力。Fish/Index 需要用户自行配置，云端朗读另需文字传输允许。
-语音功能现随 `0.3.0-rc.4` 本地候选一起审核；上方下载链接仍指向已公开版本。
+语音面板属于 v0.3.0；具体引擎能力和验证范围以发布说明为准。
 [操作和架构](docs/VOICE_ARCHITECTURE.md) · [引擎能力](docs/VOICE_PROVIDERS.md) ·
 [隐私与资源](docs/VOICE_PRIVACY.md) · [36 项分层评测](docs/VOICE_EVALUATION.md)
 
-### Scheduled Agent（本地审核分支）
+### Scheduled Agent
 
 工作模式 →「模块」→「定时任务」，选择工作会话，绑定已发布的固定工作流版本。
 支持一次性、每五分钟起的固定间隔、每天、每周，以及授权项目文件变化／指定工作流状态变化。
@@ -66,7 +66,7 @@ Chat / Work 输入框旁的麦克风可开启语音面板。选择设备、中�
 [后台模式](docs/SCHEDULER_BACKGROUND_MODE.md) · [30 项评测](docs/SCHEDULER_EVALUATION.md) ·
 [自动审核](docs/SCHEDULER_AUTOMATED_QA.md)
 
-### Visual Computer Use（本地审核分支）
+### Visual Computer Use
 
 工作模式 →「模块」→「屏幕观察」。默认关闭；用户选择窗口并在原生确认框授权后，
 可读取 Windows UIA、按需预览受控窗口、本地识别中英文文字，并定位唯一控件后输入、点击或滚动。
@@ -155,7 +155,7 @@ Windows 安全存储保存凭据，不把已保存 Token 返回界面或导出�
 
 ![安装版的 MCP 与 Skills 评测：20 项受控结果、协议指标及 Trace 入口](docs/screenshots/mcp-evaluation.png)
 
-### 本地知识库与可控记忆（本地审核分支）
+### 本地知识库与可控记忆
 
 解决项目资料分散、聊天缺少可核对出处的问题。侧栏「知识与记忆」或工作台对应模块可以
 创建库、显式授权目录、增量索引、中文/英文关键词搜索，并查看行号、页码或段落来源。
@@ -196,7 +196,7 @@ Evaluation 新增 28 项 Knowledge Core，使用合成资料和固定模型，�
 [引用](docs/RAG_CITATIONS.md) · [记忆](docs/LONG_TERM_MEMORY.md) ·
 [安全边界](docs/KNOWLEDGE_SECURITY.md) · [评测与实测性能](docs/KNOWLEDGE_EVALUATION.md)
 
-### Visual Workflow Builder（本地审核分支）
+### Visual Workflow Builder
 
 工作模式 →「模块」→「Visual Workflow · 流程设计」。可在画布上添加、拖动和连接节点，
 选择工具 / MCP / Skill、绑定输入和祖先节点的输出，校验后保存并发布本地不可变版本。
@@ -395,7 +395,7 @@ JSON 上限 **256 KB**，桌面选择角色卡文件上限 **6 MB**。每次导�
 
 PDF 提取前 30 页文本，没有 OCR，不读取加密 PDF；DOCX 提取段落；长文件选择相关片段，不保证发送全文。图片需 API 配置与模型实际支持视觉能力，GIF 使用第一帧。
 
-### MCP 与 Skills（本地审核版）
+### MCP 与 Skills
 
 1. 在 MCP & Skills 设置中添加现有程序或准确 MCP 端点，保存后手动连接并审阅原生确认框。
 2. 工具初始禁用；查看 Schema、来源和风险，再按需要启用。高风险操作每次确认。

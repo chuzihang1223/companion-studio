@@ -1,10 +1,10 @@
 {
-  "version": "0.3.0-rc.4",
+  "version": "0.3.0",
   "product_name": "Companion Studio",
-  "build_label": "Companion Studio Final Production Local Candidate",
-  "build_id": "studio-0.3.0-rc.4-source",
+  "build_label": "Companion Studio Public Release",
+  "build_id": "studio-0.3.0-source",
   "built_at": null,
-  "channel": "review",
+  "channel": "release",
   "app_id": "com.companionstudio.desktop",
   "clean_distribution": true,
   "source_fingerprint": null

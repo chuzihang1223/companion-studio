@@ -223,7 +223,11 @@ async def lifespan(app: FastAPI):
             yield
 
 
-app = FastAPI(title=os.getenv("COMPANION_APP_NAME", "Companion Studio") + " API", lifespan=lifespan)
+app = FastAPI(
+    title=os.getenv("COMPANION_APP_NAME", "Companion Studio") + " API",
+    version="0.3.0",
+    lifespan=lifespan,
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],

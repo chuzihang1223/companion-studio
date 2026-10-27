@@ -1,5 +1,11 @@
 # Windows 发布流程
 
+## v0.3.0 维护者发布决定
+
+维护者已明确授权 v0.3.0 Stable 发行，并将独立第三方安全签署从本次强制发布条件中移除。必须披露：`Independent third-party security review: Not performed / Owner accepted release with disclosed limitations.` 历史 GATE-07/GATE-13 的 BLOCKED 与原四域合同仍保留，不改成 PASS，也不表示获得第三方签署。平台拒绝的 Reviewer 不重试或绕过。
+
+本次使用当前完整 release 分支源码，完成正常构建、公开源码/历史/产物检查与实际发行验收后，通过获授权的 Git/GitHub CLI 正常快进 main、创建不可移动的 v0.3.0 标签和 Stable Release。保留已有发行，不强推。版本、Commit、安装器和发布资产须一致；不能重命名旧 rc 安装器。下面保留通用的 PR/CI/草稿流程说明，手动发行时不得让重复的自动草稿覆盖已核验资产。
+
 版本以 `desktop/package.json` 和锁文件为准。已有 tag、公开 Release 与资产保持不变；安装器由同一构建入口生成，不提交进 Git 源码历史。
 
 ## 1. 准备维护分支
