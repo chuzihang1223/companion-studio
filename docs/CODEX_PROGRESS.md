@@ -1,56 +1,62 @@
 # Codex 进度
 
-## 当前断点
+## 当前断点（2026-10-27，最终冲刺已完成可执行工程验收）
 
-本次 Sprint 已推进：live runtime 测试 fixture 原为 DELETE，和产品正常启动的 WAL 配置不一致。真实 BEGIN/read snapshot 对照在旧配置下失败（database is locked，7.41s）；fixture 仅补 WAL，不改变原超时。新增 `cancel_with_reader`，保留原四种 outcome ID 及五秒 flush 断言。80 项相关回归通过（68.31s），完整回归待集中执行。产品运行时代码未修改，原一小时/生命周期执行文件 SHA 全部一致；原提交标识保留。证据入口：`.cache/final-release-sprint-01/fixture-fix-evidence.json`。
+- Skill：Final Production Release Sprint，承接 Final Production Release。
+- 版本仍为 **0.3.0-rc.4**；目标 v0.3.0 未获正式发布批准。
+- 分支：`release/0.3.0-final-hardening`；仅本地提交，无推送、Tag、Release 或资产上传。
+- 安装包及冻结源码提交：`8d173c0008fcd8ddc58d10b734c2edb53110b21d`。本文件后续提交仅保存交付进度，不冒充该提交重新完成测试。
+- **发行状态 BLOCKED**：必需独立 Security 审查未执行，原 code/runtime/security/qa 四域最终合同未闭环。当前工程范围报告不能替代原合同。
+- 首先读取本机 `.cache/final-release-sprint-01/candidate-status.json`、`delivery-verification.json` 和候选的 `Reports/FINAL_RELEASE_READINESS.md`，不要重新扫描架构、跑全套或重建安装包。
 
-这证明了测试配置缺陷及其修正，不倒推历史那次偶发取消失败的唯一原因；以新的完整回归决定是否解除该阻断。
+## 本次关键修改与验证
 
-- Skill：Final Production Release；目标 v0.3.0，当前仍为 **0.3.0-rc.4**。
-- 分支：`release/0.3.0-final-hardening`；所有修改和提交仅在本地，未推送、建 Tag 或发布。
-- 本轮运行时实测提交：`0ce5cda33348ef4949c7e831584e2b2653d14d2d`。
-- 诊断代码提交：`6a6db86e714936d6bb84aed71099e4f319b6d3c1`；只补充失败现场输出，产品运行时未改。随后仅更新本进度，准确最新 SHA 见 `git log -1` 和本机续接索引。
-- **尚未完成，发行状态 BLOCKED。** 原始失败保留；没有新的 rc.4 安装包，未替换正式用户版本。
+- `backend/tests/test_trace_persistence.py`：live runtime fixture 原为 DELETE，和正常产品启动的 WAL 不一致。仅增加 WAL 并断言实际返回模式，保留原默认 5000ms 超时，不套用会提高超时的生产 helper。
+- `backend/tests/test_agent_trace.py`：保留原四种 outcome ID 和原 5 秒 flush 断言；新增 `cancel_with_reader`，使用真实 BEGIN/read snapshot，在取消和持久化完成后仍保持读快照。未放宽 2 秒、16 次重试或性能门限。
+- 旧 fixture 的真实读快照反例在 7.41 秒于实际 commit 失败，错误为 `sqlite3.OperationalError: database is locked`。没有记录数值 SQLite 扩展错误码，不能据此称 SQLITE_LOCKED 枚举。修正后 80 项定向测试通过。
+- 当前源码原完整检查 **848 项：846 PASS、2 SKIP、0 FAIL**；包括前端/Electron检查、源码/历史和依赖审计。
+- 原构建自身再执行完整回归：**846 PASS、2 SKIP、0 FAIL，1066.77 秒**，无观察插件、未使用 SkipTests。两次取消及真实读快照用例均通过。SKIP 均为 Windows 当前账号不能创建符号链接。
+- 当前依赖一致性、许可、SBOM、通告检查及发行资源白名单审计通过；不等同于独立 Security 签署。
 
-## 已完成
+## 真实长时证据及限制
 
-- 修复 SSE 订阅与 Session 生命周期、Agent prepared Handle 引用/取消清理、未执行计划过期回收。
-- 修复 Trace 并发删除累计账本，保留 SQLite 原事务、耐久性与容量限制。
-- 修复私有测试归档的 Windows 长路径删除、拒绝 junction 别名；评测测试等待真实 Task 完成。
-- 公开源码导出保留完整文档/功能 JSON，加入本进度文件后共 993 个跟踪文件。
-- 上述实现文件重点：`work_state.py`、`agent_service.py`、`desktop/runtime.py`、`runtime_registry.py`、`trace/repository.py`、`evaluation/environment.py`。
+- 原一小时实际执行提交仍为 `0ce5cda33348ef4949c7e831584e2b2653d14d2d`，没有改写成 8d 的新执行。
+- 真实混合负载 **3600.0011043 秒**，另有 **61.7007484 秒/13 次**空闲采样；360 轮、60 个 MCP 子进程、12 次调度、60 次取消。
+- 21774 个事件生成＝接受＝提交；pending、失写、丢弃、BUSY、遗留子进程均为 0；13 项 live counter 在规定静止/空闲/退出边界归零，SQLite 事务 P95 14.032ms。
+- 311 个 soak 执行范围、312 个生命周期范围、569 个 GUI 范围文件，以及相关依赖声明和原报告 SHA 与当前一致。改动的两个测试未被原小时 workload 导入，产品运行时代码未改；依据用户允许的未变范围复用，未缩短或伪造一小时。
+- 三次服务启停和退出后 7 次采样通过。唯一摘要匹配的闭合**合成**数据库只读核对 integrity=ok、账本/回执/留存一致，前后文件字节未变。
+- 负载 private memory 末 30 分钟约 0.3659 MiB/min、末 10 分钟约 0.4464 MiB/min；空闲段斜率 0。余量仍是 **UNATTRIBUTED_GROWTH**，不是任意长期零泄漏证明。
+- 旧历史取消失败的唯一原因尚未证明。本次第一次完整检查也曾有 enqueue 3604.5792ms 超原 3000ms 门限；后续源码和构建全套通过不抹除旧失败或证明所有 I/O 抖动消失。checkpoint128 的受控试验更差，已拒绝，产品仍为512。
 
-## 本轮实际验证
+## 安装与交付
 
-- 原真实混合压力：**3600.0011 秒**；另有 **61.7007 秒**空闲观察，整体 3662.59 秒。360 轮、60 次 MCP 子进程、12 次调度、60 次取消均完成。
-- 21774 个 Trace 事件全部接受并提交；待处理、丢弃、写入失败、SQLite BUSY、遗留子进程均为 0。每轮/空闲/关闭边界的 13 项 live counter 均归零。事务 P95 14.032 ms。
-- 独立三次服务启停及关闭后 7 次空闲采样通过；这是本机服务/合成模型与音频验证，不替代真实云模型、物理麦克风或主观音质验收。
-- 十个源码界面模块通过。原生窗口复查 21 项通过，3 项为实际 DPI/显示硬件条件限制；界面性能通过。
-- 首次原生窗口 CU-022 因 FOCUS_LOST 失败；用户确认桌面空闲后，只复查原原生脚本通过，没有重复十个模块。旧失败未删除。
-- 允许的只读审计通过：993 个公开文件；已扫描可达历史；锁定依赖元数据无活跃已知通告、无不可用组件，原 SBOM/锁校验通过，pip check 通过。不会安装此前被拒绝的审计工具，也不等同于独立 Security 签署。
-- 34 项权限/安全单元测试及 Electron computer-security 组按原始实测记录和未变文件 SHA 复用；整套回归仍 FAIL。
+- Build：`studio-0.3.0-rc.4-sprint01`，manifest/source/ASAR/冻结模块绑定当前 8d。
+- 原脚本实际 DryRun、隔离安装、28 项界面检查、现代记事本实际启动并就绪聚焦、退出/重开/卸载通过；原同产品注册与快捷方式恢复。1324 个程序资源逐文件匹配。
+- 已安装快照的原生 GUI：21 PASS、3 个 DPI/显示器硬件 BLOCKED；性能通过；十个功能模块均通过，共260项模块断言。源码 GUI 沿用相同字节范围的原执行身份。
+- 原120功能映射：**105 PASS、15 PARTIAL**，15项均保留原环境/能力限制；16项INT、10项E2E通过。合成模型/ASR/TTS不冒充真实云模型、物理麦克风或声学质量。
+- 正式 UserData 只作文件摘要比较：**96→96，变化0**；没有读取SQL记录、复制、导入或迁移正式数据库。仅本候选路径范围的最终CIM观测无遗留应用/后端进程；用户记事本和其他版本不在清理范围。
+- 当前 Setup 的 Windows Defender 扫描无威胁；签名 **NotSigned**，按 Skill 披露，不冒充已签名。
+- 993 个公开源码文件/ZIP与冻结源逐字节相等。候选含安装器、同版目录程序、源码树/ZIP、九份必需报告及校验值；本机原始日志、私有档案、截图、密钥和测试音频不进入公开发行材料。
+- 本机位置见 `candidate-status.json`；Setup SHA256：`83c633c6fed02aa1c753703225df5630cc633bb2a7fd1478d63171b6a7a13425`。
+- Code功能正确性、Runtime、Database、QA分别完成范围限定的独立工程复审，无确认的未解决 P0/P1/P2；报告及 SHA 在候选中，脱敏副本与本机原件摘要分别记录。**不构成Security或整体发布签署**。
+- 现用正式版本和个人版没有替换、合并档案或修改。
 
-## 尚未解决的实际失败
+## 必需审核阻断与下一步
 
-- 最新原完整回归：**847 项，844 PASS、1 FAIL、2 SKIP**，1335.56 秒，提交为上面的 0ce5cda。
-- 唯一失败：`test_agent_trace.py::test_runtime_step_outcomes[cancel]`，预期取消后 `store.flush()` 返回 False。原五秒断言未放宽。
-- 原失败退出后日志为 26 accepted / 26 committed / 0 pending / 0 write failure；退出清理可能完成 ACK，因此不能倒推失败当时的现场，也不能声称未发生问题。
-- 一次取消单项观察通过（0.371 秒）；完整收集 847 项但仅执行同序前 17 项的诊断通过（39.96 秒，830 项明确 deselected）。它们都不替代完整回归 PASS。
-- 已补充失败时的耗时、队列 unfinished/size、blocked、worker/Future 状态和受控指标，文件为 `backend/tests/test_agent_trace.py`。完整 JSON 在受控 False 注入中验证（这是预期失败，不是发行回归通过）；修改后的正常取消单项通过。Ruff/格式检查通过。没有更改产品行为、重试次数、时间预算或断言结果。
-- 原 check05 的另外三项失败本轮通过，但其原始时延/失败根因仍未确认；全部旧证据保留。
+1. 原 `Independent security reviewer continuation` 被自动审批以“可能存在网络安全风险”拒绝，未给具体规则。原 pip-audit 安装操作也被拒绝。原始记录在 `.cache/final-hardening-01/security-independent-block.json` 和 `policy-blocks.json`。
+2. 不重试、改名、拆分或换入口绕过这些拒绝；普通只读审计和工程复审不替代该签署。**GATE-07/GATE-13/最终签署保持 BLOCKED，不公开 GitHub。**
+3. 只有出现获准的实际 Security 审查条件后，补齐原四域合同所需的实际审查与当前源码/构建绑定，再执行原最终验收合同。不能把本机范围报告或旧 inventory 清单自动写成四域 PASS。
+4. 不要盲重跑当前 frozen runner：它和发行件绑定 8d，后续本进度提交只是记录。先读本机状态与候选最终报告；若有真实产品/依赖变更，重新判断受影响检查和真实一小时要求，不能套用旧结果。
 
-## 审核阻断
+## 证据入口与保留的失败
 
-- **GATE-07 / GATE-13 的必需 Security 部分仍 BLOCKED**：独立 Security continuation 被自动审批以“可能存在网络安全风险”拒绝，未提供具体规则。不能重试、改名、拆分绕过或用主开发者摘要冒充签署。
-- 原依赖审计工具安装也曾被拒绝，没有重试安装；允许的只读源码/历史/依赖元数据检查不替代该签署。
-- 最终独立工程复审尚未闭环；Runtime/DB 窄诊断不冒充最终签署。
-- 完整回归失败，原依赖构建自动停止；安装、安装后界面、当前发行包 AV/签名/一致性检查没有新包可验，必须保持 NOT_RUN，不能套用 rc.3 的包或结果。
-
-## 下一步具体操作
-
-1. 先看 `.cache/final-release-sprint-01/SPRINT_STATE.json`（本次完整回归/构建状态），再看旧本机续接索引 `.cache/final-production-01/CONTINUATION_STATE.json`，以及 `failed-full-check-06`、`cancel-diagnostic31`、`prefix-diagnostic32`。不要重新扫描整个项目或再次盲跑全套。
-2. 使用同序前 17 项诊断入口捕捉取消失败的现场（复制到新证据目录，不覆盖旧结果）；依据实际队列/Future/耗时证据定位原因，不把单项通过当作修复，不放宽 5s/2s/16 次等原约束。
-3. 一小时、生命周期和界面证据属于 0ce5cda。仅在逐文件 SHA 证明实际执行范围未变时复用，并保留原提交标识；测试诊断/文档变化不冒充新版本全量通过。产品行为一旦修改，应重新判断受影响范围并执行 Skill 必需质量门。
-4. 确认真实修复后再集中完成原完整回归、不跳测构建、隔离安装/恢复及允许的独立复审。必需 Security 签署仍需获准的实际入口；此前不能发布。
-
-不读取或导入正式聊天数据库，不混用私用版本、凭据、角色资产、档案、依赖或进程清理。原始测试档案、日志和缓存不进入公开源码。
+- `.cache/final-release-sprint-01/SPRINT_STATE.json`：本轮续接索引。
+- `review02/source-check/pytest.xml`、`build-pytest.xml`：两份完整回归。
+- `FINAL_ENGINEERING_EVIDENCE.json`：精确120功能/INT/E2E/GUI/原始门与未变范围复用，原NOT_RUN未改成PASS。
+- `unchanged-scope-reuse.json`、`stress-analysis.json`：原一小时和生命周期复用、关闭后合成数据库与内存统计。
+- `phase-installer.json`、`phase-installed-gui.json`、`phase-consistency.json`、`phase-supplemental.json`：实际阶段收据。
+- `runtime-final-review`、`database-final-review`、`qa-final-review`：独立工程报告、原始SHA与输入快照。
+- `failed-full-check-01`：本轮3604ms性能失败。此前 `.cache/final-production-01/failed-full-check-06` 等原日志未删。
+- 首次构建参数因带空格的JUnit路径被拆开，零测试即停止；原XML与日志保留，改为相对路径后才完成真正构建回归。
+- 最终一致性门曾在安装前因缺少installed snapshot正确拒绝；`10-manifest-profile.log` FAIL保留，安装后原门 `26-manifest-profile.log` PASS。没有绕过检查。
+- 本机源码导出首次误指定Source内缓存被原guard拒绝，随后使用Source外独立目录；汇总脚本的外部路径根、PowerShell引号/编码及URL误判已纠正，只影响本机交付辅助，不涉及产品或测试门。
